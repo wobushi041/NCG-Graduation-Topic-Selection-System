@@ -1,0 +1,180 @@
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+    'Noto Color Emoji';
+}
+
+.colorWeak {
+  filter: invert(80%);
+}
+
+.ant-layout {
+  min-height: 100vh;
+}
+.ant-pro-sider.ant-layout-sider.ant-pro-sider-fixed {
+  left: unset;
+}
+
+canvas {
+  display: block;
+}
+
+body {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+@media (max-width: 768px) {
+  /* ---- 移动端适配：收紧桌面端的 40px 页面白边 ---- */
+  /* ProLayout 默认 paddingInlinePageContainerContent=40，桌面正常，
+     375px 屏上两侧共吃掉 80px，内容只剩 295px */
+  .ant-pro-layout-content {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+  .ant-pro-page-container-children-container,
+  .ant-page-header {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  /* ProCard 卡片内边距收紧（默认 24px） */
+  .ant-pro-card .ant-pro-card-body {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  /* ---- 表格：窄屏自适应列宽，不再横向拖动 ---- */
+  /* 之前用 :last-child { position: sticky; right: 0 } 把最后一列钉在右边，
+     但表格本身是横向滚动布局，sticky 是相对滚动视口定位的，
+     会把操作列/末列拽到容器右侧并压在其他列上面，造成列重叠。
+     固定列一律交给 antd 原生的 fixed: 'right'（渲染为
+     .ant-table-cell-fix-right，antd 会自己算偏移与阴影）。 */
+  .ant-table-content > table,
+  .ant-table-body > table,
+  .ant-table-header > table {
+    width: 100% !important;
+    min-width: 0 !important;
+    /* 用 auto 而非 fixed：fixed 会把未指定 width 的列平均分配，
+       出现「工号 / 名字 / 操作」被压到 28px、文字竖排的情况。
+       auto 按内容分配列宽，长文本列自然更宽。 */
+    table-layout: auto !important;
+  }
+  .ant-table-content,
+  .ant-table-body {
+    overflow-x: visible !important;
+  }
+  /* 单元格允许换行，长文本不再把表格撑宽 */
+  .ant-table-thead > tr > th,
+  .ant-table-tbody > tr > td {
+    white-space: normal !important;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    /* 换行会让 min-content 退化成 1 个字符，短列（工号 / 姓名 / 操作）
+       会被长文本列挤到 20 多像素、文字竖排。给一个下限兜底。 */
+    min-width: 48px;
+  }
+  /* 固定列（操作等）保持不换行，避免按钮被折断 */
+  .ant-table-cell-fix-left,
+  .ant-table-cell-fix-right {
+    white-space: nowrap !important;
+    word-break: keep-all !important;
+    background-color: #fff;
+  }
+  .ant-table-thead > tr > th.ant-table-cell-fix-left,
+  .ant-table-thead > tr > th.ant-table-cell-fix-right {
+    background-color: #fafafa;
+  }
+
+  /* 单元格内的按钮 / 链接文字不折行：空间不足时整个按钮换到下一行，
+     而不是把「调整额度」拆成「调整额 / 度」竖排 */
+  .ant-table-tbody > tr > td .ant-btn,
+  .ant-table-tbody > tr > td a {
+    white-space: nowrap;
+  }
+
+  /* 表格单元格紧凑化，移动端一屏能看到更多列 */
+  .ant-table-thead > tr > th,
+  .ant-table-tbody > tr > td {
+    padding: 8px 6px !important;
+    font-size: 13px;
+  }
+
+  /* 勾选列收紧，把宽度让给内容列 */
+  .ant-table-selection-column {
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+  }
+
+  /* 长文案按钮在窄屏只保留短文案, 避免按钮过宽挤压内容 */
+  .desktop-only-label {
+    display: none !important;
+  }
+  .mobile-only-label {
+    display: inline !important;
+  }
+
+  /* 首页大标题缩小，避免 3 行折行 */
+  h1.ant-typography,
+  .ant-typography h1 {
+    font-size: 26px !important;
+  }
+  h2.ant-typography,
+  .ant-typography h2 {
+    font-size: 20px !important;
+  }
+
+  /* 查询表单按钮不再挤占过多空间 */
+  .ant-pro-query-filter-actions {
+    margin-bottom: 8px !important;
+  }
+
+  /* ---- 移动端侧边菜单抽屉：修正锚定与高度 ---- */
+  /* ProLayout 在移动端用 getContainer:false 渲染 Drawer，antd 会输出
+     .ant-drawer-inline { position: absolute }，即锚在文档顶部而非视口。
+     页面一旦滚动，抽屉与遮罩的底边就会上移，下半屏露出未遮罩的内容。
+     同时 ProLayout 给 body 硬编码 height:100vh，移动浏览器地址栏收起时
+     100vh 与实际可视高度不符。此处改为视口锚定 + 动态视口高度。 */
+  .ant-drawer.ant-drawer-inline {
+    position: fixed !important;
+    inset: 0 !important;
+    height: 100% !important;
+    max-height: 100% !important;
+  }
+  .ant-drawer.ant-drawer-inline .ant-drawer-content-wrapper {
+    height: 100vh !important;
+    height: 100dvh !important;
+  }
+  .ant-drawer.ant-drawer-inline .ant-drawer-body {
+    height: 100vh !important;
+    height: 100dvh !important;
+  }
+  /* 抽屉内部的侧边栏同样铺满，避免菜单底部留白 */
+  .ant-drawer.ant-drawer-inline .ant-pro-sider,
+  .ant-drawer.ant-drawer-inline .ant-layout-sider-children {
+    height: 100% !important;
+  }
+  /* 移动端抽屉里不再显示桌面端的折叠箭头 */
+  .ant-drawer.ant-drawer-inline .ant-pro-sider-collapsed-button {
+    display: none !important;
+  }
+}
+/* 默认隐藏移动端专用短文案, 仅小屏显示 */
+.mobile-only-label {
+  display: none;
+}
+
+.margin-16{
+  margin-bottom: 16px;
+}
