@@ -214,5 +214,115 @@ public class SentinelRateLimitProperties {
      */
     private double teacherGroupQueryAll = 300;
 
+    /// 系统开关、配置与系统诊断接口流控配置 ///
+
+    /**
+     * 查询跨系选题开关接口 QPS 阈值
+     */
+    private double policyCrossTopicQuery = 120;
+
+    /**
+     * 设置跨系选题开关接口 QPS 阈值
+     */
+    private double policyCrossTopicUpdate = 30;
+
+    /**
+     * 查询学生查看课题开关接口 QPS 阈值
+     */
+    private double policyViewTopicQuery = 120;
+
+    /**
+     * 设置学生查看课题开关接口 QPS 阈值
+     */
+    private double policyViewTopicUpdate = 30;
+
+    /**
+     * 查询单选模式开关接口 QPS 阈值
+     */
+    private double policySingleChoiceQuery = 120;
+
+    /**
+     * 设置单选模式开关接口 QPS 阈值
+     */
+    private double policySingleChoiceUpdate = 30;
+
+    /**
+     * 查询退选加锁状态接口 QPS 阈值
+     */
+    private double policyTopicLockQuery = 200;
+
+    /**
+     * 设置退选加锁状态及时间接口 QPS 阈值
+     */
+    private double policyTopicLockUpdate = 30;
+
+    /**
+     * 查询系部跨选配置接口 QPS 阈值
+     */
+    private double policyDeptConfigQuery = 60;
+
+    /**
+     * 设置系部跨选配置接口 QPS 阈值
+     */
+    private double policyDeptConfigUpdate = 30;
+
+    /**
+     * 清除系部跨选配置接口 QPS 阈值
+     */
+    private double policyDeptConfigDelete = 30;
+
+    /**
+     * 系统连通性测试诊断接口 QPS 阈值
+     */
+    private double systemDiagnosticsTest = 200;
+
+    /**
+     * 查询系统信息面板接口 QPS 阈值
+     */
+    private double systemInfoQuery = 60;
+
+    /// 用户管理接口流控配置 ///
+
+    /**
+     * 创建用户接口 QPS 阈值
+     */
+    private double userManageAdd = 30;
+
+    /**
+     * 删除用户接口 QPS 阈值
+     */
+    private double userManageDelete = 30;
+
+    /**
+     * 更新用户接口 QPS 阈值
+     */
+    private double userManageUpdate = 60;
+
+    /**
+     * 获取当前登录用户接口 QPS 阈值
+     */
+    private double userQueryCurrent = 300;
+
+    /**
+     * 分页查询用户接口 QPS 阈值
+     */
+    private double userQueryPage = 120;
+
+    /**
+     * 查询教师脱敏列表接口 QPS 阈值
+     */
+    private double userQueryTeacherList = 120;
+
+    /**
+     * 根据 id 查询用户实体接口 QPS 阈值
+     */
+    private double userQueryById = 120;
+
+    /**
+     * 根据 id 查询用户脱敏视图接口 QPS 阈值
+     */
+    private double userQueryVoById = 120;
+
 }
+
 

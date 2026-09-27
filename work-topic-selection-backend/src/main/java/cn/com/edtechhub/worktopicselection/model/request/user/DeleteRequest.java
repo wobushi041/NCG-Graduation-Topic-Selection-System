@@ -1,6 +1,5 @@
-package cn.com.edtechhub.worktopicselection.model.dto.user;
+package cn.com.edtechhub.worktopicselection.model.request.user;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -23,7 +22,6 @@ public class DeleteRequest implements Serializable {
     /**
      * 序列化版本号
      */
-    @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 
 }

@@ -1,7 +1,7 @@
 package cn.com.edtechhub.worktopicselection.service;
 
-import cn.com.edtechhub.worktopicselection.model.dto.user.UserQueryRequest;
 import cn.com.edtechhub.worktopicselection.model.entity.User;
+import cn.com.edtechhub.worktopicselection.model.request.user.UserQueryRequest;
 import cn.com.edtechhub.worktopicselection.model.vo.LoginUserVO;
 import cn.com.edtechhub.worktopicselection.model.vo.UserVO;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;

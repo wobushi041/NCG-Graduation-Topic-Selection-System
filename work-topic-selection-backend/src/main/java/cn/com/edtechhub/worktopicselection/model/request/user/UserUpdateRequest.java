@@ -1,8 +1,5 @@
-package cn.com.edtechhub.worktopicselection.model.dto.user;
+package cn.com.edtechhub.worktopicselection.model.request.user;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -45,7 +42,6 @@ public class UserUpdateRequest implements Serializable {
     /**
      * 序列化版本号
      */
-    @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 
 }

@@ -84,6 +84,27 @@ public class SentinelRuleRegistry {
         register("teacher-group.query-self", properties.getTeacherGroupQuerySelf(), false);
         register("teacher-group.query-batch", properties.getTeacherGroupQueryBatch(), false);
         register("teacher-group.query-all", properties.getTeacherGroupQueryAll(), false);
+        register("policy.cross-topic.query", properties.getPolicyCrossTopicQuery(), false);
+        register("policy.cross-topic.update", properties.getPolicyCrossTopicUpdate(), false);
+        register("policy.view-topic.query", properties.getPolicyViewTopicQuery(), false);
+        register("policy.view-topic.update", properties.getPolicyViewTopicUpdate(), false);
+        register("policy.single-choice.query", properties.getPolicySingleChoiceQuery(), false);
+        register("policy.single-choice.update", properties.getPolicySingleChoiceUpdate(), false);
+        register("policy.topic-lock.query", properties.getPolicyTopicLockQuery(), false);
+        register("policy.topic-lock.update", properties.getPolicyTopicLockUpdate(), false);
+        register("policy.dept-config.query", properties.getPolicyDeptConfigQuery(), false);
+        register("policy.dept-config.update", properties.getPolicyDeptConfigUpdate(), false);
+        register("policy.dept-config.delete", properties.getPolicyDeptConfigDelete(), false);
+        register("system.diagnostics.test", properties.getSystemDiagnosticsTest(), false);
+        register("system.info.query", properties.getSystemInfoQuery(), false);
+        register("user.manage.add", properties.getUserManageAdd(), false);
+        register("user.manage.delete", properties.getUserManageDelete(), false);
+        register("user.manage.update", properties.getUserManageUpdate(), false);
+        register("user.query.current", properties.getUserQueryCurrent(), false);
+        register("user.query.page", properties.getUserQueryPage(), false);
+        register("user.query.teacher-list", properties.getUserQueryTeacherList(), false);
+        register("user.query.by-id", properties.getUserQueryById(), false);
+        register("user.query.vo-by-id", properties.getUserQueryVoById(), false);
         publish();
     }
 
