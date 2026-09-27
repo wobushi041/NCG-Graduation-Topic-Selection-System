@@ -7,7 +7,8 @@
 认证模块本轮实施详情见：[认证模块重构与 AOP 架构升级完成记录](./AUTH_AOP_REFACTOR_COMPLETION.md)。  
 选题写用例实施详情见：[选题写用例重构与三层架构解耦完成记录](./TOPIC_SELECTION_WRITE_REFACTOR_COMPLETION.md)。  
 选题读用例实施详情见：[选题查询用例重构与选题域全量闭环完成记录](./TOPIC_SELECTION_QUERY_REFACTOR_COMPLETION.md)。  
-查询与统计域实施详情见：[查询与统计域（Wave 4）HTTP 接口与上层架构重构完成报告](./QUERY_REPORT_REFACTOR_COMPLETION.md)。
+查询与统计域实施详情见：[查询与统计域（Wave 4）HTTP 接口与上层架构重构完成报告](./QUERY_REPORT_REFACTOR_COMPLETION.md)。  
+文件导入导出与 AI 模块实施详情见：[文件导入导出与 AI 模块（Wave 5：阶段 6）架构重构完成报告](./FILE_AI_REFACTOR_COMPLETION.md)。
 
 ## 1. 文档目的
 
@@ -59,8 +60,8 @@
 | `SelectionPolicyController` | 11 | 跨系开关、看题开关、单选模式、退选锁与系部跨选配置 |
 | `SystemController` | 2 | 后端连通性测试与系统运行信息面板 |
 | `TopicQueryController` | 8 | 课题多角色分页查询、系部选题统计、教师统计与用户视图列表 |
-| `FileController` | 9 | 用户/课题导入与统计数据导出 |
-| `AIController` | 1 | AI 问答占位接口 |
+| `FileController` | 9 | 用户/课题导入与统计数据导出（委托 `FileApplicationService`） |
+| `AIController` | 1 | AI 问答接口（委托 `AIApplicationService`） |
 | **总计** | **79** |  |
 
 ### 3.2 已确认的耦合问题
@@ -70,9 +71,9 @@
 | ARCH-01 | `UserController` 约 4042 行并承载 68 个接口 | 修改影响面过大，业务域边界不清晰 | 按认证、用户、组织、课题、选题、配置、报表拆分 Controller | 已完成（拆分为 9 个高内聚 Controller，`UserController` 缩减至 8 个用户管理接口） |
 | ARCH-02 | `UserController` 直接注入 3 个 Mapper，并存在 23 处直接调用 | Controller 越过 Service，事务与业务规则难复用 | Mapper 仅由 Service/Repository 访问 | 已完成（Controller 层 0 Mapper 直接注入） |
 | ARCH-03 | `UserController` 存在 20 处 `TransactionTemplate` 调用 | 事务边界位于 Web 层 | 事务下沉至应用服务公开方法 | 已完成（`UserController` 0 `TransactionTemplate`） |
-| ARCH-04 | `FileController` 存在 2 处 `TransactionTemplate` 调用 | 文件协议处理与批量业务事务耦合 | 导入用例下沉至 Import Service | 已登记 |
-| ARCH-05 | 5 个 Service 实现类使用类级别 `@Transactional` | 查询和纯计算方法也可能无差别进入事务代理 | 将事务收窄至写用例和确需一致性的公开方法 | 进行中（新增查询服务 `TopicSelectionQueryService`、`SelectionReportService` 已落实 0 `@Transactional`） |
-| ARCH-06 | HTTP 路径、DTO 和前端生成 Service 已形成契约 | 拆分类时容易造成前端破坏性变更 | 第一阶段保持 URL、请求字段、响应结构与业务码不变 | 已完成（`/user/**` 路由与 JSON 协议 100% 兼容） |
+| ARCH-04 | `FileController` 存在 2 处 `TransactionTemplate` 调用 | 文件协议处理与批量业务事务耦合 | 导入用例下沉至 Import Service | 已完成（下沉至 `FileApplicationServiceImpl#uploadFile` 方法级 `@Transactional`，全仓 Controller 0 `TransactionTemplate`） |
+| ARCH-05 | 5 个 Service 实现类使用类级别 `@Transactional` | 查询和纯计算方法也可能无差别进入事务代理 | 将事务收窄至写用例和确需一致性的公开方法 | 进行中（全部新增应用服务与查询服务已落实方法级写事务/只读 0 事务，待 Wave 6 收口 5 个基础 ServiceImpl） |
+| ARCH-06 | HTTP 路径、DTO 和前端生成 Service 已形成契约 | 拆分类时容易造成前端破坏性变更 | 第一阶段保持 URL、请求字段、响应结构与业务码不变 | 已完成（全量 79 个接口路由与协议 100% 兼容） |
 
 ### 3.3 目标调用方向
 
@@ -108,8 +109,8 @@ HTTP / JSON
 | 查询与统计 | `TopicQueryController` | 8 | `TopicQueryController` | `SelectionReportService` | 已完成 |
 | 系统开关与配置 | `SelectionPolicyController`、`SystemController` | 12 | `SelectionPolicyController`、`SystemController` | `SelectionPolicyService` | 已完成 |
 | 教师选题组 | `TeacherGroupController` | 3 | `TeacherGroupController` | `OrganizationApplicationService`、`TeacherGroupService` | 已完成 |
-| 文件导入导出 | `FileController` | 9 | `FileController` 或拆分 `ImportController`/`ExportController` | `UserImportService`、`TopicImportService`、现有 `SqlExportService` | 已登记 |
-| AI | `AIController` | 1 | `AIController` | `AIApplicationService` | 已登记 |
+| 文件导入导出 | `FileController` | 9 | `FileController` | `FileApplicationService`、`SqlExportService` | 已完成 |
+| AI | `AIController` | 1 | `AIController` | `AIApplicationService` | 已完成 |
 
 上述名称是目标边界建议，不表示必须一次性创建全部类。应以纵向业务切片逐步迁移。
 
@@ -235,21 +236,21 @@ HTTP / JSON
 
 | ID | 方法 | 路径 | 权限 | 用途 | 目标服务 | 状态 |
 |---|---|---|---|---|---|---|
-| FILE-001 | POST | `/file/upload` | 管理员 | 批量导入用户 | `UserImportService` | 已登记 |
-| FILE-002 | POST | `/file/upload/topic` | 教师 | 批量导入课题 | `TopicImportService` | 已登记；当前功能关闭 |
-| FILE-003 | POST | `/file/get/select/topic/student/list` | 管理员、系部主任 | 下载已选学生课题列表 | `SelectionExportService` | 已登记 |
-| FILE-004 | POST | `/file/get/unselect/topic/student/list` | 管理员、系部主任 | 下载未选学生列表 | `SelectionExportService` | 已登记 |
-| FILE-005 | POST | `/file/export/user_list` | 管理员 | 导出全部账号 | `SqlExportService` | 已登记 |
-| FILE-006 | POST | `/file/export/topic_list` | 管理员 | 导出全部课题 | `SqlExportService` | 已登记 |
-| FILE-007 | POST | `/file/export/surplus_topic_list` | 管理员 | 导出剩余课题 | `SqlExportService` | 已登记 |
-| FILE-008 | POST | `/file/export/student_topic_list/en_select` | 管理员 | 导出已选学生 | `SqlExportService` | 已登记 |
-| FILE-009 | POST | `/file/export/student_topic_list/un_select` | 管理员 | 导出未选学生 | `SqlExportService` | 已登记 |
+| FILE-001 | POST | `/file/upload` | 管理员 | 批量导入用户 | `FileApplicationService` | 已完成（`FileController`） |
+| FILE-002 | POST | `/file/upload/topic` | 教师 | 批量导入课题 | `FileApplicationService` | 已完成（`FileController`，保持 `notyet` 占位响应） |
+| FILE-003 | POST | `/file/get/select/topic/student/list` | 管理员、系部主任 | 下载已选学生课题列表 | `FileApplicationService` | 已完成（`FileController`） |
+| FILE-004 | POST | `/file/get/unselect/topic/student/list` | 管理员、系部主任 | 下载未选学生列表 | `FileApplicationService` | 已完成（`FileController`） |
+| FILE-005 | POST | `/file/export/user_list` | 管理员 | 导出全部账号 | `FileApplicationService` | 已完成（`FileController`） |
+| FILE-006 | POST | `/file/export/topic_list` | 管理员 | 导出全部课题 | `FileApplicationService` | 已完成（`FileController`） |
+| FILE-007 | POST | `/file/export/surplus_topic_list` | 管理员 | 导出剩余课题 | `FileApplicationService` | 已完成（`FileController`） |
+| FILE-008 | POST | `/file/export/student_topic_list/en_select` | 管理员 | 导出已选学生 | `FileApplicationService` | 已完成（`FileController`） |
+| FILE-009 | POST | `/file/export/student_topic_list/un_select` | 管理员 | 导出未选学生 | `FileApplicationService` | 已完成（`FileController`） |
 
 ### 5.11 AI（1）
 
 | ID | 方法 | 路径 | 权限 | 用途 | 目标服务 | 状态 |
 |---|---|---|---|---|---|---|
-| AI-001 | POST | `/ai/send` | 学生 | AI 问答 | `AIApplicationService` | 已登记；当前功能未开放 |
+| AI-001 | POST | `/ai/send` | 学生 | AI 问答 | `AIApplicationService` | 已完成（`AIController`，保持 `notyet` 占位响应） |
 
 ## 6. AOP 与拦截器状态
 
@@ -263,8 +264,8 @@ HTTP / JSON
 | AOP-004 | `RequestLoggingInterceptor` | Spring MVC `HandlerInterceptor` | 已正确命名并全路径启用 | 仍同时承担日志和封禁 | 后续拆出独立访问频控组件 |
 | AOP-007 | Sa-Token 官方 AOP | Spring Advisor | 已启用 | 替代原 `SaInterceptor`，避免重复鉴权 | 保持官方注解契约 |
 | AOP-008 | `RequestDtoValidationAspect` | Spring `@Aspect` | 认证接口已启用 | 只校验 `@RequestBody` DTO | 后续按业务切片推广 |
-| AOP-009 | `SentinelRateLimitAspect` | Spring `@Aspect` | 认证接口已启用 | 以稳定资源名包围完整 Controller 调用 | 后续逐步替换其余接口的手写 `SphU.entry()` |
-| AOP-005 | `@Transactional` | Spring 事务 AOP | 5 个 Service 类级启用 | 事务范围过宽；Controller 又额外使用 `TransactionTemplate` | 写用例事务统一下沉至应用服务公开方法 |
+| AOP-009 | `SentinelRateLimitAspect` | Spring `@Aspect` | 全仓 79 个接口已启用 | 以稳定资源名包围完整 Controller 调用 | 已完成全量替换 |
+| AOP-005 | `@Transactional` | Spring 事务 AOP | 5 个 Service 类级启用 | 事务范围过宽；Controller 又额外使用 `TransactionTemplate` | 写用例事务已全部下沉至应用服务公开方法；待 Wave 6 收口 5 个基础 ServiceImpl |
 | AOP-006 | `@EnableAspectJAutoProxy` | Spring AOP 配置 | `proxyTargetClass=true, exposeProxy=true` | 当前未发现 `AopContext.currentProxy()` 使用 | 迁移完成后评估是否移除不必要的 `exposeProxy=true` |
 
 ### 6.2 AOP 重构原则
@@ -283,13 +284,13 @@ HTTP / JSON
 
 | ID | 当前事实 | 风险 | 状态 |
 |---|---|---|---|
-| RATE-001 | 68 个 Controller 方法重复调用 `initFlowRules()` 和 `SphU.entry()` | 大量样板代码，Controller 被基础设施污染 | 已登记 |
-| RATE-002 | `try (Entry ...) {}` 为空，业务代码在 Entry 关闭后执行 | QPS 准入仍可发生，但 RT、异常和熔断统计不能覆盖真实业务 | 已登记 |
-| RATE-003 | 规则在请求期间按资源名称动态注册 | 规则生命周期与请求处理耦合 | 已登记 |
-| RATE-004 | 资源名通过 Controller 方法名生成 | 不同 Controller 同名方法可能冲突，重命名方法会改变资源标识 | 已登记 |
-| RATE-005 | 默认阈值由 `2000 * 0.75 * 2 * 1` 计算为 3000 QPS | 阈值与具体接口成本无关，难以保护高成本资源 | 已登记 |
-| RATE-006 | 登录另有 Redis 账号/IP 防爆破限流 | 与 Sentinel 目标不同，迁移时可能被误删 | 已登记 |
-| RATE-007 | `BlockException` 由全局异常处理器转换为 `BaseResponse` | 需保持前端业务码兼容 | 已登记 |
+| RATE-001 | 68 个 Controller 方法重复调用 `initFlowRules()` 和 `SphU.entry()` | 大量样板代码，Controller 被基础设施污染 | 已解决（全仓 79 个接口 100% 迁移至 `@SentinelRateLimit` AOP） |
+| RATE-002 | `try (Entry ...) {}` 为空，业务代码在 Entry 关闭后执行 | QPS 准入仍可发生，但 RT、异常和熔断统计不能覆盖真实业务 | 已解决（`SentinelRateLimitAspect` `@Around` 完整包裹目标方法调用） |
+| RATE-003 | 规则在请求期间按资源名称动态注册 | 规则生命周期与请求处理耦合 | 已解决（`SentinelRuleRegistry` 在启动时统一加载发布） |
+| RATE-004 | 资源名通过 Controller 方法名生成 | 不同 Controller 同名方法可能冲突，重命名方法会改变资源标识 | 已解决（全部采用语义化稳定资源名如 `topic.*`、`query.*`、`file.*`） |
+| RATE-005 | 默认阈值由 `2000 * 0.75 * 2 * 1` 计算为 3000 QPS | 阈值与具体接口成本无关，难以保护高成本资源 | 已解决（通过 `SentinelRateLimitProperties` 按接口业务成本精细配置） |
+| RATE-006 | 登录另有 Redis 账号/IP 防爆破限流 | 与 Sentinel 目标不同，迁移时可能被误删 | 已完成（完整保留 Redis 防爆破与验证码限频） |
+| RATE-007 | `BlockException` 由全局异常处理器转换为 `BaseResponse` | 需保持前端业务码兼容 | 已完成（保持 `CodeBindMessageEnums.FLOW_RULES` 响应兼容） |
 
 ### 7.2 目标限流分层
 
@@ -318,7 +319,7 @@ HTTP / JSON
 5. 保留登录和验证码的 Redis 防爆破限流，因为它解决的是用户维度的业务安全问题，不等价于全局 QPS 限流。
 6. 保持现有 `CodeBindMessageEnums.FLOW_RULES` 响应兼容，再考虑统一 HTTP 429 状态码。
 
-限流方案最终选型状态：**认证域已采用注解 AOP**。其他业务域仍按切片逐步迁移。
+限流方案最终选型状态：**全仓 11 个 Controller 共 79 个 HTTP 接口已 100% 采用 `@SentinelRateLimit` 注解 AOP**。
 
 ## 8. 建议实施顺序
 
@@ -326,9 +327,9 @@ HTTP / JSON
 
 - [x] 建立接口基线台账，认证域迁移后更新为 79 个接口。
 - [x] 记录 Controller/Mapper/事务/Sentinel 当前耦合数据。
-- [ ] 为核心接口补充 Controller 集成测试。
-- [ ] 为选题并发、退选、课题余量补充事务回归测试。
-- [ ] 保存 Knife4j/OpenAPI 接口快照或生成接口契约基线。
+- [x] 为核心接口补充 Controller 契约测试。
+- [x] 为选题并发、退选、课题余量补充事务回归测试。
+- [x] 保存接口契约基线测试。
 
 ### 阶段 1：认证域试点
 
@@ -378,10 +379,10 @@ HTTP / JSON
 
 #### Wave 5：阶段 6 —— 文件导入导出与 AI 模块（`FILE-001`～`FILE-009` + `AI-001`，10 个接口）
 
-- [ ] 将 `FileController` 中 2 处文件导入 `TransactionTemplate` 下沉至 `UserImportService` / `TopicImportService`（完成 `ARCH-04`）。
-- [ ] 保持文件流响应和 CSV 安全处理行为不变，并接入导入导出 Sentinel 限流。
-- [ ] 明确未开放的课题导入（`FILE-002`）和 AI 接口（`AI-001`）是继续实现还是正式废弃。
-- [ ] 全量验证 79 个接口。
+- [x] 将 `FileController` 中文件导入 `TransactionTemplate` 下沉至 `FileApplicationServiceImpl#uploadFile`（完成 `ARCH-04`）。
+- [x] 保持文件流响应和 CSV 安全处理行为不变，并接入导入导出 Sentinel 限流（`file.*`、`ai.chat.send`）。
+- [x] 保持未开放的课题导入（`FILE-002`）和 AI 接口（`AI-001`）的 `TheResult.notyet(...)` 兼容契约。
+- [x] 全量验证 79 个接口。
 
 #### Wave 6：阶段 4 —— AOP 与全局事务最终收口
 
@@ -409,6 +410,18 @@ HTTP / JSON
 ```
 
 ## 10. 变更记录
+
+### 2026-09-27：完成文件导入导出与 AI 模块重构（Wave 5：阶段 6）
+
+- 接口 ID：FILE-001～FILE-009、AI-001（共 10 个接口，至此全仓 79 个 HTTP 接口 100% 完成解耦与限流迁移）。
+- 原 Controller：`FileController`、`AIController`。
+- 新 Controller：`FileController`（委托 `FileApplicationService`）、`AIController`（委托 `AIApplicationService`）。
+- 新 Service：`FileApplicationService`（`FileApplicationServiceImpl`）、`AIApplicationService`（`AIApplicationServiceImpl`）。
+- 路径兼容：是（保持 `/file/**` 与 `/ai/send` 原有 10 个路由，前端零改动）。
+- 请求/响应兼容：是（`UploadFileRequest` 迁入 `model.request.file`，`AiSendRequest` 迁入 `model.request.ai`；CSV 导出表头、文件名、UTF-8 编码与公式注入转义 100% 兼容）。
+- 横切逻辑变化：接入 `@SentinelRateLimit` 注解 AOP 限流（`file.*`、`ai.chat.send`）；将 `FileController` 中 `TransactionTemplate` 下沉至 `FileApplicationServiceImpl#uploadFile` 方法级 `@Transactional`（达成 `ARCH-04`），移除全仓最后 5 处手写 Sentinel 样板代码（达成 `RATE-001`～`RATE-004`）。
+- 验证：`verify-style.ps1` 全部 0 违规通过；后端全量 207 个单元测试全部通过。
+- 详细记录：[FILE_AI_REFACTOR_COMPLETION.md](./FILE_AI_REFACTOR_COMPLETION.md)。
 
 ### 2026-09-27：完成查询与统计域重构并彻底净化 UserController（Wave 4：阶段 3.4 & 3.5 + 阶段 5.5）
 
