@@ -106,7 +106,7 @@ const ViewTeacherTopics: React.FC = () => {
   const mobileHiddenKeys = ['selectAmount', 'description', 'requirement', 'startTime', 'endTime'];
 
   // 表格列定义 - 优化列宽和显示
-  const columns: TableColumnsType<API.Topic> = [
+  const baseColumns: TableColumnsType<API.Topic> = [
     {
       title: '序号',
       dataIndex: 'id',
@@ -187,7 +187,8 @@ const ViewTeacherTopics: React.FC = () => {
         </div>
       )
     },
-  ]
+  ];
+  const columns: TableColumnsType<API.Topic> = baseColumns
     .filter((c) => !(isMobile && mobileHiddenKeys.includes(String(c.key))))
     .map((c) => (isMobile ? { ...c, fixed: undefined } : c));
 
