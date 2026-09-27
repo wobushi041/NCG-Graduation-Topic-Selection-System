@@ -1,22 +1,21 @@
-package cn.com.edtechhub.worktopicselection.model.dto.schedule;
+package cn.com.edtechhub.worktopicselection.model.request.topic;
 
 import lombok.Data;
 
 import java.io.Serializable;
-import java.util.List;
 
 /**
- * 取消设置选题开放时间请求
+ * 删除题目请求
  *
  * @author wobushi041
  */
 @Data
-public class UnSetTimeRequest implements Serializable {
+public class DeleteTopicRequest implements Serializable {
 
     /**
-     * 选题 id 列表
+     * 题目 id
      */
-    List<Long> topicIds;
+    private Long id;
 
     /// 序列化字段 ///
 

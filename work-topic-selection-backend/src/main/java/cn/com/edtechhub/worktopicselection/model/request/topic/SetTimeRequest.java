@@ -1,4 +1,4 @@
-package cn.com.edtechhub.worktopicselection.model.dto.schedule;
+package cn.com.edtechhub.worktopicselection.model.request.topic;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
@@ -18,7 +18,7 @@ public class SetTimeRequest implements Serializable {
     /**
      * 选题 id 列表
      */
-    List<Long> topicIds;
+    private List<Long> topicIds;
 
     /**
      * 开启时间

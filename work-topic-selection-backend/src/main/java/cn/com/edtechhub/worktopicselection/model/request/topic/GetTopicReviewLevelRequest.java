@@ -1,6 +1,8 @@
-package cn.com.edtechhub.worktopicselection.model.dto.topic;
+package cn.com.edtechhub.worktopicselection.model.request.topic;
 
 import lombok.Data;
+
+import java.io.Serializable;
 
 /**
  * 获取题目审核等级请求
@@ -8,7 +10,7 @@ import lombok.Data;
  * @author wobushi041
  */
 @Data
-public class GetTopicReviewLevelRequest {
+public class GetTopicReviewLevelRequest implements Serializable {
 
     /**
      * 题目系部
@@ -39,5 +41,12 @@ public class GetTopicReviewLevelRequest {
      * 题目描述
      */
     private String description;
+
+    /// 序列化字段 ///
+
+    /**
+     * 序列化版本号
+     */
+    private static final long serialVersionUID = 1L;
 
 }

@@ -1,21 +1,21 @@
-package cn.com.edtechhub.worktopicselection.model.dto.topic;
+package cn.com.edtechhub.worktopicselection.model.request.topic;
 
 import lombok.Data;
 
 import java.io.Serializable;
 
 /**
- * 添加题目请求
+ * 修改题目请求
  *
  * @author wobushi041
  */
 @Data
-public class AddTopicRequest implements Serializable {
+public class UpdateTopicRequest implements Serializable {
 
     /**
-     * 题目
+     * 需要修改的题目名字
      */
-    private String topic;
+    private String topicName;
 
     /**
      * 题目类型
@@ -33,29 +33,9 @@ public class AddTopicRequest implements Serializable {
     private String requirement;
 
     /**
-     * 系部名
-     */
-    private String deptName;
-
-    /**
-     * 系部主任
-     */
-    private String deptTeacher;
-
-    /**
      * 题目适用的选题组（为空时兼容历史题目）
      */
     private String topicGroup;
-
-    /**
-     * 指导老师
-     */
-    private String teacherName;
-
-    /**
-     * 总数
-     */
-    private Integer amount;
 
     /// 序列化字段 ///
 

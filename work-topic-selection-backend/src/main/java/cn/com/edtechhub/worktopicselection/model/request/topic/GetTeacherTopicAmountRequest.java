@@ -1,21 +1,21 @@
-package cn.com.edtechhub.worktopicselection.model.dto.topic;
+package cn.com.edtechhub.worktopicselection.model.request.topic;
 
 import lombok.Data;
 
 import java.io.Serializable;
 
 /**
- * 删除题目请求
+ * 获取教师题目上限请求
  *
  * @author wobushi041
  */
 @Data
-public class DeleteTopicRequest implements Serializable {
+public class GetTeacherTopicAmountRequest implements Serializable {
 
     /**
-     * 题目 id
+     * 教师 ID
      */
-    private Long id;
+    private Long teacherId;
 
     /// 序列化字段 ///
 

@@ -109,4 +109,50 @@ public class SentinelRateLimitProperties {
      */
     private double topicSelectionQueryStudentsByTopic = 300;
 
+    /**
+     * 教师添加课题接口 QPS 阈值
+     */
+    private double topicAdd = 100;
+
+    /**
+     * 教师删除课题接口 QPS 阈值
+     */
+    private double topicDelete = 100;
+
+    /**
+     * 管理员查询教师题目上限接口 QPS 阈值
+     */
+    private double topicQuotaGet = 200;
+
+    /**
+     * 管理员设置教师题目上限接口 QPS 阈值
+     */
+    private double topicQuotaSet = 100;
+
+    /**
+     * 审核或重新提交课题接口 QPS 阈值
+     */
+    private double topicReviewCheck = 100;
+
+    /**
+     * 批量发布课题开放时间接口 QPS 阈值
+     */
+    private double topicPublicationPublish = 100;
+
+    /**
+     * 批量取消课题开放时间接口 QPS 阈值
+     */
+    private double topicPublicationUnpublish = 100;
+
+    /**
+     * 教师修改课题接口 QPS 阈值
+     */
+    private double topicUpdate = 100;
+
+    /**
+     * 课题 AI 审核等级检测接口 QPS 阈值（高成本外部资源）
+     */
+    private double topicReviewAiLevel = 20;
+
 }
+

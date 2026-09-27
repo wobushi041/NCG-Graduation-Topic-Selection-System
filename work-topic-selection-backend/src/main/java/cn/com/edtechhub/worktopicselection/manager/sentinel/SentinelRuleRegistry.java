@@ -63,6 +63,15 @@ public class SentinelRuleRegistry {
         register("topic.selection.query-selected", properties.getTopicSelectionQuerySelected(), false);
         register("topic.selection.query-choice-time", properties.getTopicSelectionQueryChoiceTime(), false);
         register("topic.selection.query-students-by-topic", properties.getTopicSelectionQueryStudentsByTopic(), false);
+        register("topic.add", properties.getTopicAdd(), false);
+        register("topic.delete", properties.getTopicDelete(), false);
+        register("topic.quota.get", properties.getTopicQuotaGet(), false);
+        register("topic.quota.set", properties.getTopicQuotaSet(), false);
+        register("topic.review.check", properties.getTopicReviewCheck(), false);
+        register("topic.publication.publish", properties.getTopicPublicationPublish(), false);
+        register("topic.publication.unpublish", properties.getTopicPublicationUnpublish(), false);
+        register("topic.update", properties.getTopicUpdate(), false);
+        register("topic.review.ai-level", properties.getTopicReviewAiLevel(), false);
         publish();
     }
 
