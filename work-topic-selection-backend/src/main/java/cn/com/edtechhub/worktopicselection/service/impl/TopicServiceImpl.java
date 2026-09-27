@@ -17,7 +17,6 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 
@@ -27,7 +26,6 @@ import javax.annotation.Resource;
  * @author wobushi041
  */
 @Service
-@Transactional
 public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements TopicService {
 
     /**

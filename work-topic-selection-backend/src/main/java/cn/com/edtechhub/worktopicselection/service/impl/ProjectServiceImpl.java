@@ -4,15 +4,14 @@ import cn.com.edtechhub.worktopicselection.constant.CommonConstant;
 import cn.com.edtechhub.worktopicselection.exception.BusinessException;
 import cn.com.edtechhub.worktopicselection.exception.CodeBindMessageEnums;
 import cn.com.edtechhub.worktopicselection.mapper.ProjectMapper;
-import cn.com.edtechhub.worktopicselection.model.request.organization.ProjectQueryRequest;
 import cn.com.edtechhub.worktopicselection.model.entity.Project;
+import cn.com.edtechhub.worktopicselection.model.request.organization.ProjectQueryRequest;
 import cn.com.edtechhub.worktopicselection.service.ProjectService;
 import cn.com.edtechhub.worktopicselection.utils.SqlUtils;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 专业业务服务实现类
@@ -20,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
  * @author wobushi041
  */
 @Service
-@Transactional
 public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project>
         implements ProjectService {
 

@@ -14,7 +14,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @Slf4j
 @SpringBootApplication()
 @EnableScheduling
-@EnableAspectJAutoProxy(proxyTargetClass = true, exposeProxy = true)
+@EnableAspectJAutoProxy(proxyTargetClass = true)
 public class WorkTopicSelectionApplication {
 
     /**

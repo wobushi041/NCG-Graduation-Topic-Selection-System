@@ -2,15 +2,14 @@ package cn.com.edtechhub.worktopicselection.service.impl;
 
 import cn.com.edtechhub.worktopicselection.constant.CommonConstant;
 import cn.com.edtechhub.worktopicselection.mapper.DeptMapper;
-import cn.com.edtechhub.worktopicselection.model.request.organization.DeptQueryRequest;
 import cn.com.edtechhub.worktopicselection.model.entity.Dept;
+import cn.com.edtechhub.worktopicselection.model.request.organization.DeptQueryRequest;
 import cn.com.edtechhub.worktopicselection.service.DeptService;
 import cn.com.edtechhub.worktopicselection.utils.SqlUtils;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 系部业务服务实现类
@@ -18,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
  * @author wobushi041
  */
 @Service
-@Transactional
 public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept>
         implements DeptService {
 
