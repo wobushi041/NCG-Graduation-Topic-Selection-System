@@ -18,8 +18,10 @@ import cn.com.edtechhub.worktopicselection.service.MailService;
 import cn.com.edtechhub.worktopicselection.service.ProjectService;
 import cn.com.edtechhub.worktopicselection.service.StudentTopicSelectionService;
 import cn.com.edtechhub.worktopicselection.service.SwitchService;
+import cn.com.edtechhub.worktopicselection.service.TeacherGroupService;
 import cn.com.edtechhub.worktopicselection.service.TopicService;
 import cn.com.edtechhub.worktopicselection.service.UserService;
+import cn.com.edtechhub.worktopicselection.service.impl.TopicApplicationServiceImpl;
 import cn.com.edtechhub.worktopicselection.service.impl.TopicSelectionApplicationServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,7 +29,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -53,9 +54,9 @@ import static org.mockito.Mockito.when;
 class UserControllerTopicSelectionTest {
 
     /**
-     * 待测旧用户控制器（验证未迁移的课题状态流转辅助方法）
+     * 待测课题全生命周期应用服务实现
      */
-    private final UserController controller = new UserController();
+    private TopicApplicationServiceImpl topicApplicationService;
 
     /**
      * 待测选题写用例服务实现
@@ -105,6 +106,12 @@ class UserControllerTopicSelectionTest {
     private StudentTopicSelectionService selectionService;
 
     /**
+     * 模拟教师选题组服务
+     */
+    @Mock
+    private TeacherGroupService teacherGroupService;
+
+    /**
      * 模拟系统开关服务
      */
     @Mock
@@ -124,7 +131,18 @@ class UserControllerTopicSelectionTest {
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(controller, "projectService", projectService);
+        topicApplicationService = new TopicApplicationServiceImpl(
+                userMapper,
+                topicMapper,
+                userService,
+                topicService,
+                selectionService,
+                teacherGroupService,
+                projectService,
+                mailService,
+                redisManager,
+                null
+        );
         selectionApplicationService = new TopicSelectionApplicationServiceImpl(
                 userMapper,
                 topicMapper,
@@ -239,17 +257,17 @@ class UserControllerTopicSelectionTest {
         topic.setStatus(TopicStatusEnum.PENDING_REVIEW.getCode());
 
         // 3. 断言课题审核状态转换权限符合角色与分组约束
-        assertTrue(controller.isAllowedTopicStatusTransition(dept, topic, TopicStatusEnum.NOT_PUBLISHED));
-        assertTrue(controller.isAllowedTopicStatusTransition(dept, topic, TopicStatusEnum.REJECTED));
-        assertFalse(controller.isAllowedTopicStatusTransition(otherDept, topic, TopicStatusEnum.REJECTED));
-        assertFalse(controller.isAllowedTopicStatusTransition(teacher, topic, TopicStatusEnum.NOT_PUBLISHED));
+        assertTrue(topicApplicationService.isAllowedTopicStatusTransition(dept, topic, TopicStatusEnum.NOT_PUBLISHED));
+        assertTrue(topicApplicationService.isAllowedTopicStatusTransition(dept, topic, TopicStatusEnum.REJECTED));
+        assertFalse(topicApplicationService.isAllowedTopicStatusTransition(otherDept, topic, TopicStatusEnum.REJECTED));
+        assertFalse(topicApplicationService.isAllowedTopicStatusTransition(teacher, topic, TopicStatusEnum.NOT_PUBLISHED));
         topic.setTopicGroup("第二组");
-        assertFalse(controller.isAllowedTopicStatusTransition(dept, topic, TopicStatusEnum.NOT_PUBLISHED));
+        assertFalse(topicApplicationService.isAllowedTopicStatusTransition(dept, topic, TopicStatusEnum.NOT_PUBLISHED));
         topic.setTopicGroup("第一组");
 
         topic.setStatus(TopicStatusEnum.REJECTED.getCode());
-        assertTrue(controller.isAllowedTopicStatusTransition(teacher, topic, TopicStatusEnum.PENDING_REVIEW));
-        assertFalse(controller.isAllowedTopicStatusTransition(otherTeacher, topic, TopicStatusEnum.PENDING_REVIEW));
+        assertTrue(topicApplicationService.isAllowedTopicStatusTransition(teacher, topic, TopicStatusEnum.PENDING_REVIEW));
+        assertFalse(topicApplicationService.isAllowedTopicStatusTransition(otherTeacher, topic, TopicStatusEnum.PENDING_REVIEW));
     }
 
     // 场景：测试移除预选记录不会错误增加课题剩余余量
