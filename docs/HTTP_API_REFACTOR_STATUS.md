@@ -6,7 +6,8 @@
 
 认证模块本轮实施详情见：[认证模块重构与 AOP 架构升级完成记录](./AUTH_AOP_REFACTOR_COMPLETION.md)。  
 选题写用例实施详情见：[选题写用例重构与三层架构解耦完成记录](./TOPIC_SELECTION_WRITE_REFACTOR_COMPLETION.md)。  
-选题读用例实施详情见：[选题查询用例重构与选题域全量闭环完成记录](./TOPIC_SELECTION_QUERY_REFACTOR_COMPLETION.md)。
+选题读用例实施详情见：[选题查询用例重构与选题域全量闭环完成记录](./TOPIC_SELECTION_QUERY_REFACTOR_COMPLETION.md)。  
+查询与统计域实施详情见：[查询与统计域（Wave 4）HTTP 接口与上层架构重构完成报告](./QUERY_REPORT_REFACTOR_COMPLETION.md)。
 
 ## 1. 文档目的
 
@@ -49,9 +50,15 @@
 
 | Controller | 接口数 | 当前职责 |
 |---|---:|---|
-| `UserController` | 50 | 用户、组织、课题、统计、系统配置、教师组 |
+| `UserController` | 8 | 用户管理与个人资料查询（`USR-001`～`USR-008`） |
 | `AuthController` | 10 | 登录会话、角色切换、密码与验证码 |
+| `TopicController` | 9 | 课题添加、删除、更新、审核、发布/取消发布、配额与 AI 审核等级 |
 | `TopicSelectionController` | 9 | 学生预选、最终选题、教师确认学生、退选及选题状态查询 |
+| `OrganizationController` | 9 | 系部、专业 CRUD 与专业选题组绑定 |
+| `TeacherGroupController` | 3 | 教师选题组与额度查询 |
+| `SelectionPolicyController` | 11 | 跨系开关、看题开关、单选模式、退选锁与系部跨选配置 |
+| `SystemController` | 2 | 后端连通性测试与系统运行信息面板 |
+| `TopicQueryController` | 8 | 课题多角色分页查询、系部选题统计、教师统计与用户视图列表 |
 | `FileController` | 9 | 用户/课题导入与统计数据导出 |
 | `AIController` | 1 | AI 问答占位接口 |
 | **总计** | **79** |  |
@@ -60,12 +67,12 @@
 
 | 编号 | 当前事实 | 风险 | 目标方向 | 状态 |
 |---|---|---|---|---|
-| ARCH-01 | `UserController` 约 4042 行并承载 68 个接口 | 修改影响面过大，业务域边界不清晰 | 按认证、用户、组织、课题、选题、配置、报表拆分 Controller | 已登记 |
-| ARCH-02 | `UserController` 直接注入 3 个 Mapper，并存在 23 处直接调用 | Controller 越过 Service，事务与业务规则难复用 | Mapper 仅由 Service/Repository 访问 | 已登记 |
-| ARCH-03 | `UserController` 存在 20 处 `TransactionTemplate` 调用 | 事务边界位于 Web 层 | 事务下沉至应用服务公开方法 | 已登记 |
+| ARCH-01 | `UserController` 约 4042 行并承载 68 个接口 | 修改影响面过大，业务域边界不清晰 | 按认证、用户、组织、课题、选题、配置、报表拆分 Controller | 已完成（拆分为 9 个高内聚 Controller，`UserController` 缩减至 8 个用户管理接口） |
+| ARCH-02 | `UserController` 直接注入 3 个 Mapper，并存在 23 处直接调用 | Controller 越过 Service，事务与业务规则难复用 | Mapper 仅由 Service/Repository 访问 | 已完成（Controller 层 0 Mapper 直接注入） |
+| ARCH-03 | `UserController` 存在 20 处 `TransactionTemplate` 调用 | 事务边界位于 Web 层 | 事务下沉至应用服务公开方法 | 已完成（`UserController` 0 `TransactionTemplate`） |
 | ARCH-04 | `FileController` 存在 2 处 `TransactionTemplate` 调用 | 文件协议处理与批量业务事务耦合 | 导入用例下沉至 Import Service | 已登记 |
-| ARCH-05 | 5 个 Service 实现类使用类级别 `@Transactional` | 查询和纯计算方法也可能无差别进入事务代理 | 将事务收窄至写用例和确需一致性的公开方法 | 已登记 |
-| ARCH-06 | HTTP 路径、DTO 和前端生成 Service 已形成契约 | 拆分类时容易造成前端破坏性变更 | 第一阶段保持 URL、请求字段、响应结构与业务码不变 | 已登记 |
+| ARCH-05 | 5 个 Service 实现类使用类级别 `@Transactional` | 查询和纯计算方法也可能无差别进入事务代理 | 将事务收窄至写用例和确需一致性的公开方法 | 进行中（新增查询服务 `TopicSelectionQueryService`、`SelectionReportService` 已落实 0 `@Transactional`） |
+| ARCH-06 | HTTP 路径、DTO 和前端生成 Service 已形成契约 | 拆分类时容易造成前端破坏性变更 | 第一阶段保持 URL、请求字段、响应结构与业务码不变 | 已完成（`/user/**` 路由与 JSON 协议 100% 兼容） |
 
 ### 3.3 目标调用方向
 
@@ -98,7 +105,7 @@ HTTP / JSON
 | 系部与专业 | `OrganizationController` | 9 | `OrganizationController` | `OrganizationApplicationService` | 已完成 |
 | 课题维护与审核 | `TopicController` | 9 | `TopicController` | `TopicApplicationService` | 已完成 |
 | 学生选题 | `TopicSelectionController` | 9 | `TopicSelectionController` | `TopicSelectionApplicationService`、`TopicSelectionQueryService` | 已完成 |
-| 查询与统计 | `UserController` | 8 | `TopicQueryController`、`ReportController` | `TopicQueryService`、`SelectionReportService` | 已登记 |
+| 查询与统计 | `TopicQueryController` | 8 | `TopicQueryController` | `SelectionReportService` | 已完成 |
 | 系统开关与配置 | `SelectionPolicyController`、`SystemController` | 12 | `SelectionPolicyController`、`SystemController` | `SelectionPolicyService` | 已完成 |
 | 教师选题组 | `TeacherGroupController` | 3 | `TeacherGroupController` | `OrganizationApplicationService`、`TeacherGroupService` | 已完成 |
 | 文件导入导出 | `FileController` | 9 | `FileController` 或拆分 `ImportController`/`ExportController` | `UserImportService`、`TopicImportService`、现有 `SqlExportService` | 已登记 |
@@ -190,14 +197,14 @@ HTTP / JSON
 
 | ID | 方法 | 路径 | 权限 | 用途 | 目标服务 | 状态 |
 |---|---|---|---|---|---|---|
-| QRY-001 | POST | `/user/get/topic/page` | 登录 | 分页查询可见课题 | `TopicQueryService` | 已登记 |
-| QRY-002 | POST | `/user/get/select/topic/situation` | 管理员、系部主任 | 查询系部选题统计 | `SelectionReportService` | 已登记 |
-| QRY-003 | POST | `/user/get/dept/teacher` | 登录 | 分页查询系部教师 | `UserQueryService` | 已登记 |
-| QRY-004 | POST | `/user/get/unselect/topic/student/list` | 系部主任 | 查询本系未选题学生 | `SelectionReportService` | 已登记 |
-| QRY-005 | POST | `/user/get/topic/list/by/admin` | 管理员 | 管理员分页查询课题 | `TopicQueryService` | 已登记 |
-| QRY-006 | POST | `/user/list/page/vo` | 管理员 | 分页查询用户 VO | `UserQueryService` | 已登记 |
-| QRY-007 | POST | `/user/get/user/list` | 管理员 | 查询用户名称列表 | `UserQueryService` | 已登记 |
-| QRY-008 | POST | `/user/get/dept/teacher/by/admin` | 系部主任 | 查询待审核课题相关教师 | `UserQueryService` | 已登记 |
+| QRY-001 | POST | `/user/get/topic/page` | 登录 | 分页查询可见课题 | `SelectionReportService` | 已完成（`TopicQueryController`） |
+| QRY-002 | POST | `/user/get/select/topic/situation` | 管理员、系部主任 | 查询系部选题统计 | `SelectionReportService` | 已完成（`TopicQueryController`） |
+| QRY-003 | POST | `/user/get/dept/teacher` | 登录 | 分页查询系部教师 | `SelectionReportService` | 已完成（`TopicQueryController`） |
+| QRY-004 | POST | `/user/get/unselect/topic/student/list` | 系部主任 | 查询本系未选题学生 | `SelectionReportService` | 已完成（`TopicQueryController`） |
+| QRY-005 | POST | `/user/get/topic/list/by/admin` | 管理员 | 管理员分页查询课题 | `SelectionReportService` | 已完成（`TopicQueryController`） |
+| QRY-006 | POST | `/user/list/page/vo` | 管理员 | 分页查询用户 VO | `SelectionReportService` | 已完成（`TopicQueryController`） |
+| QRY-007 | POST | `/user/get/user/list` | 管理员 | 查询用户名称列表 | `SelectionReportService` | 已完成（`TopicQueryController`） |
+| QRY-008 | POST | `/user/get/dept/teacher/by/admin` | 系部主任 | 查询待审核课题相关教师 | `SelectionReportService` | 已完成（`TopicQueryController`） |
 
 ### 5.8 系统开关与配置（12）
 
@@ -365,9 +372,9 @@ HTTP / JSON
 
 #### Wave 4：阶段 3.4 & 3.5 —— 查询与统计域（`QRY-001`～`QRY-008`，8 个接口）
 
-- [ ] 创建 `TopicQueryService` 与 `SelectionReportService` 承接课题分页、系部选题统计、未选题学生等 8 个只读查询接口。
-- [ ] 落地查询服务“无写事务代理”策略。
-- [ ] 移除 `UserController` 最后 8 处手写 Sentinel 样板代码（至此 `UserController` 手写 Sentinel 100% 清零，完成阶段 5.5）。
+- [x] 创建 `TopicQueryController` 与 `SelectionReportService` 承接课题分页、系部选题统计、未选题学生等 8 个只读查询接口。
+- [x] 落地查询服务“无写事务代理”策略（`SelectionReportServiceImpl` 0 `@Transactional`）。
+- [x] 移除 `UserController` 最后 8 处手写 Sentinel 样板代码（至此 `UserController` 手写 Sentinel 100% 清零，完成阶段 5.5）。
 
 #### Wave 5：阶段 6 —— 文件导入导出与 AI 模块（`FILE-001`～`FILE-009` + `AI-001`，10 个接口）
 
@@ -402,6 +409,18 @@ HTTP / JSON
 ```
 
 ## 10. 变更记录
+
+### 2026-09-27：完成查询与统计域重构并彻底净化 UserController（Wave 4：阶段 3.4 & 3.5 + 阶段 5.5）
+
+- 接口 ID：QRY-001～QRY-008（共 8 个接口）。
+- 原 Controller：`UserController`。
+- 新 Controller：`TopicQueryController`（`@RequestMapping("/user")`）。
+- 新 Service：`SelectionReportService`（`SelectionReportServiceImpl`）。
+- 路径兼容：是（保持 `/user/**` 原有 8 个路由，前端零改动）。
+- 请求/响应兼容：是（`TopicQueryRequest`、`TopicQueryByAdminRequest` 迁入 `model.request.topic`，`DeptTeacherQueryRequest`、`GetUserListRequest` 迁入 `model.request.user`，JSON 字段与 `BaseResponse` 结构 100% 兼容）。
+- 横切逻辑变化：接入 `@SentinelRateLimit` 注解 AOP 限流（`query.*`）；`SelectionReportServiceImpl` 落实只读服务无 `@Transactional` 代理策略（`ARCH-05`）；彻底移除 `UserController` 最后 8 处手写 Sentinel 样板代码与冗余依赖，`UserController` 现仅保留 8 个用户管理接口与 `UserApplicationService` 单一依赖。
+- 验证：`verify-style.ps1` 全部 0 违规通过；后端全量 200 个单元测试全部通过。
+- 详细记录：[QUERY_REPORT_REFACTOR_COMPLETION.md](./QUERY_REPORT_REFACTOR_COMPLETION.md)。
 
 ### 2026-09-27：完成系统开关配置、系统诊断与用户管理域重构（Wave 3：阶段 3.3 + 阶段 5 切片）
 
