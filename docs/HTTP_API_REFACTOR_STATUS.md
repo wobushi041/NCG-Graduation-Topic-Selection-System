@@ -4,7 +4,9 @@
 > 当前基线：79 个 HTTP 接口  
 > 适用范围：后端 Controller/Service 解耦、AOP 整理、Sentinel 限流迁移
 
-认证模块本轮实施详情见：[认证模块重构与 AOP 架构升级完成记录](./AUTH_AOP_REFACTOR_COMPLETION.md)。
+认证模块本轮实施详情见：[认证模块重构与 AOP 架构升级完成记录](./AUTH_AOP_REFACTOR_COMPLETION.md)。  
+选题写用例实施详情见：[选题写用例重构与三层架构解耦完成记录](./TOPIC_SELECTION_WRITE_REFACTOR_COMPLETION.md)。  
+选题读用例实施详情见：[选题查询用例重构与选题域全量闭环完成记录](./TOPIC_SELECTION_QUERY_REFACTOR_COMPLETION.md)。
 
 ## 1. 文档目的
 
@@ -47,8 +49,9 @@
 
 | Controller | 接口数 | 当前职责 |
 |---|---:|---|
-| `UserController` | 59 | 用户、组织、课题、选题、统计、系统配置、教师组 |
+| `UserController` | 50 | 用户、组织、课题、统计、系统配置、教师组 |
 | `AuthController` | 10 | 登录会话、角色切换、密码与验证码 |
+| `TopicSelectionController` | 9 | 学生预选、最终选题、教师确认学生、退选及选题状态查询 |
 | `FileController` | 9 | 用户/课题导入与统计数据导出 |
 | `AIController` | 1 | AI 问答占位接口 |
 | **总计** | **79** |  |
@@ -94,7 +97,7 @@ HTTP / JSON
 | 认证与密码 | `AuthController` | 10 | `AuthController` | `AuthenticationService`、`PasswordService`、`VerificationCodeService` | 已完成 |
 | 系部与专业 | `UserController` | 9 | `OrganizationController` | `OrganizationApplicationService` | 已登记 |
 | 课题维护与审核 | `UserController` | 9 | `TopicController` | `TopicApplicationService`、`TopicReviewService` | 已登记 |
-| 学生选题 | `UserController` | 9 | `TopicSelectionController` | `TopicSelectionApplicationService` | 已登记 |
+| 学生选题 | `TopicSelectionController` | 9 | `TopicSelectionController` | `TopicSelectionApplicationService`、`TopicSelectionQueryService` | 已完成 |
 | 查询与统计 | `UserController` | 8 | `TopicQueryController`、`ReportController` | `TopicQueryService`、`SelectionReportService` | 已登记 |
 | 系统开关与配置 | `UserController` | 12 | `SelectionPolicyController`、`SystemController` | `SelectionPolicyService`、`SystemQueryService` | 已登记 |
 | 教师选题组 | `UserController` | 3 | `TeacherGroupController` | 现有 `TeacherGroupService` | 已登记 |
@@ -173,15 +176,15 @@ HTTP / JSON
 
 | ID | 方法 | 路径 | 权限 | 用途 | 目标服务 | 状态 |
 |---|---|---|---|---|---|---|
-| SEL-001 | POST | `/user/preselect/topic/by/id` | 学生 | 预选或取消预选 | `TopicSelectionApplicationService` | 已登记 |
-| SEL-002 | POST | `/user/select/topic/by/id` | 学生 | 提交最终选题 | `TopicSelectionApplicationService` | 已登记 |
-| SEL-003 | POST | `/user/select/student` | 教师 | 教师为学生确认课题 | `TopicSelectionApplicationService` | 已登记 |
-| SEL-004 | POST | `/user/withdraw` | 教师、学生 | 退选并恢复课题余量 | `TopicSelectionApplicationService` | 已登记 |
-| SEL-005 | POST | `/user/get/select/topic/by/id` | 教师 | 查询选择本人课题的学生 | `TopicSelectionQueryService` | 已登记 |
-| SEL-006 | POST | `/user/get/preselect/topic` | 学生 | 查询当前学生预选课题 | `TopicSelectionQueryService` | 已登记 |
-| SEL-007 | POST | `/user/get/select/topic` | 学生 | 查询当前学生最终选题 | `TopicSelectionQueryService` | 已登记；源码注解无前导 `/` |
-| SEL-008 | POST | `/user/get/select/topic/choice_time` | 学生 | 查询选中时间 | `TopicSelectionQueryService` | 已登记 |
-| SEL-009 | POST | `/user/get/student/by/topicId` | 教师 | 按课题查询学生 | `TopicSelectionQueryService` | 已登记 |
+| SEL-001 | POST | `/user/preselect/topic/by/id` | 学生 | 预选或取消预选 | `TopicSelectionApplicationService` | 已完成；迁入 `TopicSelectionController` |
+| SEL-002 | POST | `/user/select/topic/by/id` | 学生 | 提交最终选题 | `TopicSelectionApplicationService` | 已完成；迁入 `TopicSelectionController` |
+| SEL-003 | POST | `/user/select/student` | 教师 | 教师为学生确认课题 | `TopicSelectionApplicationService` | 已完成；迁入 `TopicSelectionController` |
+| SEL-004 | POST | `/user/withdraw` | 教师、学生 | 退选并恢复课题余量 | `TopicSelectionApplicationService` | 已完成；迁入 `TopicSelectionController` |
+| SEL-005 | POST | `/user/get/select/topic/by/id` | 教师 | 查询选择本人课题的学生 | `TopicSelectionQueryService` | 已完成；迁入 `TopicSelectionController` |
+| SEL-006 | POST | `/user/get/preselect/topic` | 学生 | 查询当前学生预选课题 | `TopicSelectionQueryService` | 已完成；迁入 `TopicSelectionController` |
+| SEL-007 | POST | `/user/get/select/topic` | 学生 | 查询当前学生最终选题 | `TopicSelectionQueryService` | 已完成；迁入 `TopicSelectionController` 并补全前导 `/` |
+| SEL-008 | POST | `/user/get/select/topic/choice_time` | 学生 | 查询选中时间 | `TopicSelectionQueryService` | 已完成；迁入 `TopicSelectionController` |
+| SEL-009 | POST | `/user/get/student/by/topicId` | 教师 | 按课题查询学生 | `TopicSelectionQueryService` | 已完成；迁入 `TopicSelectionController` |
 
 ### 5.7 查询与统计（8）
 
@@ -330,40 +333,55 @@ HTTP / JSON
 
 ### 阶段 2：选题写用例
 
-- [ ] 迁移预选、最终选题、教师确认和退选。
-- [ ] 将悲观锁 Mapper 调用封装进事务应用服务。
-- [ ] 一个公开用例方法对应一个清晰事务边界。
-- [ ] 验证并发下课题余量、重复选题和退选恢复。
+- [x] 迁移预选、最终选题、教师确认和退选。
+- [x] 将悲观锁 Mapper 调用封装进事务应用服务。
+- [x] 一个公开用例方法对应一个清晰事务边界。
+- [x] 验证并发下课题余量、重复选题和退选恢复。
 
-### 阶段 3：课题、组织与查询
+### 阶段 3 ～ 阶段 6：剩余 60 个接口与全局横切推进顺序（Wave 1 ～ Wave 6）
 
-- [ ] 迁移课题维护、审核、发布和额度管理。
-- [ ] 迁移系部、专业和选题组归属。
-- [ ] 创建查询服务，避免查询接口继续堆积在 `UserController`。
-- [ ] 评估查询事务的 `readOnly=true` 或无事务策略。
+> **排期约束**：
+> 1. 阶段 0（契约/回归测试）与阶段 5（`@SentinelRateLimit` 迁移 + 删除手写 Sentinel 样板代码）作为每个纵向业务波次的标准内置工序同步完成。
+> 2. 阶段 4 的“收窄 5 个存量基础 ServiceImpl 类级 `@Transactional`（`ARCH-05`）”必须在 Wave 1 ～ Wave 5 所有写接口均已下沉为 Application Service 方法级 `@Transactional` 后再统一执行（Wave 6）。
 
-### 阶段 4：AOP 与 MVC 横切组件
+#### Wave 1：阶段 3.1 —— 课题维护、审核与发布（`TOPIC-001`～`TOPIC-009`，9 个接口）+ 高成本资源保护（阶段 5.4）
+
+- [ ] 迁移课题添加、删除、更新、审核、发布/取消发布和教师课题额度管理至 `TopicController`。
+- [ ] 将 7 处 `TransactionTemplate` 与悲观锁下沉至 `TopicApplicationService`、`TopicReviewService`、`TopicPublicationService`、`TopicQuotaService`。
+- [ ] 为 AI 审核等级（`TOPIC-009`）与邮件通知等高成本能力接入 Sentinel 资源保护。
+- [ ] 移除 9 处 Controller 手写 Sentinel 样板代码（剩余 50 $\rightarrow$ 41 处）。
+
+#### Wave 2：阶段 3.2 —— 系部、专业与教师选题组（`ORG-001`～`ORG-009` + `GRP-001`～`GRP-003`，12 个接口）
+
+- [ ] 迁移系部、专业 CRUD 与选题组绑定（4 处 `TransactionTemplate`）至 `OrganizationController` 与 `OrganizationApplicationService` / `OrganizationQueryService`。
+- [ ] 迁移教师选题组与额度查询至 `TeacherGroupController` 与 `TeacherGroupService`。
+- [ ] 移除 12 处 Controller 手写 Sentinel 样板代码（剩余 41 $\rightarrow$ 29 处）。
+
+#### Wave 3：阶段 3.3 —— 系统开关配置与用户管理（`CFG-001`～`CFG-012` + `USR-001`～`USR-008` + `TST-001`，21 个接口）
+
+- [ ] 迁移跨系开关、看题开关、单选模式、退选锁、系部跨选配置（2 处 `TransactionTemplate`）与系统信息面板至 `SelectionPolicyController` / `SystemController`。
+- [ ] 迁移用户创建、删除、更新（3 处 `TransactionTemplate`）与用户查询至重构后的 `UserController` 与 `UserApplicationService` / `UserQueryService`（至此 `UserController` 内 `TransactionTemplate` 与直接 Mapper 调用 100% 清零，完成 `ARCH-02`、`ARCH-03`）。
+- [ ] 移除 21 处 Controller 手写 Sentinel 样板代码（剩余 29 $\rightarrow$ 8 处）。
+
+#### Wave 4：阶段 3.4 & 3.5 —— 查询与统计域（`QRY-001`～`QRY-008`，8 个接口）
+
+- [ ] 创建 `TopicQueryService` 与 `SelectionReportService` 承接课题分页、系部选题统计、未选题学生等 8 个只读查询接口。
+- [ ] 落地查询服务“无写事务代理”策略。
+- [ ] 移除 `UserController` 最后 8 处手写 Sentinel 样板代码（至此 68 处手写 Sentinel 100% 清零，完成阶段 5.5）。
+
+#### Wave 5：阶段 6 —— 文件导入导出与 AI 模块（`FILE-001`～`FILE-009` + `AI-001`，10 个接口）
+
+- [ ] 将 `FileController` 中 2 处文件导入 `TransactionTemplate` 下沉至 `UserImportService` / `TopicImportService`（完成 `ARCH-04`）。
+- [ ] 保持文件流响应和 CSV 安全处理行为不变，并接入导入导出 Sentinel 限流。
+- [ ] 明确未开放的课题导入（`FILE-002`）和 AI 接口（`AI-001`）是继续实现还是正式废弃。
+- [ ] 全量验证 79 个接口。
+
+#### Wave 6：阶段 4 —— AOP 与全局事务最终收口
 
 - [x] 更正 `RequestLogAOP` 命名和包归属，迁移为 `RequestLoggingInterceptor`。
-- [ ] 决定缓存切面的保留、重写或删除。
-- [ ] 收窄 `@Transactional` 范围。
-- [ ] 评估 `exposeProxy=true` 是否仍有必要。
-
-### 阶段 5：限流迁移
-
-- [x] 为认证域定义稳定 Sentinel 资源名和接口分级阈值。
-- [x] 将认证域规则加载移出请求方法。
-- [x] 认证域接入层统一使用注解 AOP 处理路由级限流。
-- [ ] Service 层保护高成本业务资源。
-- [ ] 删除 68 处 Controller Sentinel 样板代码。
-- [x] 验证认证域限流响应、完整方法包围和异常记录实现。
-
-### 阶段 6：文件与剩余模块
-
-- [ ] 将文件导入事务下沉至 Import Service。
-- [ ] 保持文件流响应和 CSV 安全处理行为不变。
-- [ ] 明确未开放的课题导入和 AI 接口是继续实现还是正式废弃。
-- [ ] 全量验证 79 个接口并更新本台账状态。
+- [ ] 安全摘除 `UserServiceImpl`、`TopicServiceImpl`、`StudentTopicSelectionServiceImpl`、`DeptServiceImpl`、`ProjectServiceImpl` 5 个基础 ServiceImpl 上的类级 `@Transactional`（完成 `ARCH-05`）。
+- [ ] 决定 `CacheSearchOptimizationAOP` 缓存切面的保留、重写或删除（`AOP-001`～`AOP-003`）。
+- [ ] 评估 `@EnableAspectJAutoProxy(exposeProxy=true)` 是否移除不必要的 `exposeProxy=true`（`AOP-006`）。
 
 ## 9. 每次变更的更新格式
 
@@ -384,6 +402,31 @@ HTTP / JSON
 ```
 
 ## 10. 变更记录
+
+### 2026-09-27：完成选题查询用例重构与选题域全量闭环（阶段 2 第二步）
+
+- 接口 ID：SEL-005～SEL-009。
+- 原 Controller：`UserController`。
+- 新 Controller：`TopicSelectionController`（至此完整承载 SEL-001～SEL-009 共 9 个接口）。
+- 新 Service：`TopicSelectionQueryService`（`TopicSelectionQueryServiceImpl`）。
+- 路径兼容：是（保持 `/user/**` 原有 5 个路由，修复 `SEL-007` 缺少前导 `/` 的注解，前端零改动）。
+- 请求/响应兼容：是（`GetSelectTopicByIdRequest`、`GetSelectTopicRequest`、`GetStudentByTopicIdRequest` 迁入 `model.request.selection`，JSON 字段与 `BaseResponse` 结构 100% 兼容）。
+- 横切逻辑变化：接入 Sa-Token 官方 AOP 鉴权、`@SentinelRateLimit` 注解 AOP 限流（`topic.selection.query-*`）、`@ValidateRequest` DTO 校验 AOP；移除原 Controller 中 5 处手写 Sentinel 样板代码；查询服务不开启写事务代理（落实 `ARCH-05`）。
+- 验证：`verify-style.ps1` 全部 0 违规通过；后端 165 个单元测试全部通过。
+- 详细记录：[TOPIC_SELECTION_QUERY_REFACTOR_COMPLETION.md](./TOPIC_SELECTION_QUERY_REFACTOR_COMPLETION.md)。
+
+### 2026-09-27：完成选题写用例重构与三层架构解耦（阶段 2 第一步）
+
+- 接口 ID：SEL-001～SEL-004。
+- 原 Controller：`UserController`。
+- 新 Controller：`TopicSelectionController`。
+- 新 Service：`TopicSelectionApplicationService`（`TopicSelectionApplicationServiceImpl`）。
+- 路径兼容：是（保持 `/user/**` 原有 4 个路由，前端零改动）。
+- 请求/响应兼容：是（`SelectTopicByIdRequest`、`SelectStudentRequest`、`WithdrawRequest` 迁入 `model.request.selection`，JSON 字段与 `BaseResponse` 结构 100% 兼容）。
+- 横切逻辑变化：接入 Sa-Token 官方 AOP 鉴权、`@SentinelRateLimit` 注解 AOP 限流（`topic.selection.*`）、`@ValidateRequest` DTO 校验 AOP；移除原 Controller 中 4 处 `TransactionTemplate` 与手写 Sentinel 样板代码。
+- 事务与并发安全：下沉至 Service 公开写方法级 `@Transactional(rollbackFor = Exception.class)`，保持 `User -> Topic -> StudentTopicSelection` 固定悲观行锁顺序与原有事务原子性不变。
+- 验证：`verify-style.ps1` 全部 0 违规通过；后端 162 个单元测试全部通过。
+- 详细记录：[TOPIC_SELECTION_WRITE_REFACTOR_COMPLETION.md](./TOPIC_SELECTION_WRITE_REFACTOR_COMPLETION.md)。
 
 ### 2026-09-27：完成认证模块重构与 AOP 架构升级
 
