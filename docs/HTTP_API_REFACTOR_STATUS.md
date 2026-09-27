@@ -92,14 +92,14 @@ HTTP / JSON
 
 | 业务域 | 当前入口 | 接口数 | 建议目标 Controller | 建议目标应用服务 | 状态 |
 |---|---|---:|---|---|---|
-| 测试诊断 | `UserController` | 1 | `DiagnosticsController` | 无或 `DiagnosticsService` | 已登记 |
-| 用户管理 | `UserController` | 8 | `UserController` | `UserApplicationService`、`UserQueryService` | 已登记 |
+| 测试诊断 | `SystemController` | 1 | `SystemController` | 无（`TheResult.notyet()`） | 已完成 |
+| 用户管理 | `UserController` | 8 | `UserController` | `UserApplicationService` | 已完成 |
 | 认证与密码 | `AuthController` | 10 | `AuthController` | `AuthenticationService`、`PasswordService`、`VerificationCodeService` | 已完成 |
 | 系部与专业 | `OrganizationController` | 9 | `OrganizationController` | `OrganizationApplicationService` | 已完成 |
 | 课题维护与审核 | `TopicController` | 9 | `TopicController` | `TopicApplicationService` | 已完成 |
 | 学生选题 | `TopicSelectionController` | 9 | `TopicSelectionController` | `TopicSelectionApplicationService`、`TopicSelectionQueryService` | 已完成 |
 | 查询与统计 | `UserController` | 8 | `TopicQueryController`、`ReportController` | `TopicQueryService`、`SelectionReportService` | 已登记 |
-| 系统开关与配置 | `UserController` | 12 | `SelectionPolicyController`、`SystemController` | `SelectionPolicyService`、`SystemQueryService` | 已登记 |
+| 系统开关与配置 | `SelectionPolicyController`、`SystemController` | 12 | `SelectionPolicyController`、`SystemController` | `SelectionPolicyService` | 已完成 |
 | 教师选题组 | `TeacherGroupController` | 3 | `TeacherGroupController` | `OrganizationApplicationService`、`TeacherGroupService` | 已完成 |
 | 文件导入导出 | `FileController` | 9 | `FileController` 或拆分 `ImportController`/`ExportController` | `UserImportService`、`TopicImportService`、现有 `SqlExportService` | 已登记 |
 | AI | `AIController` | 1 | `AIController` | `AIApplicationService` | 已登记 |
@@ -114,20 +114,20 @@ HTTP / JSON
 
 | ID | 方法 | 路径 | 权限 | 用途 | 状态 |
 |---|---|---|---|---|---|
-| TST-001 | GET | `/user/test` | 公开 | 后端连通性测试 | 已登记 |
+| TST-001 | GET | `/user/test` | 公开（`@SaIgnore`） | 后端连通性测试 | 已完成（`SystemController`） |
 
 ### 5.2 用户管理（8）
 
 | ID | 方法 | 路径 | 权限 | 用途 | 目标服务 | 状态 |
 |---|---|---|---|---|---|---|
-| USR-001 | POST | `/user/add` | 管理员 | 创建用户 | `UserApplicationService` | 已登记 |
-| USR-002 | POST | `/user/delete` | 管理员 | 删除用户及关联数据 | `UserApplicationService` | 已登记 |
-| USR-003 | POST | `/user/update` | 管理员 | 更新用户 | `UserApplicationService` | 已登记 |
-| USR-004 | GET | `/user/get/login` | 登录 | 获取当前登录用户 | `UserQueryService` | 已登记 |
-| USR-005 | POST | `/user/get/user/page` | 管理员、教师 | 分页查询用户 | `UserQueryService` | 已登记 |
-| USR-006 | POST | `/user/get/teacher` | 教师 | 查询教师脱敏列表 | `UserQueryService` | 已登记 |
-| USR-007 | GET | `/user/get` | 管理员 | 按 ID 查询用户实体 | `UserQueryService` | 已登记 |
-| USR-008 | GET | `/user/get/vo` | 管理员 | 按 ID 查询用户 VO | `UserQueryService` | 已登记 |
+| USR-001 | POST | `/user/add` | 管理员 | 创建用户 | `UserApplicationService` | 已完成（`UserController`） |
+| USR-002 | POST | `/user/delete` | 管理员 | 删除用户及关联数据 | `UserApplicationService` | 已完成（`UserController`） |
+| USR-003 | POST | `/user/update` | 管理员 | 更新用户 | `UserApplicationService` | 已完成（`UserController`） |
+| USR-004 | GET | `/user/get/login` | 登录 | 获取当前登录用户 | `UserApplicationService` | 已完成（`UserController`） |
+| USR-005 | POST | `/user/get/user/page` | 管理员、教师 | 分页查询用户 | `UserApplicationService` | 已完成（`UserController`） |
+| USR-006 | POST | `/user/get/teacher` | 教师 | 查询教师脱敏列表 | `UserApplicationService` | 已完成（`UserController`） |
+| USR-007 | GET | `/user/get` | 管理员 | 按 ID 查询用户实体 | `UserApplicationService` | 已完成（`UserController`） |
+| USR-008 | GET | `/user/get/vo` | 管理员 | 按 ID 查询用户 VO | `UserApplicationService` | 已完成（`UserController`） |
 
 ### 5.3 认证、密码与验证码（10）
 
@@ -203,18 +203,18 @@ HTTP / JSON
 
 | ID | 方法 | 路径 | 权限 | 用途 | 目标服务 | 状态 |
 |---|---|---|---|---|---|---|
-| CFG-001 | GET | `/user/cross_topic` | 管理员 | 查询跨系选题开关 | `SelectionPolicyService` | 已登记 |
-| CFG-002 | POST | `/user/cross_topic` | 管理员 | 设置跨系选题开关 | `SelectionPolicyService` | 已登记 |
-| CFG-003 | GET | `/user/view_topic` | 管理员 | 查询学生查看课题开关 | `SelectionPolicyService` | 已登记 |
-| CFG-004 | POST | `/user/view_topic` | 管理员 | 设置学生查看课题开关 | `SelectionPolicyService` | 已登记 |
-| CFG-005 | GET | `/user/switch_single_choice` | 管理员 | 查询单选模式 | `SelectionPolicyService` | 已登记 |
-| CFG-006 | POST | `/user/switch_single_choice` | 管理员 | 设置单选模式 | `SelectionPolicyService` | 已登记 |
-| CFG-007 | GET | `/user/topic_lock` | 管理员、教师、学生 | 查询退选锁定状态 | `SelectionPolicyService` | 已登记 |
-| CFG-008 | POST | `/user/topic_lock` | 管理员 | 设置退选锁定状态和时间 | `SelectionPolicyService` | 已登记 |
-| CFG-009 | GET | `/user/get/dept/config` | 管理员 | 查询系部跨选配置 | `SelectionPolicyService` | 已登记 |
-| CFG-010 | POST | `/user/set/dept/config` | 管理员 | 设置系部跨选配置 | `SelectionPolicyService` | 已登记 |
-| CFG-011 | POST | `/user/del/dept/config` | 管理员 | 清除系部跨选配置 | `SelectionPolicyService` | 已登记 |
-| CFG-012 | GET | `/user/get/system/info` | 管理员 | 查询系统信息面板 | `SystemQueryService` | 已登记 |
+| CFG-001 | GET | `/user/cross_topic` | 管理员 | 查询跨系选题开关 | `SelectionPolicyService` | 已完成（`SelectionPolicyController`） |
+| CFG-002 | POST | `/user/cross_topic` | 管理员 | 设置跨系选题开关 | `SelectionPolicyService` | 已完成（`SelectionPolicyController`） |
+| CFG-003 | GET | `/user/view_topic` | 管理员 | 查询学生查看课题开关 | `SelectionPolicyService` | 已完成（`SelectionPolicyController`） |
+| CFG-004 | POST | `/user/view_topic` | 管理员 | 设置学生查看课题开关 | `SelectionPolicyService` | 已完成（`SelectionPolicyController`） |
+| CFG-005 | GET | `/user/switch_single_choice` | 管理员 | 查询单选模式 | `SelectionPolicyService` | 已完成（`SelectionPolicyController`） |
+| CFG-006 | POST | `/user/switch_single_choice` | 管理员 | 设置单选模式 | `SelectionPolicyService` | 已完成（`SelectionPolicyController`） |
+| CFG-007 | GET | `/user/topic_lock` | 管理员、教师、学生 | 查询退选锁定状态 | `SelectionPolicyService` | 已完成（`SelectionPolicyController`） |
+| CFG-008 | POST | `/user/topic_lock` | 管理员 | 设置退选锁定状态和时间 | `SelectionPolicyService` | 已完成（`SelectionPolicyController`） |
+| CFG-009 | GET | `/user/get/dept/config` | 管理员 | 查询系部跨选配置 | `SelectionPolicyService` | 已完成（`SelectionPolicyController`） |
+| CFG-010 | POST | `/user/set/dept/config` | 管理员 | 设置系部跨选配置 | `SelectionPolicyService` | 已完成（`SelectionPolicyController`） |
+| CFG-011 | POST | `/user/del/dept/config` | 管理员 | 清除系部跨选配置 | `SelectionPolicyService` | 已完成（`SelectionPolicyController`） |
+| CFG-012 | GET | `/user/get/system/info` | 管理员 | 查询系统信息面板 | `SelectionPolicyService` | 已完成（`SystemController`） |
 
 ### 5.9 教师选题组（3）
 
@@ -359,9 +359,9 @@ HTTP / JSON
 
 #### Wave 3：阶段 3.3 —— 系统开关配置与用户管理（`CFG-001`～`CFG-012` + `USR-001`～`USR-008` + `TST-001`，21 个接口）
 
-- [ ] 迁移跨系开关、看题开关、单选模式、退选锁、系部跨选配置（2 处 `TransactionTemplate`）与系统信息面板至 `SelectionPolicyController` / `SystemController`。
-- [ ] 迁移用户创建、删除、更新（3 处 `TransactionTemplate`）与用户查询至重构后的 `UserController` 与 `UserApplicationService` / `UserQueryService`（至此 `UserController` 内 `TransactionTemplate` 与直接 Mapper 调用 100% 清零，完成 `ARCH-02`、`ARCH-03`）。
-- [ ] 移除 21 处 Controller 手写 Sentinel 样板代码（剩余 32 $\rightarrow$ 11 处）。
+- [x] 迁移跨系开关、看题开关、单选模式、退选锁、系部跨选配置与系统信息面板至 `SelectionPolicyController` / `SystemController`（`SelectionPolicyService`）。
+- [x] 迁移用户创建、删除、更新（3 处 `TransactionTemplate`）与用户查询至重构后的 `UserController` 与 `UserApplicationService`（至此 `UserController` 内 `TransactionTemplate` 与直接 Mapper 调用 100% 清零，完成 `ARCH-02`、`ARCH-03`）。
+- [x] 移除 20 处 Controller 手写 Sentinel 样板代码并为全部 21 个接口接入 `@SentinelRateLimit`（剩余 32 $\rightarrow$ 12 处）。
 
 #### Wave 4：阶段 3.4 & 3.5 —— 查询与统计域（`QRY-001`～`QRY-008`，8 个接口）
 
@@ -402,6 +402,18 @@ HTTP / JSON
 ```
 
 ## 10. 变更记录
+
+### 2026-09-27：完成系统开关配置、系统诊断与用户管理域重构（Wave 3：阶段 3.3 + 阶段 5 切片）
+
+- 接口 ID：CFG-001～CFG-012、USR-001～USR-008、TST-001（共 21 个接口）。
+- 原 Controller：`UserController`。
+- 新 Controller：`SelectionPolicyController`（`CFG-001`～`CFG-011`）、`SystemController`（`TST-001`、`CFG-012`）、`UserController`（`USR-001`～`USR-008`）。
+- 新 Service：`SelectionPolicyService`（`SelectionPolicyServiceImpl`）、`UserApplicationService`（`UserApplicationServiceImpl`）。
+- 路径兼容：是（保持 `/user/**` 原有 21 个路由，前端零改动；为 `TST-001` `/user/test` 显式标注 `@SaIgnore`）。
+- 请求/响应兼容：是（`SetDeptConfigRequest` 迁入 `model.request.policy`，`UserAddRequest`、`DeleteRequest`、`UserUpdateRequest`、`UserQueryRequest`、`TeacherQueryRequest` 迁入 `model.request.user`，JSON 字段与 `BaseResponse` 结构 100% 兼容）。
+- 横切逻辑变化：接入 `@SentinelRateLimit` 注解 AOP 限流（`policy.*`、`system.*`、`user.*`）；将 `UserController` 剩余 3 处 `TransactionTemplate` 与 3 个直接注入的 `Mapper` 全部下沉至 `UserApplicationServiceImpl`，达成 `ARCH-02` 与 `ARCH-03`；移除 20 处手写 Sentinel 样板代码。
+- 验证：`verify-style.ps1` 全部 0 违规通过；后端 188 个单元测试全部通过。
+- 详细记录：[USER_POLICY_REFACTOR_COMPLETION.md](./USER_POLICY_REFACTOR_COMPLETION.md)。
 
 ### 2026-09-27：完成系部、专业与教师选题组域重构（Wave 2：阶段 3.2 + 阶段 5 切片）
 
