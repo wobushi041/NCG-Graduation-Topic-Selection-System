@@ -1,7 +1,8 @@
-package cn.com.edtechhub.worktopicselection.model.dto.project;
+package cn.com.edtechhub.worktopicselection.model.request.organization;
 
 import cn.com.edtechhub.worktopicselection.model.dto.PageRequest;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
 
@@ -10,6 +11,7 @@ import java.io.Serializable;
  *
  * @author wobushi041
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
 public class ProjectQueryRequest extends PageRequest implements Serializable {
 

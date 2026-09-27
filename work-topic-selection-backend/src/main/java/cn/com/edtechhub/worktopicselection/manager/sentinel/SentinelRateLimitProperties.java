@@ -154,5 +154,65 @@ public class SentinelRateLimitProperties {
      */
     private double topicReviewAiLevel = 20;
 
+    /**
+     * 添加系部接口 QPS 阈值
+     */
+    private double organizationDeptAdd = 50;
+
+    /**
+     * 添加专业接口 QPS 阈值
+     */
+    private double organizationProjectAdd = 50;
+
+    /**
+     * 更新专业所属选题组接口 QPS 阈值
+     */
+    private double organizationProjectUpdateGroup = 50;
+
+    /**
+     * 删除系部接口 QPS 阈值
+     */
+    private double organizationDeptDelete = 50;
+
+    /**
+     * 删除专业接口 QPS 阈值
+     */
+    private double organizationProjectDelete = 50;
+
+    /**
+     * 分页查询系部接口 QPS 阈值
+     */
+    private double organizationDeptQueryPage = 200;
+
+    /**
+     * 查询系部下拉列表接口 QPS 阈值
+     */
+    private double organizationDeptQueryList = 300;
+
+    /**
+     * 分页查询专业接口 QPS 阈值
+     */
+    private double organizationProjectQueryPage = 200;
+
+    /**
+     * 查询专业下拉列表接口 QPS 阈值
+     */
+    private double organizationProjectQueryList = 300;
+
+    /**
+     * 查询当前登录教师选题组列表接口 QPS 阈值
+     */
+    private double teacherGroupQuerySelf = 200;
+
+    /**
+     * 批量查询教师选题组及额度接口 QPS 阈值
+     */
+    private double teacherGroupQueryBatch = 200;
+
+    /**
+     * 查询系统全部选题组名称列表接口 QPS 阈值
+     */
+    private double teacherGroupQueryAll = 300;
+
 }
 

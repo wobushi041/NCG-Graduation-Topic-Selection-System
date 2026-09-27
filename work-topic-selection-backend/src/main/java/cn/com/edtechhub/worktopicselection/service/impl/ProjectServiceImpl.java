@@ -4,7 +4,7 @@ import cn.com.edtechhub.worktopicselection.constant.CommonConstant;
 import cn.com.edtechhub.worktopicselection.exception.BusinessException;
 import cn.com.edtechhub.worktopicselection.exception.CodeBindMessageEnums;
 import cn.com.edtechhub.worktopicselection.mapper.ProjectMapper;
-import cn.com.edtechhub.worktopicselection.model.dto.project.ProjectQueryRequest;
+import cn.com.edtechhub.worktopicselection.model.request.organization.ProjectQueryRequest;
 import cn.com.edtechhub.worktopicselection.model.entity.Project;
 import cn.com.edtechhub.worktopicselection.service.ProjectService;
 import cn.com.edtechhub.worktopicselection.utils.SqlUtils;

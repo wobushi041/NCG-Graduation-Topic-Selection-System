@@ -1,7 +1,7 @@
 package cn.com.edtechhub.worktopicselection.service;
 
 import cn.com.edtechhub.worktopicselection.exception.BusinessException;
-import cn.com.edtechhub.worktopicselection.model.dto.project.ProjectQueryRequest;
+import cn.com.edtechhub.worktopicselection.model.request.organization.ProjectQueryRequest;
 import cn.com.edtechhub.worktopicselection.service.impl.ProjectServiceImpl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import static org.junit.jupiter.api.Assertions.*;

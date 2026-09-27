@@ -1,21 +1,21 @@
-package cn.com.edtechhub.worktopicselection.model.dto.dept;
+package cn.com.edtechhub.worktopicselection.model.request.organization;
 
 import lombok.Data;
 
 import java.io.Serializable;
 
 /**
- * 系部创建请求
+ * 删除专业请求
  *
  * @author wobushi041
  */
 @Data
-public class DeptAddRequest implements Serializable {
+public class DeleteProjectRequest implements Serializable {
 
     /**
-     * 系部名称
+     * 专业名称
      */
-    private String deptName;
+    private String projectName;
 
     /// 序列化字段 ///
 

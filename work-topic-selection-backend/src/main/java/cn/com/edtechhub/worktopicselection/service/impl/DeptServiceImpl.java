@@ -2,7 +2,7 @@ package cn.com.edtechhub.worktopicselection.service.impl;
 
 import cn.com.edtechhub.worktopicselection.constant.CommonConstant;
 import cn.com.edtechhub.worktopicselection.mapper.DeptMapper;
-import cn.com.edtechhub.worktopicselection.model.dto.dept.DeptQueryRequest;
+import cn.com.edtechhub.worktopicselection.model.request.organization.DeptQueryRequest;
 import cn.com.edtechhub.worktopicselection.model.entity.Dept;
 import cn.com.edtechhub.worktopicselection.service.DeptService;
 import cn.com.edtechhub.worktopicselection.utils.SqlUtils;

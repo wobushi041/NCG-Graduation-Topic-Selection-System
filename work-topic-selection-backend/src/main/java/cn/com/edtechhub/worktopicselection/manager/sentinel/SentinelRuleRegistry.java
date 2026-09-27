@@ -72,6 +72,18 @@ public class SentinelRuleRegistry {
         register("topic.publication.unpublish", properties.getTopicPublicationUnpublish(), false);
         register("topic.update", properties.getTopicUpdate(), false);
         register("topic.review.ai-level", properties.getTopicReviewAiLevel(), false);
+        register("organization.dept.add", properties.getOrganizationDeptAdd(), false);
+        register("organization.project.add", properties.getOrganizationProjectAdd(), false);
+        register("organization.project.update-group", properties.getOrganizationProjectUpdateGroup(), false);
+        register("organization.dept.delete", properties.getOrganizationDeptDelete(), false);
+        register("organization.project.delete", properties.getOrganizationProjectDelete(), false);
+        register("organization.dept.query-page", properties.getOrganizationDeptQueryPage(), false);
+        register("organization.dept.query-list", properties.getOrganizationDeptQueryList(), false);
+        register("organization.project.query-page", properties.getOrganizationProjectQueryPage(), false);
+        register("organization.project.query-list", properties.getOrganizationProjectQueryList(), false);
+        register("teacher-group.query-self", properties.getTeacherGroupQuerySelf(), false);
+        register("teacher-group.query-batch", properties.getTeacherGroupQueryBatch(), false);
+        register("teacher-group.query-all", properties.getTeacherGroupQueryAll(), false);
         publish();
     }
 

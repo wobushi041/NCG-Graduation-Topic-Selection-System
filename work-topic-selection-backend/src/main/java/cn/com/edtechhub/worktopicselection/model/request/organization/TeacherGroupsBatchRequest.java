@@ -1,6 +1,5 @@
-package cn.com.edtechhub.worktopicselection.model.dto.user;
+package cn.com.edtechhub.worktopicselection.model.request.organization;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -24,7 +23,6 @@ public class TeacherGroupsBatchRequest implements Serializable {
     /**
      * 序列化版本号
      */
-    @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 
 }

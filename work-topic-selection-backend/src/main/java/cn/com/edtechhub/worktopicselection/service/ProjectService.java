@@ -1,6 +1,6 @@
 package cn.com.edtechhub.worktopicselection.service;
 
-import cn.com.edtechhub.worktopicselection.model.dto.project.ProjectQueryRequest;
+import cn.com.edtechhub.worktopicselection.model.request.organization.ProjectQueryRequest;
 import cn.com.edtechhub.worktopicselection.model.entity.Project;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.IService;
