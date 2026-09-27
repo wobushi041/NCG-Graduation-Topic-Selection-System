@@ -1,5 +1,6 @@
 import {Footer} from '@/components';
-import {getLoginUserUsingGet, userLoginUsingPost} from '@/services/work-topic-selection/userController';
+import {getLoginUserUsingGet} from '@/services/work-topic-selection/userController';
+import {login, LoginRequest} from '@/services/work-topic-selection/authController';
 import {LockOutlined, UserOutlined} from '@ant-design/icons';
 import {LoginForm, ProFormText} from '@ant-design/pro-components';
 import {Helmet, history, Link, useModel} from '@umijs/max';
@@ -104,10 +105,10 @@ const Login: React.FC = () => {
     }
     return undefined;
   };
-  const handleSubmit = async (values: API.UserLoginRequest) => {
+  const handleSubmit = async (values: LoginRequest) => {
     try {
       // 登录
-      const res = await userLoginUsingPost(values, {skipErrorHandler: true});
+      const res = await login(values, {skipErrorHandler: true});
       if (res.code === 0) {
         message.success(res.message);
         const loginUser = await fetchUserInfo();
@@ -151,7 +152,7 @@ const Login: React.FC = () => {
           title="毕设选题系统"
           subTitle={'毕业设计选题管理'}
           onFinish={async (values) => {
-            await handleSubmit(values as API.UserLoginRequest);
+            await handleSubmit(values as LoginRequest);
           }}
         >
           <Tabs
@@ -168,7 +169,7 @@ const Login: React.FC = () => {
           {type === 'account' && (
             <>
               <ProFormText
-                name="userAccount"
+                name="account"
                 label={<span>账户</span>}
                 fieldProps={{
                   size: 'large',
@@ -184,7 +185,7 @@ const Login: React.FC = () => {
                 ]}
               />
               <ProFormText.Password
-                name="userPassword"
+                name="password"
                 label={<span>密码</span>}
                 fieldProps={{
                   size: 'large',

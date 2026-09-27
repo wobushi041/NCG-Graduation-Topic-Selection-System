@@ -117,21 +117,6 @@ export async function addTopicUsingPost(
   });
 }
 
-/** checkCaptcha POST /user/check/captcha */
-export async function checkCaptchaUsingPost(
-  body: API.CheckCaptchaRequest,
-  options?: { [key: string]: any },
-) {
-  return request<API.BaseResponseBoolean_>('/user/check/captcha', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    data: body,
-    ...(options || {}),
-  });
-}
-
 /** checkTopic POST /user/check/topic */
 export async function checkTopicUsingPost(
   body: API.CheckTopicRequest,
@@ -579,50 +564,12 @@ export async function listUserVoByPageUsingPost(
   });
 }
 
-/** userLogin POST /user/login */
-export async function userLoginUsingPost(
-  body: API.UserLoginRequest,
-  options?: { [key: string]: any },
-) {
-  return request<API.BaseResponseLoginUserVO_>('/user/login', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    data: body,
-    ...(options || {}),
-  });
-}
-
-/** userLogout POST /user/logout */
-export async function userLogoutUsingPost(options?: { [key: string]: any }) {
-  return request<API.BaseResponseBoolean_>('/user/logout', {
-    method: 'POST',
-    ...(options || {}),
-  });
-}
-
 /** preSelectTopicById POST /user/preselect/topic/by/id */
 export async function preSelectTopicByIdUsingPost(
   body: API.SelectTopicByIdRequest,
   options?: { [key: string]: any },
 ) {
   return request<API.BaseResponseLong_>('/user/preselect/topic/by/id', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    data: body,
-    ...(options || {}),
-  });
-}
-
-/** resetPassword POST /user/reset/password */
-export async function resetPasswordUsingPost(
-  body: API.ResetPasswordRequest,
-  options?: { [key: string]: any },
-) {
-  return request<API.BaseResponseString_>('/user/reset/password', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -653,36 +600,6 @@ export async function selectTopicByIdUsingPost(
   options?: { [key: string]: any },
 ) {
   return request<API.BaseResponseLong_>('/user/select/topic/by/id', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    data: body,
-    ...(options || {}),
-  });
-}
-
-/** sendCaptcha POST /user/send/captcha */
-export async function sendCaptchaUsingPost(
-  body: API.CaptchaRequest,
-  options?: { [key: string]: any },
-) {
-  return request<API.BaseResponseString_>('/user/send/captcha', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    data: body,
-    ...(options || {}),
-  });
-}
-
-/** sendCode POST /user/send/code */
-export async function sendCodeUsingPost(
-  body: API.SendCodeRequest,
-  options?: { [key: string]: any },
-) {
-  return request<API.BaseResponseString_>('/user/send/code', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -768,29 +685,6 @@ export async function testUsingGet(options?: { [key: string]: any }) {
   });
 }
 
-/** userToggleLogin POST /user/toggle/login */
-export async function userToggleLoginUsingPost(
-  body: API.UserToggleRequest,
-  options?: { [key: string]: any },
-) {
-  return request<API.BaseResponseLoginUserVO_>('/user/toggle/login', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    data: body,
-    ...(options || {}),
-  });
-}
-
-/** 查询当前账号能否切换身份 GET /user/toggle/available */
-export async function getToggleAvailableUsingGet(options?: { [key: string]: any }) {
-  return request<API.BaseResponseBoolean_>('/user/toggle/available', {
-    method: 'GET',
-    ...(options || {}),
-  });
-}
-
 /** getTopicLock GET /user/topic_lock */
 export async function getTopicLockUsingGet(options?: { [key: string]: any }) {
   return request<API.BaseResponseTopicLockVO_>('/user/topic_lock', {
@@ -820,21 +714,6 @@ export async function unsetTimeByIdUsingPost(
   options?: { [key: string]: any },
 ) {
   return request<API.BaseResponseString_>('/user/unset/time/by/id', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    data: body,
-    ...(options || {}),
-  });
-}
-
-/** userUpdatePassword POST /user/updata/password */
-export async function userUpdatePasswordUsingPost(
-  body: API.UserUpdatePassword,
-  options?: { [key: string]: any },
-) {
-  return request<API.BaseResponseLong_>('/user/updata/password', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

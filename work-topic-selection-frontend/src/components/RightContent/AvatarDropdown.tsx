@@ -7,11 +7,7 @@ import React, {useCallback, useEffect, useState} from 'react';
 import {flushSync} from 'react-dom';
 import HeaderDropdown from '../HeaderDropdown';
 import {USER_ROLE_ENUM, USER_ROLE_MAP} from '@/constants/user';
-import {
-  getToggleAvailableUsingGet,
-  userLogoutUsingPost,
-  userToggleLoginUsingPost,
-} from '@/services/work-topic-selection/userController';
+import {getRoleSwitchAvailability, logout, switchRole} from '@/services/work-topic-selection/authController';
 
 export type GlobalHeaderRightProps = {
   menu?: boolean;
@@ -96,10 +92,10 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({menu, children
       return;
     }
     let cancelled = false;
-    getToggleAvailableUsingGet()
+    getRoleSwitchAvailability()
       .then((res) => {
         if (!cancelled) {
-          setCanToggleRole(res.code === 0 && res.data === true);
+          setCanToggleRole(res.code === 0 && res.data?.available === true);
         }
       })
       .catch(() => {
@@ -117,7 +113,7 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({menu, children
       const {key} = event;
       if (key === 'logout') {
         try {
-          const res = await userLogoutUsingPost();
+          const res = await logout();
           if (res.code === 0) {
             message.success(res.message);
           } else {
@@ -153,19 +149,17 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({menu, children
           onOk: async () => {
             try {
               // 确定要切换到的角色
-              let targetRole;
+              let targetRole: 'teacher' | 'dept';
               if (currentUser.userRole === USER_ROLE_ENUM.TEACHER) {
-                targetRole = USER_ROLE_ENUM.DIRECTOR;  // 教师切换到专业负责人
+                targetRole = 'dept';
               } else if (currentUser.userRole === USER_ROLE_ENUM.DIRECTOR) {
-                targetRole = USER_ROLE_ENUM.TEACHER;   // 专业负责人切换到教师
+                targetRole = 'teacher';
               } else {
                 return;
               }
 
               // 调用切换身份的接口
-              const res = await userToggleLoginUsingPost({
-                userRole: targetRole,
-              });
+              const res = await switchRole(targetRole);
 
               // 检查返回值
               if (res.code === 0 && res.data) {

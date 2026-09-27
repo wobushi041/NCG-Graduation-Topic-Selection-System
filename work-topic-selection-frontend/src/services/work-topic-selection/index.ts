@@ -5,7 +5,9 @@
 import * as aiController from './aiController';
 import * as fileController from './fileController';
 import * as userController from './userController';
+import * as authController from './authController';
 export default {
+  authController,
   aiController,
   fileController,
   userController,

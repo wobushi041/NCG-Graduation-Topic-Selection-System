@@ -5,8 +5,8 @@ import {
   getDeptListUsingPost,
   getProjectListUsingPost,
   listUserByPageUsingPost,
-  resetPasswordUsingPost,
 } from '@/services/work-topic-selection/userController';
+import {adminResetPassword} from '@/services/work-topic-selection/authController';
 import {PlusOutlined} from '@ant-design/icons';
 import {ActionType, ProColumns, ProFormSelect, ProFormText, ProTable,} from '@ant-design/pro-components';
 import {ModalForm} from '@ant-design/pro-form';
@@ -230,9 +230,9 @@ export default () => {
             }}
             submitTimeout={2000}
             onFinish={async (values) => {
-              const res = await resetPasswordUsingPost(values);
+              const res = await adminResetPassword({account: values.userAccount, name: values.userName});
               if (res.code === 0) {
-                message.success(res.message);
+                message.success(`重置成功，临时密码：${res.data?.temporaryPassword}`);
                 actionRef.current?.reload();
                 return true;
               } else {
