@@ -1,4 +1,4 @@
-package cn.com.edtechhub.worktopicselection.model.dto.file;
+package cn.com.edtechhub.worktopicselection.model.request.file;
 
 import lombok.Data;
 import org.springframework.web.multipart.MultipartFile;

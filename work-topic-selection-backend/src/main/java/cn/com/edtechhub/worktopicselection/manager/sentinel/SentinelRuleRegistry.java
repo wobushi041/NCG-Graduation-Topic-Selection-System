@@ -113,6 +113,16 @@ public class SentinelRuleRegistry {
         register("query.user.vo-page", properties.getQueryUserVoPage(), false);
         register("query.user.name-list", properties.getQueryUserNameList(), false);
         register("query.dept.pending-teacher", properties.getQueryDeptPendingTeacher(), false);
+        register("file.user.import", properties.getFileUserImport(), false);
+        register("file.topic.import", properties.getFileTopicImport(), false);
+        register("file.selection.selected-export", properties.getFileSelectionSelectedExport(), false);
+        register("file.selection.unselected-export", properties.getFileSelectionUnselectedExport(), false);
+        register("file.export.user-list", properties.getFileExportUserList(), false);
+        register("file.export.topic-list", properties.getFileExportTopicList(), false);
+        register("file.export.surplus-topic-list", properties.getFileExportSurplusTopicList(), false);
+        register("file.export.student-en-select", properties.getFileExportStudentEnSelect(), false);
+        register("file.export.student-un-select", properties.getFileExportStudentUnSelect(), false);
+        register("ai.chat.send", properties.getAiChatSend(), false);
         publish();
     }
 

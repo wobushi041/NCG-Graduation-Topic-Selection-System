@@ -365,7 +365,56 @@ public class SentinelRateLimitProperties {
      */
     private double queryDeptPendingTeacher = 120;
 
+    /// 文件导入导出与 AI 域接口流控配置 ///
+
+    /**
+     * 批量导入用户接口 QPS 阈值
+     */
+    private double fileUserImport = 10;
+
+    /**
+     * 批量导入课题接口 QPS 阈值
+     */
+    private double fileTopicImport = 10;
+
+    /**
+     * 导出已选题学生课题列表接口 QPS 阈值
+     */
+    private double fileSelectionSelectedExport = 20;
+
+    /**
+     * 导出未选题学生列表接口 QPS 阈值
+     */
+    private double fileSelectionUnselectedExport = 20;
+
+    /**
+     * 导出系统内所有账号接口 QPS 阈值
+     */
+    private double fileExportUserList = 20;
+
+    /**
+     * 导出系统内所有题目接口 QPS 阈值
+     */
+    private double fileExportTopicList = 20;
+
+    /**
+     * 导出系统内剩余题目接口 QPS 阈值
+     */
+    private double fileExportSurplusTopicList = 20;
+
+    /**
+     * 导出系统内已选学生详情接口 QPS 阈值
+     */
+    private double fileExportStudentEnSelect = 20;
+
+    /**
+     * 导出系统内未选学生详情接口 QPS 阈值
+     */
+    private double fileExportStudentUnSelect = 20;
+
+    /**
+     * AI 问答发送消息接口 QPS 阈值
+     */
+    private double aiChatSend = 30;
+
 }
-
-
-
