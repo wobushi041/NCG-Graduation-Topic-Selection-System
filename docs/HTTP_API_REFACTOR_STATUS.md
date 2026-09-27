@@ -95,12 +95,12 @@ HTTP / JSON
 | 测试诊断 | `UserController` | 1 | `DiagnosticsController` | 无或 `DiagnosticsService` | 已登记 |
 | 用户管理 | `UserController` | 8 | `UserController` | `UserApplicationService`、`UserQueryService` | 已登记 |
 | 认证与密码 | `AuthController` | 10 | `AuthController` | `AuthenticationService`、`PasswordService`、`VerificationCodeService` | 已完成 |
-| 系部与专业 | `UserController` | 9 | `OrganizationController` | `OrganizationApplicationService` | 已登记 |
+| 系部与专业 | `OrganizationController` | 9 | `OrganizationController` | `OrganizationApplicationService` | 已完成 |
 | 课题维护与审核 | `TopicController` | 9 | `TopicController` | `TopicApplicationService` | 已完成 |
 | 学生选题 | `TopicSelectionController` | 9 | `TopicSelectionController` | `TopicSelectionApplicationService`、`TopicSelectionQueryService` | 已完成 |
 | 查询与统计 | `UserController` | 8 | `TopicQueryController`、`ReportController` | `TopicQueryService`、`SelectionReportService` | 已登记 |
 | 系统开关与配置 | `UserController` | 12 | `SelectionPolicyController`、`SystemController` | `SelectionPolicyService`、`SystemQueryService` | 已登记 |
-| 教师选题组 | `UserController` | 3 | `TeacherGroupController` | 现有 `TeacherGroupService` | 已登记 |
+| 教师选题组 | `TeacherGroupController` | 3 | `TeacherGroupController` | `OrganizationApplicationService`、`TeacherGroupService` | 已完成 |
 | 文件导入导出 | `FileController` | 9 | `FileController` 或拆分 `ImportController`/`ExportController` | `UserImportService`、`TopicImportService`、现有 `SqlExportService` | 已登记 |
 | AI | `AIController` | 1 | `AIController` | `AIApplicationService` | 已登记 |
 
@@ -148,15 +148,15 @@ HTTP / JSON
 
 | ID | 方法 | 路径 | 权限 | 用途 | 目标服务 | 状态 |
 |---|---|---|---|---|---|---|
-| ORG-001 | POST | `/user/add/dept` | 管理员 | 添加系部 | `OrganizationApplicationService` | 已登记 |
-| ORG-002 | POST | `/user/add/project` | 管理员 | 添加专业 | `OrganizationApplicationService` | 已登记 |
-| ORG-003 | POST | `/user/update/project/group` | 管理员 | 设置专业所属选题组 | `OrganizationApplicationService` | 已登记 |
-| ORG-004 | POST | `/user/delete/dept` | 管理员 | 删除系部 | `OrganizationApplicationService` | 已登记 |
-| ORG-005 | POST | `/user/delete/project` | 管理员 | 删除专业 | `OrganizationApplicationService` | 已登记 |
-| ORG-006 | POST | `/user/get/dept/page` | 管理员 | 分页查询系部 | `OrganizationQueryService` | 已登记 |
-| ORG-007 | POST | `/user/get/dept/list` | 登录 | 查询可见系部列表 | `OrganizationQueryService` | 已登记 |
-| ORG-008 | POST | `/user/get/project/page` | 登录 | 分页查询专业 | `OrganizationQueryService` | 已登记 |
-| ORG-009 | POST | `/user/get/project/list` | 登录 | 查询可见专业列表 | `OrganizationQueryService` | 已登记 |
+| ORG-001 | POST | `/user/add/dept` | 管理员 | 添加系部 | `OrganizationApplicationService` | 已完成（`OrganizationController`） |
+| ORG-002 | POST | `/user/add/project` | 管理员 | 添加专业 | `OrganizationApplicationService` | 已完成（`OrganizationController`） |
+| ORG-003 | POST | `/user/update/project/group` | 管理员 | 设置专业所属选题组 | `OrganizationApplicationService` | 已完成（`OrganizationController`） |
+| ORG-004 | POST | `/user/delete/dept` | 管理员 | 删除系部 | `OrganizationApplicationService` | 已完成（`OrganizationController`，补齐 `@SaCheckLogin`） |
+| ORG-005 | POST | `/user/delete/project` | 管理员 | 删除专业 | `OrganizationApplicationService` | 已完成（`OrganizationController`，补齐 `@SaCheckLogin`） |
+| ORG-006 | POST | `/user/get/dept/page` | 管理员 | 分页查询系部 | `OrganizationApplicationService` | 已完成（`OrganizationController`） |
+| ORG-007 | POST | `/user/get/dept/list` | 登录 | 查询可见系部列表 | `OrganizationApplicationService` | 已完成（`OrganizationController`） |
+| ORG-008 | POST | `/user/get/project/page` | 登录 | 分页查询专业 | `OrganizationApplicationService` | 已完成（`OrganizationController`） |
+| ORG-009 | POST | `/user/get/project/list` | 登录 | 查询可见专业列表 | `OrganizationApplicationService` | 已完成（`OrganizationController`） |
 
 ### 5.5 课题维护、审核与发布（9）
 
@@ -220,9 +220,9 @@ HTTP / JSON
 
 | ID | 方法 | 路径 | 权限 | 用途 | 目标服务 | 状态 |
 |---|---|---|---|---|---|---|
-| GRP-001 | GET | `/user/teacher/groups` | 教师 | 查询当前教师选题组与额度 | `TeacherGroupService` | 已登记 |
-| GRP-002 | POST | `/user/teacher/groups/batch` | 管理员、系部主任 | 批量查询教师选题组额度 | `TeacherGroupService` | 已登记 |
-| GRP-003 | GET | `/user/group/list` | 管理员、系部主任 | 查询选题组名称列表 | `TeacherGroupService` | 已登记 |
+| GRP-001 | GET | `/user/teacher/groups` | 教师 | 查询当前教师选题组与额度 | `OrganizationApplicationService` | 已完成（`TeacherGroupController`，补齐 `@SaCheckLogin`） |
+| GRP-002 | POST | `/user/teacher/groups/batch` | 管理员、系部主任 | 批量查询教师选题组额度 | `OrganizationApplicationService` | 已完成（`TeacherGroupController`，补齐 `@SaCheckLogin`） |
+| GRP-003 | GET | `/user/group/list` | 管理员、系部主任 | 查询选题组名称列表 | `OrganizationApplicationService` | 已完成（`TeacherGroupController`，补齐 `@SaCheckLogin`） |
 
 ### 5.10 文件导入导出（9）
 
@@ -353,21 +353,21 @@ HTTP / JSON
 
 #### Wave 2：阶段 3.2 —— 系部、专业与教师选题组（`ORG-001`～`ORG-009` + `GRP-001`～`GRP-003`，12 个接口）
 
-- [ ] 迁移系部、专业 CRUD 与选题组绑定（4 处 `TransactionTemplate`）至 `OrganizationController` 与 `OrganizationApplicationService` / `OrganizationQueryService`。
-- [ ] 迁移教师选题组与额度查询至 `TeacherGroupController` 与 `TeacherGroupService`。
-- [ ] 移除 12 处 Controller 手写 Sentinel 样板代码（剩余 41 $\rightarrow$ 29 处）。
+- [x] 迁移系部、专业 CRUD 与选题组绑定（5 处 `TransactionTemplate`）至 `OrganizationController` 与 `OrganizationApplicationService`。
+- [x] 迁移教师选题组与额度查询至 `TeacherGroupController` 与 `OrganizationApplicationService`（委托 `TeacherGroupService`）。
+- [x] 移除 9 处 Controller 手写 Sentinel 样板代码并为全部 12 个接口接入 `@SentinelRateLimit`（剩余 41 $\rightarrow$ 32 处）。
 
 #### Wave 3：阶段 3.3 —— 系统开关配置与用户管理（`CFG-001`～`CFG-012` + `USR-001`～`USR-008` + `TST-001`，21 个接口）
 
 - [ ] 迁移跨系开关、看题开关、单选模式、退选锁、系部跨选配置（2 处 `TransactionTemplate`）与系统信息面板至 `SelectionPolicyController` / `SystemController`。
 - [ ] 迁移用户创建、删除、更新（3 处 `TransactionTemplate`）与用户查询至重构后的 `UserController` 与 `UserApplicationService` / `UserQueryService`（至此 `UserController` 内 `TransactionTemplate` 与直接 Mapper 调用 100% 清零，完成 `ARCH-02`、`ARCH-03`）。
-- [ ] 移除 21 处 Controller 手写 Sentinel 样板代码（剩余 29 $\rightarrow$ 8 处）。
+- [ ] 移除 21 处 Controller 手写 Sentinel 样板代码（剩余 32 $\rightarrow$ 11 处）。
 
 #### Wave 4：阶段 3.4 & 3.5 —— 查询与统计域（`QRY-001`～`QRY-008`，8 个接口）
 
 - [ ] 创建 `TopicQueryService` 与 `SelectionReportService` 承接课题分页、系部选题统计、未选题学生等 8 个只读查询接口。
 - [ ] 落地查询服务“无写事务代理”策略。
-- [ ] 移除 `UserController` 最后 8 处手写 Sentinel 样板代码（至此 68 处手写 Sentinel 100% 清零，完成阶段 5.5）。
+- [ ] 移除 `UserController` 最后 8 处手写 Sentinel 样板代码（至此 `UserController` 手写 Sentinel 100% 清零，完成阶段 5.5）。
 
 #### Wave 5：阶段 6 —— 文件导入导出与 AI 模块（`FILE-001`～`FILE-009` + `AI-001`，10 个接口）
 
@@ -402,6 +402,18 @@ HTTP / JSON
 ```
 
 ## 10. 变更记录
+
+### 2026-09-27：完成系部、专业与教师选题组域重构（Wave 2：阶段 3.2 + 阶段 5 切片）
+
+- 接口 ID：ORG-001～ORG-009、GRP-001～GRP-003（共 12 个接口）。
+- 原 Controller：`UserController`。
+- 新 Controller：`OrganizationController`（`@RequestMapping("/user")`）、`TeacherGroupController`（`@RequestMapping("/user")`）。
+- 新 Service：`OrganizationApplicationService`（`OrganizationApplicationServiceImpl`）。
+- 路径兼容：是（保持 `/user/**` 原有 12 个路由，前端零改动；为 `ORG-004`、`ORG-005`、`GRP-001`～`GRP-003` 共 5 个接口补齐显式 `@SaCheckLogin`）。
+- 请求/响应兼容：是（`DeptAddRequest`、`DeleteDeptRequest`、`DeptQueryRequest`、`ProjectAddRequest`、`DeleteProjectRequest`、`ProjectGroupUpdateRequest`、`ProjectQueryRequest`、`TeacherGroupsBatchRequest` 共 8 个请求模型迁入 `model.request.organization`，JSON 字段与 `BaseResponse` 结构 100% 兼容）。
+- 横切逻辑变化：接入 Sa-Token 官方 AOP 鉴权、`@SentinelRateLimit` 注解 AOP 限流（`organization.*`、`teacher-group.*`）；移除原 Controller 中 5 处 `TransactionTemplate` 与 9 处手写 Sentinel 样板代码；5 个写方法采用方法级 `@Transactional(rollbackFor = Exception.class)`，7 个只读分页/列表/选题组查询方法不开启数据库写事务。
+- 验证：`verify-style.ps1` 全部 0 违规通过；后端 181 个单元测试全部通过。
+- 详细记录：[ORGANIZATION_GROUP_REFACTOR_COMPLETION.md](./ORGANIZATION_GROUP_REFACTOR_COMPLETION.md)。
 
 ### 2026-09-27：完成课题维护、审核、发布、配额管理与 AI 查重重构（Wave 1：阶段 3.1 + 阶段 5.4）
 
