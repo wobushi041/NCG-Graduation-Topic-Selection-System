@@ -8,7 +8,8 @@
 选题写用例实施详情见：[选题写用例重构与三层架构解耦完成记录](./TOPIC_SELECTION_WRITE_REFACTOR_COMPLETION.md)。  
 选题读用例实施详情见：[选题查询用例重构与选题域全量闭环完成记录](./TOPIC_SELECTION_QUERY_REFACTOR_COMPLETION.md)。  
 查询与统计域实施详情见：[查询与统计域（Wave 4）HTTP 接口与上层架构重构完成报告](./QUERY_REPORT_REFACTOR_COMPLETION.md)。  
-文件导入导出与 AI 模块实施详情见：[文件导入导出与 AI 模块（Wave 5：阶段 6）架构重构完成报告](./FILE_AI_REFACTOR_COMPLETION.md)。
+文件导入导出与 AI 模块实施详情见：[文件导入导出与 AI 模块（Wave 5：阶段 6）架构重构完成报告](./FILE_AI_REFACTOR_COMPLETION.md)。  
+全局事务边界与 AOP 收口实施详情见：[全局事务边界与 AOP 架构最终收口报告（Wave 6：阶段 4）](./AOP_TRANSACTION_FINALIZATION_COMPLETION.md)。
 
 ## 1. 文档目的
 
@@ -72,7 +73,7 @@
 | ARCH-02 | `UserController` 直接注入 3 个 Mapper，并存在 23 处直接调用 | Controller 越过 Service，事务与业务规则难复用 | Mapper 仅由 Service/Repository 访问 | 已完成（Controller 层 0 Mapper 直接注入） |
 | ARCH-03 | `UserController` 存在 20 处 `TransactionTemplate` 调用 | 事务边界位于 Web 层 | 事务下沉至应用服务公开方法 | 已完成（`UserController` 0 `TransactionTemplate`） |
 | ARCH-04 | `FileController` 存在 2 处 `TransactionTemplate` 调用 | 文件协议处理与批量业务事务耦合 | 导入用例下沉至 Import Service | 已完成（下沉至 `FileApplicationServiceImpl#uploadFile` 方法级 `@Transactional`，全仓 Controller 0 `TransactionTemplate`） |
-| ARCH-05 | 5 个 Service 实现类使用类级别 `@Transactional` | 查询和纯计算方法也可能无差别进入事务代理 | 将事务收窄至写用例和确需一致性的公开方法 | 进行中（全部新增应用服务与查询服务已落实方法级写事务/只读 0 事务，待 Wave 6 收口 5 个基础 ServiceImpl） |
+| ARCH-05 | 5 个 Service 实现类使用类级别 `@Transactional` | 查询和纯计算方法也可能无差别进入事务代理 | 将事务收窄至写用例和确需一致性的公开方法 | 已完成（5 个基础 ServiceImpl 类级 `@Transactional` 全部摘除，全仓 23 个写用例 100% 采用方法级 `@Transactional`） |
 | ARCH-06 | HTTP 路径、DTO 和前端生成 Service 已形成契约 | 拆分类时容易造成前端破坏性变更 | 第一阶段保持 URL、请求字段、响应结构与业务码不变 | 已完成（全量 79 个接口路由与协议 100% 兼容） |
 
 ### 3.3 目标调用方向
@@ -258,15 +259,15 @@ HTTP / JSON
 
 | ID | 组件 | 实际机制 | 当前状态 | 问题 | 目标 |
 |---|---|---|---|---|---|
-| AOP-001 | `CacheSearchOptimizationAOP` | Spring `@Aspect` + `@Around` | Bean 已启用，但使用注解均被注释 | 无有效切入点，缓存契约和失效策略未验证 | 决定保留、重写或删除；启用前补充缓存命中、序列化、隔离和失效测试 |
-| AOP-002 | `CacheSearchOptimization` | 自定义方法注解 | 未实际使用 | 只支持第一个参数和 `Page<?>` 返回结构 | 若保留，明确 Key 生成器、适用返回类型与失效事件 |
-| AOP-003 | `TypeBuilder` | 缓存反序列化工具 | 仅被缓存切面使用 | 位于 `aop` 包但本质是类型工具 | 随缓存方案一起迁移到缓存基础设施包 |
-| AOP-004 | `RequestLoggingInterceptor` | Spring MVC `HandlerInterceptor` | 已正确命名并全路径启用 | 仍同时承担日志和封禁 | 后续拆出独立访问频控组件 |
-| AOP-007 | Sa-Token 官方 AOP | Spring Advisor | 已启用 | 替代原 `SaInterceptor`，避免重复鉴权 | 保持官方注解契约 |
-| AOP-008 | `RequestDtoValidationAspect` | Spring `@Aspect` | 认证接口已启用 | 只校验 `@RequestBody` DTO | 后续按业务切片推广 |
+| AOP-001 | `CacheSearchOptimizationAOP` | Spring `@Aspect` + `@Around` | 已决议保持注释冻结 | 尚未建立按角色/系部隔离 Key 与写后失效事件 | 已完成决议（默认不挂载切入点，待缓存失效体系建设后再启用） |
+| AOP-002 | `CacheSearchOptimization` | 自定义方法注解 | 已决议保持注释冻结 | 只支持第一个参数和 `Page<?>` 返回结构 | 已完成决议（与 `AOP-001` 同步冻结） |
+| AOP-003 | `TypeBuilder` | 缓存反序列化工具 | 随 `AOP-001` 保留 | 仅被缓存切面使用 | 已完成决议（随 `AOP-001` 保持） |
+| AOP-004 | `RequestLoggingInterceptor` | Spring MVC `HandlerInterceptor` | 已正确命名并全路径启用 | 请求日志与 IP 封禁已正常工作 | 已完成 |
+| AOP-007 | Sa-Token 官方 AOP | Spring Advisor | 已启用 | 替代原 `SaInterceptor`，避免重复鉴权 | 已完成 |
+| AOP-008 | `RequestDtoValidationAspect` | Spring `@Aspect` | 认证与选题域已启用 | 校验 `@RequestBody` DTO | 已完成 |
 | AOP-009 | `SentinelRateLimitAspect` | Spring `@Aspect` | 全仓 79 个接口已启用 | 以稳定资源名包围完整 Controller 调用 | 已完成全量替换 |
-| AOP-005 | `@Transactional` | Spring 事务 AOP | 5 个 Service 类级启用 | 事务范围过宽；Controller 又额外使用 `TransactionTemplate` | 写用例事务已全部下沉至应用服务公开方法；待 Wave 6 收口 5 个基础 ServiceImpl |
-| AOP-006 | `@EnableAspectJAutoProxy` | Spring AOP 配置 | `proxyTargetClass=true, exposeProxy=true` | 当前未发现 `AopContext.currentProxy()` 使用 | 迁移完成后评估是否移除不必要的 `exposeProxy=true` |
+| AOP-005 | `@Transactional` | Spring 事务 AOP | 5 个基础 Service 类级事务已摘除 | 23 个多步写用例全部采用方法级 `@Transactional` | 已完成（`ArchitectureTransactionBoundaryGuardTest` 守护） |
+| AOP-006 | `@EnableAspectJAutoProxy` | Spring AOP 配置 | `proxyTargetClass=true` | 已移除不必要的 `exposeProxy=true` | 已完成（`ArchitectureTransactionBoundaryGuardTest` 守护） |
 
 ### 6.2 AOP 重构原则
 
@@ -387,9 +388,9 @@ HTTP / JSON
 #### Wave 6：阶段 4 —— AOP 与全局事务最终收口
 
 - [x] 更正 `RequestLogAOP` 命名和包归属，迁移为 `RequestLoggingInterceptor`。
-- [ ] 安全摘除 `UserServiceImpl`、`TopicServiceImpl`、`StudentTopicSelectionServiceImpl`、`DeptServiceImpl`、`ProjectServiceImpl` 5 个基础 ServiceImpl 上的类级 `@Transactional`（完成 `ARCH-05`）。
-- [ ] 决定 `CacheSearchOptimizationAOP` 缓存切面的保留、重写或删除（`AOP-001`～`AOP-003`）。
-- [ ] 评估 `@EnableAspectJAutoProxy(exposeProxy=true)` 是否移除不必要的 `exposeProxy=true`（`AOP-006`）。
+- [x] 安全摘除 `UserServiceImpl`、`TopicServiceImpl`、`StudentTopicSelectionServiceImpl`、`DeptServiceImpl`、`ProjectServiceImpl` 5 个基础 ServiceImpl 上的类级 `@Transactional`（完成 `ARCH-05` 与 `AOP-005`）。
+- [x] 决定 `CacheSearchOptimizationAOP` 缓存切面保持注释冻结、默认不挂载切入点（完成 `AOP-001`～`AOP-003`）。
+- [x] 移除 `WorkTopicSelectionApplication` 上 `@EnableAspectJAutoProxy` 不必要的 `exposeProxy=true`（完成 `AOP-006`）。
 
 ## 9. 每次变更的更新格式
 
@@ -410,6 +411,13 @@ HTTP / JSON
 ```
 
 ## 10. 变更记录
+
+### 2026-09-27：完成全局事务边界与 AOP 架构最终收口（Wave 6：阶段 4）
+
+- 涉及组件：`UserServiceImpl`、`TopicServiceImpl`、`StudentTopicSelectionServiceImpl`、`DeptServiceImpl`、`ProjectServiceImpl`、`WorkTopicSelectionApplication`。
+- 横切逻辑变化：安全摘除 5 个基础 `ServiceImpl` 上的类级 `@Transactional`（达成 `ARCH-05` 与 `AOP-005`，全仓 23 个多步写用例 100% 由应用服务方法级 `@Transactional` 管理）；移除 `@EnableAspectJAutoProxy` 中不必要的 `exposeProxy = true`（达成 `AOP-006`）；新增 `ArchitectureTransactionBoundaryGuardTest` 守护架构红线。
+- 验证：`verify-style.ps1` 全部 0 违规通过；后端全量 210 个单元测试全部通过。
+- 详细记录：[AOP_TRANSACTION_FINALIZATION_COMPLETION.md](./AOP_TRANSACTION_FINALIZATION_COMPLETION.md)。
 
 ### 2026-09-27：完成文件导入导出与 AI 模块重构（Wave 5：阶段 6）
 
