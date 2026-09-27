@@ -96,7 +96,7 @@ HTTP / JSON
 | 用户管理 | `UserController` | 8 | `UserController` | `UserApplicationService`、`UserQueryService` | 已登记 |
 | 认证与密码 | `AuthController` | 10 | `AuthController` | `AuthenticationService`、`PasswordService`、`VerificationCodeService` | 已完成 |
 | 系部与专业 | `UserController` | 9 | `OrganizationController` | `OrganizationApplicationService` | 已登记 |
-| 课题维护与审核 | `UserController` | 9 | `TopicController` | `TopicApplicationService`、`TopicReviewService` | 已登记 |
+| 课题维护与审核 | `TopicController` | 9 | `TopicController` | `TopicApplicationService` | 已完成 |
 | 学生选题 | `TopicSelectionController` | 9 | `TopicSelectionController` | `TopicSelectionApplicationService`、`TopicSelectionQueryService` | 已完成 |
 | 查询与统计 | `UserController` | 8 | `TopicQueryController`、`ReportController` | `TopicQueryService`、`SelectionReportService` | 已登记 |
 | 系统开关与配置 | `UserController` | 12 | `SelectionPolicyController`、`SystemController` | `SelectionPolicyService`、`SystemQueryService` | 已登记 |
@@ -162,15 +162,15 @@ HTTP / JSON
 
 | ID | 方法 | 路径 | 权限 | 用途 | 目标服务 | 状态 |
 |---|---|---|---|---|---|---|
-| TOPIC-001 | POST | `/user/add/topic` | 教师 | 添加课题 | `TopicApplicationService` | 已登记 |
-| TOPIC-002 | POST | `/user/delete/topic` | 教师 | 删除课题 | `TopicApplicationService` | 已登记 |
-| TOPIC-003 | POST | `/user/get/teacher/topicAmount` | 管理员 | 查询教师课题额度 | `TopicQuotaService` | 已登记 |
-| TOPIC-004 | POST | `/user/set/teacher/topicAmount` | 管理员 | 设置教师课题额度 | `TopicQuotaService` | 已登记 |
-| TOPIC-005 | POST | `/user/check/topic` | 系部主任、教师 | 审核或重新审核课题 | `TopicReviewService` | 已登记 |
-| TOPIC-006 | POST | `/user/set/time/by/id` | 管理员 | 发布课题并设置开放时间 | `TopicPublicationService` | 已登记 |
-| TOPIC-007 | POST | `/user/unset/time/by/id` | 管理员 | 取消发布并清空时间 | `TopicPublicationService` | 已登记 |
-| TOPIC-008 | POST | `/user/update/topic` | 教师 | 更新课题 | `TopicApplicationService` | 已登记 |
-| TOPIC-009 | POST | `/user/get/topic/review_level` | 管理员、教师 | 获取 AI 审核等级 | `TopicReviewService` | 已登记 |
+| TOPIC-001 | POST | `/user/add/topic` | 教师 | 添加课题 | `TopicApplicationService` | 已完成（`TopicController`） |
+| TOPIC-002 | POST | `/user/delete/topic` | 教师 | 删除课题 | `TopicApplicationService` | 已完成（`TopicController`，补齐 `@SaCheckLogin`） |
+| TOPIC-003 | POST | `/user/get/teacher/topicAmount` | 管理员 | 查询教师课题额度 | `TopicApplicationService` | 已完成（`TopicController`） |
+| TOPIC-004 | POST | `/user/set/teacher/topicAmount` | 管理员 | 设置教师课题额度 | `TopicApplicationService` | 已完成（`TopicController`） |
+| TOPIC-005 | POST | `/user/check/topic` | 系部主任、教师 | 审核或重新审核课题 | `TopicApplicationService` | 已完成（`TopicController`） |
+| TOPIC-006 | POST | `/user/set/time/by/id` | 管理员 | 发布课题并设置开放时间 | `TopicApplicationService` | 已完成（`TopicController`） |
+| TOPIC-007 | POST | `/user/unset/time/by/id` | 管理员 | 取消发布并清空时间 | `TopicApplicationService` | 已完成（`TopicController`） |
+| TOPIC-008 | POST | `/user/update/topic` | 教师 | 更新课题 | `TopicApplicationService` | 已完成（`TopicController`） |
+| TOPIC-009 | POST | `/user/get/topic/review_level` | 管理员、教师 | 获取 AI 审核等级 | `TopicApplicationService` | 已完成（`TopicController`） |
 
 ### 5.6 学生选题与教师确认（9）
 
@@ -346,10 +346,10 @@ HTTP / JSON
 
 #### Wave 1：阶段 3.1 —— 课题维护、审核与发布（`TOPIC-001`～`TOPIC-009`，9 个接口）+ 高成本资源保护（阶段 5.4）
 
-- [ ] 迁移课题添加、删除、更新、审核、发布/取消发布和教师课题额度管理至 `TopicController`。
-- [ ] 将 7 处 `TransactionTemplate` 与悲观锁下沉至 `TopicApplicationService`、`TopicReviewService`、`TopicPublicationService`、`TopicQuotaService`。
-- [ ] 为 AI 审核等级（`TOPIC-009`）与邮件通知等高成本能力接入 Sentinel 资源保护。
-- [ ] 移除 9 处 Controller 手写 Sentinel 样板代码（剩余 50 $\rightarrow$ 41 处）。
+- [x] 迁移课题添加、删除、更新、审核、发布/取消发布和教师课题额度管理至 `TopicController`。
+- [x] 将 7 处 `TransactionTemplate` 与悲观锁下沉至 `TopicApplicationService`。
+- [x] 为 AI 审核等级（`TOPIC-009`）与邮件通知等高成本能力接入 Sentinel 资源保护。
+- [x] 移除 9 处 Controller 手写 Sentinel 样板代码（剩余 50 $\rightarrow$ 41 处）。
 
 #### Wave 2：阶段 3.2 —— 系部、专业与教师选题组（`ORG-001`～`ORG-009` + `GRP-001`～`GRP-003`，12 个接口）
 
@@ -402,6 +402,18 @@ HTTP / JSON
 ```
 
 ## 10. 变更记录
+
+### 2026-09-27：完成课题维护、审核、发布、配额管理与 AI 查重重构（Wave 1：阶段 3.1 + 阶段 5.4）
+
+- 接口 ID：TOPIC-001～TOPIC-009。
+- 原 Controller：`UserController`。
+- 新 Controller：`TopicController`（`@RequestMapping("/user")`）。
+- 新 Service：`TopicApplicationService`（`TopicApplicationServiceImpl`）。
+- 路径兼容：是（保持 `/user/**` 原有 9 个路由，前端零改动；为 `TOPIC-002` `/user/delete/topic` 补齐显式 `@SaCheckLogin`）。
+- 请求/响应兼容：是（`AddTopicRequest`、`DeleteTopicRequest`、`GetTeacherTopicAmountRequest`、`SetTeacherTopicAmountRequest`、`CheckTopicRequest`、`SetTimeRequest`、`UnSetTimeRequest`、`UpdateTopicRequest`、`GetTopicReviewLevelRequest` 共 9 个请求模型迁入 `model.request.topic`，JSON 字段与 `BaseResponse` 结构 100% 兼容）。
+- 横切逻辑变化：接入 Sa-Token 官方 AOP 鉴权、`@SentinelRateLimit` 注解 AOP 限流（`topic.*`，AI 查重设为 20 QPS 低阈值 + Redis 每日 30 次限流双层防护）；移除原 Controller 中 7 处 `TransactionTemplate` 与 9 处手写 Sentinel 样板代码；7 个写方法采用方法级 `@Transactional(rollbackFor = Exception.class)`，只读配额查询与外部 AI 调用不开启长事务。
+- 验证：`verify-style.ps1` 全部 0 违规通过；后端 172 个单元测试全部通过。
+- 详细记录：[TOPIC_DOMAIN_REFACTOR_COMPLETION.md](./TOPIC_DOMAIN_REFACTOR_COMPLETION.md)。
 
 ### 2026-09-27：完成选题查询用例重构与选题域全量闭环（阶段 2 第二步）
 
