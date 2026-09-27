@@ -3,6 +3,7 @@ package cn.com.edtechhub.worktopicselection.manager.bootstrap;
 import cn.com.edtechhub.worktopicselection.constant.UserConstant;
 import cn.com.edtechhub.worktopicselection.model.entity.User;
 import cn.com.edtechhub.worktopicselection.model.enums.UserRoleEnum;
+import cn.com.edtechhub.worktopicselection.service.PasswordService;
 import cn.com.edtechhub.worktopicselection.service.UserService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +28,12 @@ public class AdminBootstrap implements CommandLineRunner {
      */
     @Resource
     private UserService userService;
+
+    /**
+     * 注入密码服务依赖
+     */
+    @Resource
+    private PasswordService passwordService;
 
     /**
      * 引导管理员登录账号配置
@@ -59,7 +66,7 @@ public class AdminBootstrap implements CommandLineRunner {
         if (StringUtils.isAnyBlank(account, name, password)) {
             throw new IllegalStateException("管理员引导账号、姓名和密码必须同时配置");
         }
-        if (!userService.isPasswordValid(password)) {
+        if (!passwordService.isPasswordValid(password)) {
             throw new IllegalStateException("管理员引导密码必须为 8 到 72 个 UTF-8 字节");
         }
 
@@ -82,7 +89,7 @@ public class AdminBootstrap implements CommandLineRunner {
         User administrator = new User();
         administrator.setUserAccount(normalizedAccount);
         administrator.setUserName(name.trim());
-        administrator.setUserPassword(userService.encodePassword(password));
+        administrator.setUserPassword(passwordService.encodePassword(password));
         administrator.setUserRole(UserRoleEnum.ADMIN.getCode());
         administrator.setStatus(null);
 

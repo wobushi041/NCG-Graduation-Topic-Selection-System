@@ -2,6 +2,7 @@ package cn.com.edtechhub.worktopicselection.manager.bootstrap;
 
 import cn.com.edtechhub.worktopicselection.model.entity.User;
 import cn.com.edtechhub.worktopicselection.model.enums.UserRoleEnum;
+import cn.com.edtechhub.worktopicselection.service.PasswordService;
 import cn.com.edtechhub.worktopicselection.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -20,7 +21,7 @@ class AdminBootstrapTest {
     @Test
     void blankConfigurationDoesNothing() {
         UserService userService = mock(UserService.class);
-        AdminBootstrap bootstrap = bootstrap(userService, "", "", "");
+        AdminBootstrap bootstrap = bootstrap(userService, mock(PasswordService.class), "", "", "");
 
         bootstrap.run();
 
@@ -30,11 +31,13 @@ class AdminBootstrapTest {
     @Test
     void configuredBootstrapCreatesInitialAdminWithEncodedPassword() {
         UserService userService = mock(UserService.class);
-        when(userService.isPasswordValid("Temporary-Admin-9!")).thenReturn(true);
-        when(userService.encodePassword("Temporary-Admin-9!")).thenReturn("bcrypt-hash");
+        PasswordService passwordService = mock(PasswordService.class);
+        when(passwordService.isPasswordValid("Temporary-Admin-9!")).thenReturn(true);
+        when(passwordService.encodePassword("Temporary-Admin-9!")).thenReturn("bcrypt-hash");
         when(userService.save(any(User.class))).thenReturn(true);
         AdminBootstrap bootstrap = bootstrap(
                 userService,
+                passwordService,
                 " admin001 ",
                 " 本地管理员 ",
                 "Temporary-Admin-9!"
@@ -55,10 +58,12 @@ class AdminBootstrapTest {
     @Test
     void configuredBootstrapDoesNothingWhenAnyAdminAlreadyExists() {
         UserService userService = mock(UserService.class);
-        when(userService.isPasswordValid("Temporary-Admin-9!")).thenReturn(true);
+        PasswordService passwordService = mock(PasswordService.class);
+        when(passwordService.isPasswordValid("Temporary-Admin-9!")).thenReturn(true);
         when(userService.count(any())).thenReturn(1L);
         AdminBootstrap bootstrap = bootstrap(
                 userService,
+                passwordService,
                 "admin002",
                 "另一个管理员",
                 "Temporary-Admin-9!"
@@ -71,12 +76,14 @@ class AdminBootstrapTest {
 
     private static AdminBootstrap bootstrap(
             UserService userService,
+            PasswordService passwordService,
             String account,
             String name,
             String password
     ) {
         AdminBootstrap bootstrap = new AdminBootstrap();
         ReflectionTestUtils.setField(bootstrap, "userService", userService);
+        ReflectionTestUtils.setField(bootstrap, "passwordService", passwordService);
         ReflectionTestUtils.setField(bootstrap, "account", account);
         ReflectionTestUtils.setField(bootstrap, "name", name);
         ReflectionTestUtils.setField(bootstrap, "password", password);

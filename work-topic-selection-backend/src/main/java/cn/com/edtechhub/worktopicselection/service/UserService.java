@@ -34,54 +34,6 @@ public interface UserService extends IService<User> {
     User userIsExist(String userAccount, String userName);
 
     /**
-     * 对新设置的明文密码进行安全单向散列编码
-     *
-     * @param rawPassword 明文密码
-     * @return 编码后的密码密文
-     */
-    String encodePassword(String rawPassword);
-
-    /**
-     * 在历史密码升级场景下对明文密码进行兼容散列编码
-     *
-     * @param rawPassword 明文密码
-     * @return 编码后的密码密文
-     */
-    String encodePasswordForMigration(String rawPassword);
-
-    /**
-     * 校验输入的明文密码与已存储的散列密码是否匹配
-     *
-     * @param rawPassword     输入的明文密码
-     * @param encodedPassword 已存储的散列密码
-     * @return 密码是否匹配
-     */
-    boolean matchesPassword(String rawPassword, String encodedPassword);
-
-    /**
-     * 判断已存储的密码散列是否需要升级为新版加密格式
-     *
-     * @param encodedPassword 已存储的散列密码
-     * @return 是否需要升级加密格式
-     */
-    boolean needsPasswordUpgrade(String encodedPassword);
-
-    /**
-     * 生成只展示一次的随机临时密码
-     *
-     * @return 随机临时密码字符串
-     */
-    String generateTemporaryPassword();
-
-    /**
-     * 校验明文密码长度是否符合安全策略要求
-     *
-     * @param rawPassword 明文密码
-     * @return 密码长度是否合法
-     */
-    boolean isPasswordValid(String rawPassword);
-
-    /**
      * 获取当前已登录用户的唯一标识
      *
      * @return 当前登录用户 ID

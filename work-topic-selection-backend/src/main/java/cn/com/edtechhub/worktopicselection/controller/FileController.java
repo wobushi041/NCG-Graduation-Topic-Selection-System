@@ -78,6 +78,12 @@ public class FileController {
     private UserService userService;
 
     /**
+     * 注入密码服务依赖
+     */
+    @Resource
+    private PasswordService passwordService;
+
+    /**
      * 注入选题服务依赖
      */
     @Resource
@@ -172,7 +178,7 @@ public class FileController {
                     // 检查表格空白填写的问题
                     ThrowUtils.throwIf(StringUtils.isAnyBlank(userAccount, name, department, temporaryPassword), CodeBindMessageEnums.PARAMS_ERROR, "表中第 " + i + " 行存在必填项空白");
                     ThrowUtils.throwIf(userAccount.length() > UserConstant.MAX_USER_ACCOUNT_LENGTH, CodeBindMessageEnums.PARAMS_ERROR, "表中第 " + i + " 行的用户账号不能超过 128 个字符");
-                    ThrowUtils.throwIf(temporaryPassword.length() < 12 || !userService.isPasswordValid(temporaryPassword), CodeBindMessageEnums.PARAMS_ERROR, "表中第 " + i + " 行的临时密码必须至少 12 个字符，且不能超过 72 个 UTF-8 字节");
+                    ThrowUtils.throwIf(temporaryPassword.length() < 12 || !passwordService.isPasswordValid(temporaryPassword), CodeBindMessageEnums.PARAMS_ERROR, "表中第 " + i + " 行的临时密码必须至少 12 个字符，且不能超过 72 个 UTF-8 字节");
                     ThrowUtils.throwIf(!temporaryPasswords.add(temporaryPassword), CodeBindMessageEnums.PARAMS_ERROR, "表中第 " + i + " 行的临时密码与前面的账号重复，请为每个账号设置不同密码");
 
                     // 检查用户账号是否已存在, 存在则跳过
@@ -184,7 +190,7 @@ public class FileController {
                     // 创建新的用户
                     user = new User();
                     user.setUserAccount(userAccount);
-                    user.setUserPassword(userService.encodePassword(temporaryPassword));
+                    user.setUserPassword(passwordService.encodePassword(temporaryPassword));
                     user.setUserName(name);
                     user.setUserRole(request.getStatus());
                     user.setDept(department);
