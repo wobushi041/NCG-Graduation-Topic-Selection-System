@@ -126,7 +126,10 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 处理 JSON 语法错误和字段类型转换失败。
+     * 将 JSON 语法错误和字段类型转换失败包装为统一参数错误响应
+     *
+     * @param ex HTTP 消息不可读异常
+     * @return 统一参数错误响应
      */
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public BaseResponse<?> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {

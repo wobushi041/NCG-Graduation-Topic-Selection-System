@@ -4,10 +4,10 @@ import cn.com.edtechhub.worktopicselection.constant.UserConstant;
 import cn.com.edtechhub.worktopicselection.event.CredentialsChangedEvent;
 import cn.com.edtechhub.worktopicselection.exception.CodeBindMessageEnums;
 import cn.com.edtechhub.worktopicselection.manager.security.SecurityRateLimitManager;
-import cn.com.edtechhub.worktopicselection.model.dto.auth.AdminResetPasswordRequest;
-import cn.com.edtechhub.worktopicselection.model.dto.auth.ChangePasswordRequest;
-import cn.com.edtechhub.worktopicselection.model.dto.auth.ResetPasswordByCodeRequest;
 import cn.com.edtechhub.worktopicselection.model.entity.User;
+import cn.com.edtechhub.worktopicselection.model.request.auth.AdminResetPasswordRequest;
+import cn.com.edtechhub.worktopicselection.model.request.auth.ChangePasswordRequest;
+import cn.com.edtechhub.worktopicselection.model.request.auth.ResetPasswordByCodeRequest;
 import cn.com.edtechhub.worktopicselection.model.vo.AdminResetPasswordVO;
 import cn.com.edtechhub.worktopicselection.service.PasswordService;
 import cn.com.edtechhub.worktopicselection.service.UserService;
@@ -28,24 +28,87 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * 基于 BCrypt、旧 MD5 兼容校验和事务事件实现密码业务
+ *
+ * @author wobushi041
+ */
 @Service
 public class PasswordServiceImpl implements PasswordService {
 
+    /**
+     * BCrypt 密码编码器
+     */
     private static final BCryptPasswordEncoder PASSWORD_ENCODER = new BCryptPasswordEncoder();
+
+    /**
+     * 临时密码安全随机数生成器
+     */
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
+    /**
+     * 临时密码大写字母集合
+     */
     private static final String UPPERCASE = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+
+    /**
+     * 临时密码小写字母集合
+     */
     private static final String LOWERCASE = "abcdefghijkmnopqrstuvwxyz";
+
+    /**
+     * 临时密码数字集合
+     */
     private static final String DIGITS = "23456789";
+
+    /**
+     * 临时密码特殊字符集合
+     */
     private static final String SPECIALS = "!@#$%*-_";
+
+    /**
+     * 临时密码完整字符集合
+     */
     private static final String TEMPORARY_PASSWORD_ALPHABET = UPPERCASE + LOWERCASE + DIGITS + SPECIALS;
+
+    /**
+     * 临时密码字符长度
+     */
     private static final int TEMPORARY_PASSWORD_LENGTH = 16;
+
+    /**
+     * 未知账号密码校验使用的伪 BCrypt 摘要
+     */
     private static final String DUMMY_PASSWORD_HASH = "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
 
+    /**
+     * 注入用户服务依赖
+     */
     private final UserService userService;
+
+    /**
+     * 注入验证码服务依赖
+     */
     private final VerificationCodeService verificationCodeService;
+
+    /**
+     * 注入安全业务限频管理器依赖
+     */
     private final SecurityRateLimitManager rateLimitManager;
+
+    /**
+     * 注入应用事件发布器依赖
+     */
     private final ApplicationEventPublisher eventPublisher;
 
+    /**
+     * 初始化密码服务实现
+     *
+     * @param userService             用户服务
+     * @param verificationCodeService 验证码服务
+     * @param rateLimitManager        安全业务限频管理器
+     * @param eventPublisher          应用事件发布器
+     */
     public PasswordServiceImpl(UserService userService, VerificationCodeService verificationCodeService,
                                SecurityRateLimitManager rateLimitManager,
                                ApplicationEventPublisher eventPublisher) {
@@ -55,6 +118,14 @@ public class PasswordServiceImpl implements PasswordService {
         this.eventPublisher = eventPublisher;
     }
 
+    /// 密码编码与校验 ///
+
+    /**
+     * 校验 UTF-8 字节长度后使用 BCrypt 编码密码
+     *
+     * @param rawPassword 原始密码
+     * @return BCrypt 密码摘要
+     */
     @Override
     public String encodePassword(String rawPassword) {
         if (!isPasswordValid(rawPassword)) {
@@ -63,6 +134,12 @@ public class PasswordServiceImpl implements PasswordService {
         return PASSWORD_ENCODER.encode(rawPassword);
     }
 
+    /**
+     * 对符合迁移上限的旧密码使用 BCrypt 重新编码
+     *
+     * @param rawPassword 原始密码
+     * @return BCrypt 密码摘要
+     */
     @Override
     public String encodePasswordForMigration(String rawPassword) {
         if (rawPassword == null || rawPassword.isEmpty()
@@ -72,6 +149,13 @@ public class PasswordServiceImpl implements PasswordService {
         return PASSWORD_ENCODER.encode(rawPassword);
     }
 
+    /**
+     * 按 BCrypt 或旧 MD5 格式校验原始密码
+     *
+     * @param rawPassword     原始密码
+     * @param encodedPassword 已编码密码
+     * @return 密码是否匹配
+     */
     @Override
     public boolean matchesPassword(String rawPassword, String encodedPassword) {
         if (rawPassword == null || encodedPassword == null) {
@@ -93,11 +177,24 @@ public class PasswordServiceImpl implements PasswordService {
                 encodedPassword.toLowerCase().getBytes(StandardCharsets.US_ASCII));
     }
 
+    /**
+     * 通过 MD5 摘要格式判断密码是否需要升级
+     *
+     * @param encodedPassword 已编码密码
+     * @return 是否需要升级
+     */
     @Override
     public boolean needsPasswordUpgrade(String encodedPassword) {
         return encodedPassword != null && encodedPassword.matches("(?i)^[0-9a-f]{32}$");
     }
 
+    /// 临时密码 ///
+
+    /**
+     * 使用 SecureRandom 生成并打乱符合复杂度要求的临时密码
+     *
+     * @return 随机临时密码
+     */
     @Override
     public String generateTemporaryPassword() {
         List<Character> characters = new ArrayList<>(TEMPORARY_PASSWORD_LENGTH);
@@ -116,6 +213,12 @@ public class PasswordServiceImpl implements PasswordService {
         return password.toString();
     }
 
+    /**
+     * 按 UTF-8 字节数校验密码长度
+     *
+     * @param rawPassword 原始密码
+     * @return 密码是否有效
+     */
     @Override
     public boolean isPasswordValid(String rawPassword) {
         if (rawPassword == null) {
@@ -125,6 +228,14 @@ public class PasswordServiceImpl implements PasswordService {
         return bytes >= 8 && bytes <= 72;
     }
 
+    /// 密码变更 ///
+
+    /**
+     * 查询目标账号、生成临时密码并在事务提交后注销用户会话
+     *
+     * @param request 管理员重置密码请求
+     * @return 账号与临时密码
+     */
     @Override
     @Transactional
     public AdminResetPasswordVO adminReset(AdminResetPasswordRequest request) {
@@ -143,6 +254,13 @@ public class PasswordServiceImpl implements PasswordService {
         return new AdminResetPasswordVO(user.getUserAccount(), temporaryPassword);
     }
 
+    /**
+     * 校验当前密码和邮箱凭证后更新 BCrypt 密码
+     *
+     * @param request  修改密码请求
+     * @param clientIp 客户端 IP
+     * @return 用户 id
+     */
     @Override
     @Transactional
     public Long changePassword(ChangePasswordRequest request, String clientIp) {
@@ -173,6 +291,12 @@ public class PasswordServiceImpl implements PasswordService {
         return user.getId();
     }
 
+    /**
+     * 原子消费 Redis 重置码后更新 BCrypt 密码
+     *
+     * @param request 重置密码请求
+     * @return 用户 id
+     */
     @Override
     @Transactional
     public Long resetPassword(ResetPasswordByCodeRequest request) {
@@ -188,6 +312,12 @@ public class PasswordServiceImpl implements PasswordService {
         return user.getId();
     }
 
+    /**
+     * 持久化新密码并发布凭证变更事务事件
+     *
+     * @param user        目标用户
+     * @param newPassword 新密码
+     */
     private void updatePassword(User user, String newPassword) {
         user.setUserPassword(encodePassword(newPassword));
         user.setStatus("老用户");
@@ -195,7 +325,14 @@ public class PasswordServiceImpl implements PasswordService {
         eventPublisher.publishEvent(new CredentialsChangedEvent(user.getId()));
     }
 
+    /**
+     * 从指定字符集合中随机选择一个字符
+     *
+     * @param characters 候选字符集合
+     * @return 随机字符
+     */
     private static char randomCharacter(String characters) {
         return characters.charAt(SECURE_RANDOM.nextInt(characters.length()));
     }
+
 }

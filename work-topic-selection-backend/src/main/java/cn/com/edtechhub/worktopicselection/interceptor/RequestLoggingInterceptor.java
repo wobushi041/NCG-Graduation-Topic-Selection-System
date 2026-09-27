@@ -19,7 +19,7 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * 请求日志与恶意流量拦截切面
+ * 请求日志与恶意流量拦截器
  *
  * @author wobushi041
  */
@@ -71,7 +71,7 @@ public class RequestLoggingInterceptor implements HandlerInterceptor {
         Date unbanDate = null;
         String deviceInfo = DeviceUtils.getRequestDeviceInfo(request);
 
-        // 设置恶意流量拦截器(不要对外来访客进行拦截, 否则有可能把整个学校的 ip 都屏蔽)
+        // 设置恶意流量拦截器（不要对外来访客进行拦截，否则可能屏蔽整个学校的 IP）
         if (!loginId.equals("外来访客")) {
             // 设置 Redis 键名
             String redisKey = "user:requests:" + loginId;
@@ -81,7 +81,8 @@ public class RequestLoggingInterceptor implements HandlerInterceptor {
             count = countStr == null ? 0 : Integer.parseInt(countStr);
 
             // 设置白名单
-            List<Long> ids = new ArrayList<>(); // 把 9 - 16 的用户加入白名单
+            // 把 9 - 16 的用户加入白名单
+            List<Long> ids = new ArrayList<>();
             for (long i = 1; i <= 16; i++) {
                 ids.add(i);
             }
@@ -89,9 +90,9 @@ public class RequestLoggingInterceptor implements HandlerInterceptor {
             // 不在白名单中, 并且超过限制就封禁
             if (count >= MAX_REQUESTS && !ids.contains(Long.parseLong(loginId))) {
                 // 获取解禁日期
-                long remainingSeconds = StpUtil.getDisableTime(loginId); // 剩余封禁秒数
-                long unbanTimestamp = System.currentTimeMillis() + remainingSeconds * 1000; // 毫秒时间戳
-                unbanDate = new Date(unbanTimestamp); // 转为日期对象
+                long remainingSeconds = StpUtil.getDisableTime(loginId);
+                long unbanTimestamp = System.currentTimeMillis() + remainingSeconds * 1000;
+                unbanDate = new Date(unbanTimestamp);
                 if (remainingSeconds > 0) {
                     ThrowUtils.throwIf(true, CodeBindMessageEnums.USER_DISABLE_ERROR, "您的帐号被封禁中, 请等待一段时间再操作, 将在 " + unbanDate + " 解封, 请不要恶意访问本站");
                 }
@@ -106,7 +107,8 @@ public class RequestLoggingInterceptor implements HandlerInterceptor {
             }
         }
         log.info("[RequestLoggingInterceptor] 拦截到请求, 来自: {} {} == {} {} {} {}_{} {} == {}", ip, device, loginId, method, uri, count, MAX_REQUESTS, "not-ban", deviceInfo);
-        return true; // 返回 false 会终止请求, 可以利用这一点进行 IP 屏蔽
+        // 返回 false 会终止请求，可以利用这一点进行 IP 屏蔽
+        return true;
     }
 
 }

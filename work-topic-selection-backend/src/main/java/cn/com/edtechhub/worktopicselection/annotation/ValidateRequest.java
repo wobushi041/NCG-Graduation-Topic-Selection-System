@@ -6,9 +6,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 声明由请求 DTO 校验切面校验方法中的 RequestBody 参数。
+ * 声明由请求 DTO 校验切面校验方法中的 RequestBody 参数
+ *
+ * @author wobushi041
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ValidateRequest {
+
 }

@@ -24,26 +24,98 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 
+/**
+ * 基于 Redis 一次性消费和邮件服务实现验证码业务
+ *
+ * @author wobushi041
+ */
 @Service
 public class VerificationCodeServiceImpl implements VerificationCodeService {
 
+    /**
+     * 密码重置码 Redis 键前缀
+     */
     private static final String PASSWORD_RESET_CODE_PREFIX = "password-reset:";
+
+    /**
+     * 密码重置码限频 Redis 键前缀
+     */
     private static final String PASSWORD_RESET_RATE_PREFIX = "password-reset-rate:";
+
+    /**
+     * 邮箱验证码 Redis 键前缀
+     */
     private static final String EMAIL_CODE_PREFIX = "email-captcha:";
+
+    /**
+     * 邮箱验证码限频 Redis 键前缀
+     */
     private static final String EMAIL_RATE_PREFIX = "email-captcha-rate:";
+
+    /**
+     * 邮箱验证凭证 Redis 键前缀
+     */
     private static final String EMAIL_PROOF_PREFIX = "email-proof:";
+
+    /**
+     * 验证码有效秒数
+     */
     private static final long CODE_TTL_SECONDS = 2 * 60;
+
+    /**
+     * 邮箱验证凭证有效秒数
+     */
     private static final long PROOF_TTL_SECONDS = 5 * 60;
+
+    /**
+     * 密码重置码字符集合
+     */
     private static final String RESET_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+
+    /**
+     * 邮箱验证码字符集合
+     */
     private static final String CAPTCHA_ALPHABET = "23456789";
 
+    /**
+     * 验证码安全随机数生成器
+     */
     private final SecureRandom secureRandom = new SecureRandom();
+
+    /**
+     * 注入用户服务依赖
+     */
     private final UserService userService;
+
+    /**
+     * 注入 Redis 管理器依赖
+     */
     private final RedisManager redisManager;
+
+    /**
+     * 注入邮件服务依赖
+     */
     private final MailService mailService;
+
+    /**
+     * 注入安全业务限频管理器依赖
+     */
     private final SecurityRateLimitManager rateLimitManager;
+
+    /**
+     * 允许使用的邮箱域名集合
+     */
     private final Set<String> allowedEmailDomains;
 
+    /**
+     * 初始化验证码服务并解析邮箱域名白名单
+     *
+     * @param userService      用户服务
+     * @param redisManager     Redis 管理器
+     * @param mailService      邮件服务
+     * @param rateLimitManager 安全业务限频管理器
+     * @param domains          邮箱域名白名单配置
+     */
     public VerificationCodeServiceImpl(UserService userService, RedisManager redisManager,
                                        MailService mailService, SecurityRateLimitManager rateLimitManager,
                                        @Value("${app.security.allowed-email-domains:qq.com,gmail.com,nfu.edu.cn}") String domains) {
@@ -59,6 +131,15 @@ public class VerificationCodeServiceImpl implements VerificationCodeService {
                 .forEach(this.allowedEmailDomains::add);
     }
 
+    /// 密码重置码 ///
+
+    /**
+     * 将密码重置码写入 Redis 并发送到账号绑定邮箱
+     *
+     * @param account  账号
+     * @param clientIp 客户端 IP
+     * @return 防止账号枚举的通用发送结果
+     */
     @Override
     public String sendPasswordResetCode(String account, String clientIp) {
         String normalizedAccount = account.trim();
@@ -83,6 +164,15 @@ public class VerificationCodeServiceImpl implements VerificationCodeService {
         return response;
     }
 
+    /// 邮箱验证码 ///
+
+    /**
+     * 将邮箱验证码写入 Redis 并通过邮件服务发送
+     *
+     * @param email    邮箱
+     * @param clientIp 客户端 IP
+     * @return 发送结果
+     */
     @Override
     public String sendEmailCode(String email, String clientIp) {
         String normalizedEmail = requireAllowedEmail(email);
@@ -100,6 +190,13 @@ public class VerificationCodeServiceImpl implements VerificationCodeService {
         return "发送成功，请查收邮箱";
     }
 
+    /**
+     * 原子消费 Redis 邮箱验证码并签发一次性验证凭证
+     *
+     * @param email 邮箱
+     * @param code  验证码
+     * @return 邮箱验证凭证
+     */
     @Override
     public EmailVerificationVO verifyEmailCode(String email, String code) {
         String normalizedEmail = requireAllowedEmail(email);
@@ -111,6 +208,13 @@ public class VerificationCodeServiceImpl implements VerificationCodeService {
         return new EmailVerificationVO(token, PROOF_TTL_SECONDS);
     }
 
+    /**
+     * 按邮箱匹配并原子消费 Redis 验证凭证
+     *
+     * @param email      邮箱
+     * @param proofToken 邮箱验证凭证
+     * @return 凭证是否有效并成功消费
+     */
     @Override
     public boolean consumeEmailProof(String email, String proofToken) {
         if (StringUtils.isBlank(proofToken)) {
@@ -120,16 +224,37 @@ public class VerificationCodeServiceImpl implements VerificationCodeService {
         return redisManager.consumeValue(EMAIL_PROOF_PREFIX + sha256(proofToken), normalizedEmail) == 1;
     }
 
+    /**
+     * 按账号匹配并原子消费 Redis 密码重置码
+     *
+     * @param account   账号
+     * @param resetCode 密码重置码
+     * @return Redis 原子消费结果
+     */
     @Override
     public long consumePasswordResetCode(String account, String resetCode) {
         return redisManager.consumeValue(PASSWORD_RESET_CODE_PREFIX + account, resetCode);
     }
 
+    /// 数据规范化 ///
+
+    /**
+     * 去除邮箱首尾空白并转换为小写
+     *
+     * @param email 邮箱
+     * @return 规范化邮箱地址
+     */
     @Override
     public String normalizeEmail(String email) {
         return email == null ? null : email.trim().toLowerCase(Locale.ROOT);
     }
 
+    /**
+     * 校验邮箱域名是否位于配置白名单
+     *
+     * @param email 邮箱
+     * @return 规范化邮箱地址
+     */
     private String requireAllowedEmail(String email) {
         String normalized = normalizeEmail(email);
         int at = normalized == null ? -1 : normalized.lastIndexOf('@');
@@ -139,6 +264,15 @@ public class VerificationCodeServiceImpl implements VerificationCodeService {
         return normalized;
     }
 
+    /// 凭证生成 ///
+
+    /**
+     * 从指定字符集合生成安全随机码
+     *
+     * @param length   随机码长度
+     * @param alphabet 候选字符集合
+     * @return 安全随机码
+     */
     private String generateCode(int length, String alphabet) {
         StringBuilder value = new StringBuilder(length);
         for (int i = 0; i < length; i++) {
@@ -147,12 +281,23 @@ public class VerificationCodeServiceImpl implements VerificationCodeService {
         return value.toString();
     }
 
+    /**
+     * 生成 URL 安全的一次性邮箱验证凭证
+     *
+     * @return 邮箱验证凭证
+     */
     private String generateProofToken() {
         byte[] bytes = new byte[32];
         secureRandom.nextBytes(bytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
+    /**
+     * 计算凭证的 SHA-256 十六进制摘要
+     *
+     * @param value 原始凭证
+     * @return SHA-256 十六进制摘要
+     */
     private static String sha256(String value) {
         try {
             byte[] digest = MessageDigest.getInstance("SHA-256")
@@ -166,4 +311,5 @@ public class VerificationCodeServiceImpl implements VerificationCodeService {
             throw new IllegalStateException("SHA-256 algorithm unavailable", exception);
         }
     }
+
 }

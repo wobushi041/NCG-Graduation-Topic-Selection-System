@@ -11,18 +11,37 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 集中维护并一次性发布 Sentinel 流控规则。
+ * 集中维护并一次性发布 Sentinel 流控规则
+ *
+ * @author wobushi041
  */
 @Component
 public class SentinelRuleRegistry {
 
+    /**
+     * 注入认证接口限流配置
+     */
     private final SentinelRateLimitProperties properties;
+
+    /**
+     * Sentinel 流控规则集合
+     */
     private final Map<String, FlowRule> rules = new ConcurrentHashMap<>();
 
+    /**
+     * 初始化 Sentinel 规则注册器
+     *
+     * @param properties 认证接口限流配置
+     */
     public SentinelRuleRegistry(SentinelRateLimitProperties properties) {
         this.properties = properties;
     }
 
+    /// 认证规则 ///
+
+    /**
+     * 注册并发布认证模块的全部 Sentinel 流控规则
+     */
     @PostConstruct
     public void registerAuthenticationRules() {
         register("auth.login", properties.getLogin(), false);
@@ -38,10 +57,25 @@ public class SentinelRuleRegistry {
         publish();
     }
 
+    /// 动态注册 ///
+
+    /**
+     * 注册单个 Sentinel 流控规则并立即发布规则快照
+     *
+     * @param resource Sentinel 资源名称
+     * @param qps      QPS 阈值
+     */
     public synchronized void register(String resource, double qps) {
         register(resource, qps, true);
     }
 
+    /**
+     * 更新单个 Sentinel 流控规则并按需发布规则快照
+     *
+     * @param resource           Sentinel 资源名称
+     * @param qps                QPS 阈值
+     * @param publishImmediately 是否立即发布规则快照
+     */
     private void register(String resource, double qps, boolean publishImmediately) {
         FlowRule current = rules.get(resource);
         if (current != null && Double.compare(current.getCount(), qps) == 0) {
@@ -56,7 +90,11 @@ public class SentinelRuleRegistry {
         }
     }
 
+    /**
+     * 将当前规则快照发布到 Sentinel
+     */
     private void publish() {
         FlowRuleManager.loadRules(new ArrayList<>(rules.values()));
     }
+
 }

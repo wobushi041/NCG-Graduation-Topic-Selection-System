@@ -23,7 +23,7 @@ import java.util.List;
 public class CrossDomainConfig implements WebMvcConfigurer {
 
     /**
-     * 注入请求日志拦截切面依赖
+     * 注入请求日志拦截器依赖
      */
     @Resource
     private RequestLoggingInterceptor requestLoggingInterceptor;

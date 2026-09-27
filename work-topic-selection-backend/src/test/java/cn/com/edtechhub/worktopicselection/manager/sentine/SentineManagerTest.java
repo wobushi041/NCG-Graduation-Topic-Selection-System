@@ -13,6 +13,11 @@ import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * Sentinel 兼容管理器测试
+ *
+ * @author wobushi041
+ */
 class SentineManagerTest {
 
     @AfterEach
@@ -20,13 +25,17 @@ class SentineManagerTest {
         FlowRuleManager.loadRules(Collections.emptyList());
     }
 
+    // 场景：测试连续注册资源时保留已经存在的 Sentinel 规则
     @Test
     void addingAResourceDoesNotReplaceExistingRules() {
+        // 1. 准备集中式 Sentinel 规则注册器
         SentinelRuleRegistry manager = new SentinelRuleRegistry(new SentinelRateLimitProperties());
 
+        // 2. 连续注册两个独立资源
         manager.register("first-resource", 10);
         manager.register("second-resource", 20);
 
+        // 3. 断言两个资源规则同时存在
         List<String> resources = FlowRuleManager.getRules()
                 .stream()
                 .map(FlowRule::getResource)
@@ -34,4 +43,5 @@ class SentineManagerTest {
         assertTrue(resources.contains("first-resource"));
         assertTrue(resources.contains("second-resource"));
     }
+
 }

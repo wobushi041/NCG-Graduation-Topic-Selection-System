@@ -3,10 +3,10 @@ package cn.com.edtechhub.worktopicselection.service.impl;
 import cn.com.edtechhub.worktopicselection.exception.CodeBindMessageEnums;
 import cn.com.edtechhub.worktopicselection.manager.satoken.AuthSessionManager;
 import cn.com.edtechhub.worktopicselection.manager.security.SecurityRateLimitManager;
-import cn.com.edtechhub.worktopicselection.model.dto.auth.LoginRequest;
-import cn.com.edtechhub.worktopicselection.model.dto.auth.RoleSwitchRequest;
 import cn.com.edtechhub.worktopicselection.model.entity.User;
 import cn.com.edtechhub.worktopicselection.model.enums.UserRoleEnum;
+import cn.com.edtechhub.worktopicselection.model.request.auth.LoginRequest;
+import cn.com.edtechhub.worktopicselection.model.request.auth.RoleSwitchRequest;
 import cn.com.edtechhub.worktopicselection.model.vo.LoginUserVO;
 import cn.com.edtechhub.worktopicselection.model.vo.RoleSwitchAvailabilityVO;
 import cn.com.edtechhub.worktopicselection.service.AuthenticationService;
@@ -21,16 +21,47 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * 基于数据库账号、BCrypt 密码和 Sa-Token 会话实现认证业务
+ *
+ * @author wobushi041
+ */
 @Service
 public class AuthenticationServiceImpl implements AuthenticationService {
 
+    /**
+     * 未知账号密码校验使用的伪 BCrypt 摘要
+     */
     private static final String DUMMY_PASSWORD_HASH = "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
 
+    /**
+     * 注入用户服务依赖
+     */
     private final UserService userService;
+
+    /**
+     * 注入密码服务依赖
+     */
     private final PasswordService passwordService;
+
+    /**
+     * 注入安全业务限频管理器依赖
+     */
     private final SecurityRateLimitManager rateLimitManager;
+
+    /**
+     * 注入认证会话管理器依赖
+     */
     private final AuthSessionManager authSessionManager;
 
+    /**
+     * 初始化认证服务实现
+     *
+     * @param userService        用户服务
+     * @param passwordService    密码服务
+     * @param rateLimitManager   安全业务限频管理器
+     * @param authSessionManager 认证会话管理器
+     */
     public AuthenticationServiceImpl(UserService userService, PasswordService passwordService,
                                      SecurityRateLimitManager rateLimitManager,
                                      AuthSessionManager authSessionManager) {
@@ -40,6 +71,16 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         this.authSessionManager = authSessionManager;
     }
 
+    /// 登录会话 ///
+
+    /**
+     * 通过数据库账号和 BCrypt 兼容校验建立 Sa-Token 会话
+     *
+     * @param request  登录请求
+     * @param clientIp 客户端 IP
+     * @param device   登录设备类型
+     * @return 登录用户信息
+     */
     @Override
     public LoginUserVO login(LoginRequest request, String clientIp, String device) {
         String account = request.getAccount().trim();
@@ -73,12 +114,26 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return userService.getLoginUserVO(user);
     }
 
+    /**
+     * 通过 Sa-Token 注销当前登录会话
+     *
+     * @return 是否注销成功
+     */
     @Override
     public boolean logout() {
         authSessionManager.logoutCurrent();
         return true;
     }
 
+    /// 角色切换 ///
+
+    /**
+     * 根据同名、同系和同邮箱账号匹配结果切换 Sa-Token 会话
+     *
+     * @param request 角色切换请求
+     * @param device  登录设备类型
+     * @return 切换后的登录用户信息
+     */
     @Override
     public LoginUserVO switchRole(RoleSwitchRequest request, String device) {
         User loginUser = userService.userGetCurrentLoginUser();
@@ -100,6 +155,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return userService.getLoginUserVO(target);
     }
 
+    /**
+     * 查询数据库中的配对账号并计算角色切换可用性
+     *
+     * @return 角色切换可用性
+     */
     @Override
     public RoleSwitchAvailabilityVO getRoleSwitchAvailability() {
         User loginUser = userService.userGetCurrentLoginUser();
@@ -115,6 +175,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return new RoleSwitchAvailabilityVO(false, null);
     }
 
+    /**
+     * 按身份配对规则查询目标角色账号
+     *
+     * @param loginUser  当前登录用户
+     * @param targetRole 目标角色编码
+     * @return 符合配对条件的用户列表
+     */
     private List<User> findCounterpart(User loginUser, int targetRole) {
         return userService.list(new QueryWrapper<User>()
                 .ne("id", loginUser.getId())
@@ -125,6 +192,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .eq("userRole", targetRole));
     }
 
+    /**
+     * 判断当前角色和目标角色是否构成允许的切换组合
+     *
+     * @param currentRole 当前角色编码
+     * @param targetRole  目标角色编码
+     * @return 是否允许切换
+     */
     private static boolean isAllowedRoleToggle(Integer currentRole, Integer targetRole) {
         return (Objects.equals(currentRole, UserRoleEnum.TEACHER.getCode())
                 && Objects.equals(targetRole, UserRoleEnum.DEPT.getCode()))
@@ -132,6 +206,12 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 && Objects.equals(targetRole, UserRoleEnum.TEACHER.getCode()));
     }
 
+    /**
+     * 根据角色描述查找角色枚举
+     *
+     * @param description 角色描述
+     * @return 匹配的角色枚举
+     */
     private static UserRoleEnum roleByDescription(String description) {
         for (UserRoleEnum role : UserRoleEnum.values()) {
             if (role.getDescription().equals(description)) {
@@ -140,4 +220,5 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
         return null;
     }
+
 }

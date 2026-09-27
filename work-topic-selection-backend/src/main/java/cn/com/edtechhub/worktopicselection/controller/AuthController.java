@@ -3,14 +3,14 @@ package cn.com.edtechhub.worktopicselection.controller;
 import cn.com.edtechhub.worktopicselection.annotation.SentinelRateLimit;
 import cn.com.edtechhub.worktopicselection.annotation.ValidateRequest;
 import cn.com.edtechhub.worktopicselection.exception.CodeBindMessageEnums;
-import cn.com.edtechhub.worktopicselection.model.dto.auth.AdminResetPasswordRequest;
-import cn.com.edtechhub.worktopicselection.model.dto.auth.ChangePasswordRequest;
-import cn.com.edtechhub.worktopicselection.model.dto.auth.LoginRequest;
-import cn.com.edtechhub.worktopicselection.model.dto.auth.ResetPasswordByCodeRequest;
-import cn.com.edtechhub.worktopicselection.model.dto.auth.RoleSwitchRequest;
-import cn.com.edtechhub.worktopicselection.model.dto.auth.SendEmailCodeRequest;
-import cn.com.edtechhub.worktopicselection.model.dto.auth.SendResetCodeRequest;
-import cn.com.edtechhub.worktopicselection.model.dto.auth.VerifyEmailCodeRequest;
+import cn.com.edtechhub.worktopicselection.model.request.auth.AdminResetPasswordRequest;
+import cn.com.edtechhub.worktopicselection.model.request.auth.ChangePasswordRequest;
+import cn.com.edtechhub.worktopicselection.model.request.auth.LoginRequest;
+import cn.com.edtechhub.worktopicselection.model.request.auth.ResetPasswordByCodeRequest;
+import cn.com.edtechhub.worktopicselection.model.request.auth.RoleSwitchRequest;
+import cn.com.edtechhub.worktopicselection.model.request.auth.SendEmailCodeRequest;
+import cn.com.edtechhub.worktopicselection.model.request.auth.SendResetCodeRequest;
+import cn.com.edtechhub.worktopicselection.model.request.auth.VerifyEmailCodeRequest;
 import cn.com.edtechhub.worktopicselection.model.vo.AdminResetPasswordVO;
 import cn.com.edtechhub.worktopicselection.model.vo.EmailVerificationVO;
 import cn.com.edtechhub.worktopicselection.model.vo.LoginUserVO;
@@ -35,16 +35,36 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.servlet.http.HttpServletRequest;
 
 /**
- * 认证、密码和验证码 HTTP 入口。
+ * 认证、密码和验证码 HTTP 入口
+ *
+ * @author wobushi041
  */
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
 
+    /**
+     * 注入认证服务依赖
+     */
     private final AuthenticationService authenticationService;
+
+    /**
+     * 注入密码服务依赖
+     */
     private final PasswordService passwordService;
+
+    /**
+     * 注入验证码服务依赖
+     */
     private final VerificationCodeService verificationCodeService;
 
+    /**
+     * 初始化认证模块 HTTP 入口
+     *
+     * @param authenticationService   认证服务
+     * @param passwordService         密码服务
+     * @param verificationCodeService 验证码服务
+     */
     public AuthController(AuthenticationService authenticationService, PasswordService passwordService,
                           VerificationCodeService verificationCodeService) {
         this.authenticationService = authenticationService;
@@ -52,6 +72,15 @@ public class AuthController {
         this.verificationCodeService = verificationCodeService;
     }
 
+    /// 登录会话 ///
+
+    /**
+     * 登录账号并创建认证会话
+     *
+     * @param request        登录请求
+     * @param servletRequest HTTP 请求
+     * @return 登录用户信息响应
+     */
     @SaIgnore
     @ValidateRequest
     @SentinelRateLimit(resource = "auth.login")
@@ -65,6 +94,11 @@ public class AuthController {
         return TheResult.success(CodeBindMessageEnums.SUCCESS, result);
     }
 
+    /**
+     * 退出当前认证会话
+     *
+     * @return 退出结果响应
+     */
     @SaCheckLogin
     @SentinelRateLimit(resource = "auth.logout")
     @PostMapping("/logout")
@@ -72,6 +106,15 @@ public class AuthController {
         return TheResult.success(CodeBindMessageEnums.SUCCESS, authenticationService.logout());
     }
 
+    /// 角色切换 ///
+
+    /**
+     * 在教师与专业负责人身份之间切换认证会话
+     *
+     * @param request        角色切换请求
+     * @param servletRequest HTTP 请求
+     * @return 切换后的登录用户信息响应
+     */
     @SaCheckLogin
     @SaCheckRole(value = {"teacher", "dept"}, mode = SaMode.OR)
     @ValidateRequest
@@ -83,6 +126,11 @@ public class AuthController {
                 authenticationService.switchRole(request, DeviceUtils.getRequestDevice(servletRequest)));
     }
 
+    /**
+     * 查询当前账号是否可以切换角色
+     *
+     * @return 角色切换可用性响应
+     */
     @SaCheckLogin
     @SentinelRateLimit(resource = "auth.role-switch-availability")
     @GetMapping("/role-switch/availability")
@@ -91,6 +139,14 @@ public class AuthController {
                 authenticationService.getRoleSwitchAvailability());
     }
 
+    /// 密码管理 ///
+
+    /**
+     * 由管理员为指定账号重置临时密码
+     *
+     * @param request 管理员重置密码请求
+     * @return 账号与临时密码响应
+     */
     @SaCheckLogin
     @SaCheckRole("admin")
     @ValidateRequest
@@ -100,6 +156,13 @@ public class AuthController {
         return TheResult.success(CodeBindMessageEnums.SUCCESS, passwordService.adminReset(request));
     }
 
+    /**
+     * 使用当前密码修改账号密码
+     *
+     * @param request        修改密码请求
+     * @param servletRequest HTTP 请求
+     * @return 用户 id 响应
+     */
     @SaIgnore
     @ValidateRequest
     @SentinelRateLimit(resource = "auth.password-change")
@@ -110,6 +173,12 @@ public class AuthController {
                 passwordService.changePassword(request, IpUtils.getIpAddress(servletRequest)));
     }
 
+    /**
+     * 使用一次性重置码修改账号密码
+     *
+     * @param request 重置密码请求
+     * @return 用户 id 响应
+     */
     @SaIgnore
     @ValidateRequest
     @SentinelRateLimit(resource = "auth.password-reset")
@@ -118,6 +187,13 @@ public class AuthController {
         return TheResult.success(CodeBindMessageEnums.SUCCESS, passwordService.resetPassword(request));
     }
 
+    /**
+     * 向账号绑定邮箱发送密码重置码
+     *
+     * @param request        发送重置码请求
+     * @param servletRequest HTTP 请求
+     * @return 通用发送结果响应
+     */
     @SaIgnore
     @ValidateRequest
     @SentinelRateLimit(resource = "auth.password-reset-code-send")
@@ -129,6 +205,15 @@ public class AuthController {
                         request.getAccount(), IpUtils.getIpAddress(servletRequest)));
     }
 
+    /// 邮箱验证 ///
+
+    /**
+     * 向指定邮箱发送验证码
+     *
+     * @param request        发送邮箱验证码请求
+     * @param servletRequest HTTP 请求
+     * @return 发送结果响应
+     */
     @SaIgnore
     @ValidateRequest
     @SentinelRateLimit(resource = "auth.email-code-send")
@@ -139,6 +224,12 @@ public class AuthController {
                 verificationCodeService.sendEmailCode(request.getEmail(), IpUtils.getIpAddress(servletRequest)));
     }
 
+    /**
+     * 校验邮箱验证码并签发一次性凭证
+     *
+     * @param request 邮箱验证码校验请求
+     * @return 邮箱验证凭证响应
+     */
     @SaIgnore
     @ValidateRequest
     @SentinelRateLimit(resource = "auth.email-code-verify")
@@ -147,4 +238,5 @@ public class AuthController {
         return TheResult.success(CodeBindMessageEnums.SUCCESS,
                 verificationCodeService.verifyEmailCode(request.getEmail(), request.getCode()));
     }
+
 }
