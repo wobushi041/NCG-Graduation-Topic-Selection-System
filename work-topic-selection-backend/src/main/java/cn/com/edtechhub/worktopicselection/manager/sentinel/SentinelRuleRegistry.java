@@ -37,10 +37,10 @@ public class SentinelRuleRegistry {
         this.properties = properties;
     }
 
-    /// 认证规则 ///
+    /// 预置规则 ///
 
     /**
-     * 注册并发布认证模块的全部 Sentinel 流控规则
+     * 注册并发布认证模块与选题写用例模块的全部 Sentinel 流控规则
      */
     @PostConstruct
     public void registerAuthenticationRules() {
@@ -54,6 +54,15 @@ public class SentinelRuleRegistry {
         register("auth.password-reset-code-send", properties.getPasswordResetCodeSend(), false);
         register("auth.email-code-send", properties.getEmailCodeSend(), false);
         register("auth.email-code-verify", properties.getEmailCodeVerify(), false);
+        register("topic.selection.preselect", properties.getTopicSelectionPreselect(), false);
+        register("topic.selection.confirm", properties.getTopicSelectionConfirm(), false);
+        register("topic.selection.assign-student", properties.getTopicSelectionAssignStudent(), false);
+        register("topic.selection.withdraw", properties.getTopicSelectionWithdraw(), false);
+        register("topic.selection.query-selected-students", properties.getTopicSelectionQuerySelectedStudents(), false);
+        register("topic.selection.query-preselected", properties.getTopicSelectionQueryPreselected(), false);
+        register("topic.selection.query-selected", properties.getTopicSelectionQuerySelected(), false);
+        register("topic.selection.query-choice-time", properties.getTopicSelectionQueryChoiceTime(), false);
+        register("topic.selection.query-students-by-topic", properties.getTopicSelectionQueryStudentsByTopic(), false);
         publish();
     }
 

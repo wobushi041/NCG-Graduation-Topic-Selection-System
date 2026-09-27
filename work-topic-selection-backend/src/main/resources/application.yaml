@@ -123,6 +123,15 @@ app:
       password-reset-code-send: ${APP_SENTINEL_AUTH_PASSWORD_RESET_CODE_SEND:20}
       email-code-send: ${APP_SENTINEL_AUTH_EMAIL_CODE_SEND:20}
       email-code-verify: ${APP_SENTINEL_AUTH_EMAIL_CODE_VERIFY:100}
+      topic-selection-preselect: ${APP_SENTINEL_TOPIC_SELECTION_PRESELECT:200}
+      topic-selection-confirm: ${APP_SENTINEL_TOPIC_SELECTION_CONFIRM:100}
+      topic-selection-assign-student: ${APP_SENTINEL_TOPIC_SELECTION_ASSIGN_STUDENT:100}
+      topic-selection-withdraw: ${APP_SENTINEL_TOPIC_SELECTION_WITHDRAW:100}
+      topic-selection-query-selected-students: ${APP_SENTINEL_TOPIC_SELECTION_QUERY_SELECTED_STUDENTS:300}
+      topic-selection-query-preselected: ${APP_SENTINEL_TOPIC_SELECTION_QUERY_PRESELECTED:300}
+      topic-selection-query-selected: ${APP_SENTINEL_TOPIC_SELECTION_QUERY_SELECTED:300}
+      topic-selection-query-choice-time: ${APP_SENTINEL_TOPIC_SELECTION_QUERY_CHOICE_TIME:300}
+      topic-selection-query-students-by-topic: ${APP_SENTINEL_TOPIC_SELECTION_QUERY_STUDENTS_BY_TOPIC:300}
   security:
     allowed-email-domains: ${APP_ALLOWED_EMAIL_DOMAINS:qq.com,gmail.com,nfu.edu.cn}
 

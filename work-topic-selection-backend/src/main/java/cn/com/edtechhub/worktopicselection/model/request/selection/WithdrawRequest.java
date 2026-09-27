@@ -1,7 +1,9 @@
-package cn.com.edtechhub.worktopicselection.model.dto.topic;
+package cn.com.edtechhub.worktopicselection.model.request.selection;
 
 import lombok.Data;
 
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Positive;
 import java.io.Serializable;
 
 /**
@@ -15,6 +17,8 @@ public class WithdrawRequest implements Serializable {
     /**
      * 题目 id
      */
+    @NotNull(message = "id 不能为空")
+    @Positive(message = "id 必须是正整数")
     private Long id;
 
     /**

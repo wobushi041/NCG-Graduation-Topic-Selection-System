@@ -1,11 +1,12 @@
-package cn.com.edtechhub.worktopicselection.model.dto.studentTopicSelection;
+package cn.com.edtechhub.worktopicselection.model.request.selection;
 
 import lombok.Data;
 
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 
 /**
- * 选择学生请求
+ * 教师选择学生确认课题请求
  *
  * @author wobushi041
  */
@@ -15,11 +16,13 @@ public class SelectStudentRequest implements Serializable {
     /**
      * 学生账号
      */
+    @NotBlank(message = "用户账号不能为空")
     private String userAccount;
 
     /**
-     * 题目
+     * 课题名称
      */
+    @NotBlank(message = "课题名称不能为空")
     private String topic;
 
     /// 序列化字段 ///

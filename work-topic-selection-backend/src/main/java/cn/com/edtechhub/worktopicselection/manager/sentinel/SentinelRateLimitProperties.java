@@ -64,4 +64,49 @@ public class SentinelRateLimitProperties {
      */
     private double emailCodeVerify = 100;
 
+    /**
+     * 学生预选或取消预选课题接口 QPS 阈值
+     */
+    private double topicSelectionPreselect = 200;
+
+    /**
+     * 学生确认最终选题接口 QPS 阈值
+     */
+    private double topicSelectionConfirm = 100;
+
+    /**
+     * 教师确认学生选题接口 QPS 阈值
+     */
+    private double topicSelectionAssignStudent = 100;
+
+    /**
+     * 退选课题接口 QPS 阈值
+     */
+    private double topicSelectionWithdraw = 100;
+
+    /**
+     * 教师查询已选本人课题学生列表接口 QPS 阈值
+     */
+    private double topicSelectionQuerySelectedStudents = 300;
+
+    /**
+     * 学生查询预选课题列表接口 QPS 阈值
+     */
+    private double topicSelectionQueryPreselected = 300;
+
+    /**
+     * 学生查询最终选题列表接口 QPS 阈值
+     */
+    private double topicSelectionQuerySelected = 300;
+
+    /**
+     * 学生查询最终选题确认时间接口 QPS 阈值
+     */
+    private double topicSelectionQueryChoiceTime = 300;
+
+    /**
+     * 教师按课题 ID 查询学生列表接口 QPS 阈值
+     */
+    private double topicSelectionQueryStudentsByTopic = 300;
+
 }

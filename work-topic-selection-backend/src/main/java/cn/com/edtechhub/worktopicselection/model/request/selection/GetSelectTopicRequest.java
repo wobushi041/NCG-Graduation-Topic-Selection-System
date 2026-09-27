@@ -1,9 +1,9 @@
-package cn.com.edtechhub.worktopicselection.model.dto.user;
+package cn.com.edtechhub.worktopicselection.model.request.selection;
 
-import cn.com.edtechhub.worktopicselection.model.dto.PageRequest;
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Positive;
 import java.io.Serializable;
 
 /**
@@ -17,6 +17,8 @@ public class GetSelectTopicRequest implements Serializable {
     /**
      * 题目 id
      */
+    @NotNull(message = "id 不能为空")
+    @Positive(message = "id 必须是正整数")
     private Long topicId;
 
     /// 序列化字段 ///
@@ -24,7 +26,6 @@ public class GetSelectTopicRequest implements Serializable {
     /**
      * 序列化版本号
      */
-    @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 
 }
