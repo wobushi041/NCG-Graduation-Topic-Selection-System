@@ -1,7 +1,6 @@
-package cn.com.edtechhub.worktopicselection.model.dto.user;
+package cn.com.edtechhub.worktopicselection.model.request.user;
 
 import cn.com.edtechhub.worktopicselection.model.dto.PageRequest;
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -31,7 +30,6 @@ public class DeptTeacherQueryRequest extends PageRequest implements Serializable
     /**
      * 序列化版本号
      */
-    @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 
 }

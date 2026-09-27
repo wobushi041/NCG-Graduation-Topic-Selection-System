@@ -323,6 +323,49 @@ public class SentinelRateLimitProperties {
      */
     private double userQueryVoById = 120;
 
+    /// 查询与统计域接口流控配置 ///
+
+    /**
+     * 按角色分页查询可见课题接口 QPS 阈值
+     */
+    private double queryTopicPage = 200;
+
+    /**
+     * 查询选题统计总览接口 QPS 阈值
+     */
+    private double querySelectionSituation = 120;
+
+    /**
+     * 分页查询系部教师接口 QPS 阈值
+     */
+    private double queryDeptTeacher = 150;
+
+    /**
+     * 查询本系未选题学生列表接口 QPS 阈值
+     */
+    private double querySelectionUnselectedStudents = 120;
+
+    /**
+     * 管理员分页查询课题接口 QPS 阈值
+     */
+    private double queryTopicAdminPage = 150;
+
+    /**
+     * 分页查询用户脱敏视图列表接口 QPS 阈值
+     */
+    private double queryUserVoPage = 120;
+
+    /**
+     * 查询用户姓名列表接口 QPS 阈值
+     */
+    private double queryUserNameList = 150;
+
+    /**
+     * 查询待审核课题相关系部教师接口 QPS 阈值
+     */
+    private double queryDeptPendingTeacher = 120;
+
 }
+
 
 

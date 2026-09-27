@@ -105,6 +105,14 @@ public class SentinelRuleRegistry {
         register("user.query.teacher-list", properties.getUserQueryTeacherList(), false);
         register("user.query.by-id", properties.getUserQueryById(), false);
         register("user.query.vo-by-id", properties.getUserQueryVoById(), false);
+        register("query.topic.page", properties.getQueryTopicPage(), false);
+        register("query.selection.situation", properties.getQuerySelectionSituation(), false);
+        register("query.dept.teacher", properties.getQueryDeptTeacher(), false);
+        register("query.selection.unselected-students", properties.getQuerySelectionUnselectedStudents(), false);
+        register("query.topic.admin-page", properties.getQueryTopicAdminPage(), false);
+        register("query.user.vo-page", properties.getQueryUserVoPage(), false);
+        register("query.user.name-list", properties.getQueryUserNameList(), false);
+        register("query.dept.pending-teacher", properties.getQueryDeptPendingTeacher(), false);
         publish();
     }
 
