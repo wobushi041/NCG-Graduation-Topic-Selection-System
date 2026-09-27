@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 
 /**
  * 全局异常处理器
@@ -122,6 +123,15 @@ public class GlobalExceptionHandler {
                 })
                 .orElse("请求参数校验失败"); // 兜底提示
         return TheResult.error(CodeBindMessageEnums.PARAMS_ERROR, errorMessage);
+    }
+
+    /**
+     * 处理 JSON 语法错误和字段类型转换失败。
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public BaseResponse<?> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
+        log.warn("请求 JSON 无法解析: {}", ex.getMessage());
+        return TheResult.error(CodeBindMessageEnums.PARAMS_ERROR, "请求体格式不正确");
     }
 
     /**

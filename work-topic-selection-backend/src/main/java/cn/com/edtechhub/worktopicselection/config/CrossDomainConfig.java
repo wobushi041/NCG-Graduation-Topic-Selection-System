@@ -1,6 +1,6 @@
 package cn.com.edtechhub.worktopicselection.config;
 
-import cn.com.edtechhub.worktopicselection.aop.RequestLogAOP;
+import cn.com.edtechhub.worktopicselection.interceptor.RequestLoggingInterceptor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -26,7 +26,7 @@ public class CrossDomainConfig implements WebMvcConfigurer {
      * 注入请求日志拦截切面依赖
      */
     @Resource
-    private RequestLogAOP requestLogAOP;
+    private RequestLoggingInterceptor requestLoggingInterceptor;
 
     /**
      * 允许跨域的源地址配置
@@ -41,7 +41,7 @@ public class CrossDomainConfig implements WebMvcConfigurer {
      */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(requestLogAOP).addPathPatterns("/**");
+        registry.addInterceptor(requestLoggingInterceptor).addPathPatterns("/**");
     }
 
     /**

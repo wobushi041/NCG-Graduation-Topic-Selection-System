@@ -111,6 +111,20 @@ app:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://127.0.0.1:3000,http://localhost:3000}
   websocket:
     allowed-origins: ${APP_WEBSOCKET_ALLOWED_ORIGINS:http://127.0.0.1:3000,http://localhost:3000}
+  sentinel:
+    auth:
+      login: ${APP_SENTINEL_AUTH_LOGIN:100}
+      logout: ${APP_SENTINEL_AUTH_LOGOUT:300}
+      role-switch: ${APP_SENTINEL_AUTH_ROLE_SWITCH:100}
+      role-switch-availability: ${APP_SENTINEL_AUTH_ROLE_SWITCH_AVAILABILITY:300}
+      password-admin-reset: ${APP_SENTINEL_AUTH_PASSWORD_ADMIN_RESET:20}
+      password-change: ${APP_SENTINEL_AUTH_PASSWORD_CHANGE:50}
+      password-reset: ${APP_SENTINEL_AUTH_PASSWORD_RESET:50}
+      password-reset-code-send: ${APP_SENTINEL_AUTH_PASSWORD_RESET_CODE_SEND:20}
+      email-code-send: ${APP_SENTINEL_AUTH_EMAIL_CODE_SEND:20}
+      email-code-verify: ${APP_SENTINEL_AUTH_EMAIL_CODE_VERIFY:100}
+  security:
+    allowed-email-domains: ${APP_ALLOWED_EMAIL_DOMAINS:qq.com,gmail.com,nfu.edu.cn}
 
 # 配置 Sa-Token
 sa-token: # 默认开启 Redis 配置将自动支持 Sa-token 使用 Redis 存储认证相关键值对, 想要关掉需要去除相关依赖

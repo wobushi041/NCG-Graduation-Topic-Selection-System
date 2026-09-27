@@ -133,6 +133,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
+            <version>1.18.32</version>
             <optional>true</optional>
         </dependency>
 
@@ -168,6 +169,12 @@
             <!-- Sa-Token 整合依赖 -->
             <groupId>cn.dev33</groupId>
             <artifactId>sa-token-spring-boot-starter</artifactId>
+            <version>1.42.0</version>
+        </dependency>
+        <dependency>
+            <!-- Sa-Token 官方 Spring AOP 注解鉴权实现；与 SaInterceptor 二选一 -->
+            <groupId>cn.dev33</groupId>
+            <artifactId>sa-token-spring-aop</artifactId>
             <version>1.42.0</version>
         </dependency>
         <dependency>

@@ -1,5 +1,7 @@
 package cn.com.edtechhub.worktopicselection.manager.sentine;
 
+import cn.com.edtechhub.worktopicselection.manager.sentinel.SentinelRateLimitProperties;
+import cn.com.edtechhub.worktopicselection.manager.sentinel.SentinelRuleRegistry;
 import com.alibaba.csp.sentinel.slots.block.flow.FlowRule;
 import com.alibaba.csp.sentinel.slots.block.flow.FlowRuleManager;
 import org.junit.jupiter.api.AfterEach;
@@ -20,10 +22,10 @@ class SentineManagerTest {
 
     @Test
     void addingAResourceDoesNotReplaceExistingRules() {
-        SentineManager manager = new SentineManager();
+        SentinelRuleRegistry manager = new SentinelRuleRegistry(new SentinelRateLimitProperties());
 
-        manager.initFlowRules("first-resource", 10);
-        manager.initFlowRules("second-resource", 20);
+        manager.register("first-resource", 10);
+        manager.register("second-resource", 20);
 
         List<String> resources = FlowRuleManager.getRules()
                 .stream()
