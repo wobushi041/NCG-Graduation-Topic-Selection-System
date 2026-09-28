@@ -1,5 +1,11 @@
 -- Public, non-destructive MySQL 8 schema.
--- Create the nfu_topic_selection database and database user separately.
+-- The database user and its privileges must be configured separately.
+
+CREATE DATABASE IF NOT EXISTS `nfu_topic_selection`
+    CHARACTER SET utf8mb4
+    COLLATE utf8mb4_0900_ai_ci;
+
+USE `nfu_topic_selection`;
 
 SET NAMES utf8mb4;
 

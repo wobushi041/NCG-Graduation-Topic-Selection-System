@@ -1,5 +1,7 @@
 -- Entirely fictional demonstration data. No real accounts or credentials are included.
 
+USE `nfu_topic_selection`;
+
 SET NAMES utf8mb4;
 
 INSERT INTO `dept` (`deptName`)
