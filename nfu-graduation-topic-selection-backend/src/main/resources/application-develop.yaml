@@ -1,0 +1,7 @@
+management:
+  health:
+    mail:
+      enabled: false
+
+knife4j:
+  enable: true
