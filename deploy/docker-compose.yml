@@ -1,5 +1,5 @@
 services:
-  work-mysql:
+  topic-selection-mysql:
     image: mysql:8.0
     restart: unless-stopped
     command:
@@ -8,12 +8,12 @@ services:
       - --skip-name-resolve
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?请在 deploy/.env 中设置 MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: work_topic_selection
+      MYSQL_DATABASE: nfu_topic_selection
       MYSQL_USER: ${SPRING_DATASOURCE_USERNAME:?请在 deploy/.env 中设置 SPRING_DATASOURCE_USERNAME}
       MYSQL_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:?请在 deploy/.env 中设置 SPRING_DATASOURCE_PASSWORD}
       TZ: Asia/Shanghai
     volumes:
-      - mysql-data:/var/lib/mysql
+      - topic-selection-mysql-data:/var/lib/mysql
       - ./backups:/backups
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
@@ -22,31 +22,28 @@ services:
       retries: 12
       start_period: 30s
     networks:
-      - work-net
+      - topic-selection-net
 
-  work-redis:
+  topic-selection-redis:
     image: redis:7-alpine
     restart: unless-stopped
     command: ["sh", "-c", "exec redis-server --appendonly yes --requirepass \"$$REDIS_PASSWORD\""]
     environment:
       REDIS_PASSWORD: ${SPRING_REDIS_PASSWORD:?请在 deploy/.env 中设置 SPRING_REDIS_PASSWORD}
     volumes:
-      - redis-data:/data
+      - topic-selection-redis-data:/data
     healthcheck:
       test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep -q PONG"]
-      interval: 10s
-      timeout: 5s
-      retries: 12
     networks:
-      - work-net
+      - topic-selection-net
 
-  work-backend:
-    image: graduation-topic-selection-backend:local
+  topic-selection-server:
+    image: nfu-topic-selection-server:local
     restart: unless-stopped
     depends_on:
-      work-mysql:
+      topic-selection-mysql:
         condition: service_healthy
-      work-redis:
+      topic-selection-redis:
         condition: service_healthy
     environment:
       SPRING_PROFILES_ACTIVE: release
@@ -66,31 +63,31 @@ services:
       # 可选：AI 辅助审题
       TXY_BOT_APP_KEY: ${TXY_BOT_APP_KEY:-}
     networks:
-      - work-net
+      - topic-selection-net
 
-  work-frontend:
-    image: graduation-topic-selection-frontend:local
+  topic-selection-web:
+    image: nfu-topic-selection-web:local
     restart: unless-stopped
     depends_on:
-      - work-backend
+      - topic-selection-server
     ports:
       - "80:80"
       - "443:443"
     environment:
       SITE_DOMAIN: ${SITE_DOMAIN}
-      BACKEND_UPSTREAM: work-backend:8000
+      BACKEND_UPSTREAM: topic-selection-server:8000
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy-data:/data
-      - caddy-config:/config
+      - topic-selection-caddy-data:/data
+      - topic-selection-caddy-config:/config
     networks:
-      - work-net
+      - topic-selection-net
 
 networks:
-  work-net:
+  topic-selection-net:
 
 volumes:
-  mysql-data:
-  redis-data:
-  caddy-data:
-  caddy-config:
+  topic-selection-mysql-data:
+  topic-selection-redis-data:
+  topic-selection-caddy-data:
+  topic-selection-caddy-config:

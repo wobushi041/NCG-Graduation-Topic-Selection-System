@@ -48,20 +48,20 @@
 # 两者已移出工作区，保留规则以防日后重新生成时误提交
 /deploy/教师出题额度一览.csv
 /deploy/生成导入文件.py
-/work-topic-selection-backend/src/main/resources/2022届*.csv
-/work-topic-selection-backend/src/main/resources/2022届*.xlsx
+/nfu-graduation-topic-selection-backend/src/main/resources/2022届*.csv
+/nfu-graduation-topic-selection-backend/src/main/resources/2022届*.xlsx
 
 # Database credentials and real/test account rows
-/work-topic-selection-backend/src/main/resources/sql/init.sql
-/work-topic-selection-backend/src/main/resources/sql/test.sql
-/work-topic-selection-backend/src/test/resources/sql/init.sql
+/nfu-graduation-topic-selection-backend/src/main/resources/sql/init.sql
+/nfu-graduation-topic-selection-backend/src/main/resources/sql/test.sql
+/nfu-graduation-topic-selection-backend/src/test/resources/sql/init.sql
 
 # Account documents, Word manuals that may embed screenshots, and private QR code
-/work-topic-selection-frontend/public/steps/doc/
-/work-topic-selection-frontend/public/steps/student/
-/work-topic-selection-frontend/public/steps/teacher/
-/work-topic-selection-frontend/public/steps/dept/
-/work-topic-selection-frontend/public/orcode.png
+/nfu-graduation-topic-selection-frontend/public/steps/doc/
+/nfu-graduation-topic-selection-frontend/public/steps/student/
+/nfu-graduation-topic-selection-frontend/public/steps/teacher/
+/nfu-graduation-topic-selection-frontend/public/steps/dept/
+/nfu-graduation-topic-selection-frontend/public/orcode.png
 
 ### NetBeans ###
 /nbproject/private/

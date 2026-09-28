@@ -1,17 +1,17 @@
 # 生产部署说明
 
-本目录用于把「毕业设计选题系统」以 Docker Compose 方式部署到一台公网服务器。
+本目录用于把「广州南方学院毕业选题管理系统」以 Docker Compose 方式部署到一台公网服务器。
 
 ## 架构
 
 | 服务 | 镜像 / 容器 | 说明 |
 | --- | --- | --- |
-| `work-frontend` | `graduation-topic-selection-frontend:local` | Caddy 2 提供 HTTPS、静态文件、API/WebSocket 反代 |
-| `work-backend` | `graduation-topic-selection-backend:local` | Spring Boot 后端，仅容器内网可访问 |
-| `work-mysql` | `mysql:8.0` | 数据库，数据保存在 `mysql-data` 卷 |
-| `work-redis` | `redis:7-alpine` | 会话与缓存，数据保存在 `redis-data` 卷 |
+| `topic-selection-web` | `nfu-topic-selection-web:local` | Caddy 2 提供 HTTPS、静态文件、API/WebSocket 反代 |
+| `topic-selection-server` | `nfu-topic-selection-server:local` | Spring Boot 后端，仅容器内网可访问 |
+| `topic-selection-mysql` | `mysql:8.0` | 数据库，数据保存在 `topic-selection-mysql-data` 卷 |
+| `topic-selection-redis` | `redis:7-alpine` | 会话与缓存，数据保存在 `topic-selection-redis-data` 卷 |
 
-后端 release 配置已经默认连接 `work-mysql:3306` 与 `work-redis:6379`，服务名与 `docker-compose.yml` 保持一致。
+后端 release 配置已经默认连接 `topic-selection-mysql:3306` 与 `topic-selection-redis:6379`，服务名与 `docker-compose.yml` 保持一致。
 
 ## 首次部署
 
@@ -46,15 +46,15 @@ cd 仓库根目录
 如果镜像在开发机生成、部署在服务器，可以打包传输：
 
 ```bash
-docker save graduation-topic-selection-backend:local graduation-topic-selection-frontend:local \
-  | gzip > deploy/wts-images.tar.gz
-scp deploy/wts-images.tar.gz 用户名@服务器IP:/tmp/
+docker save nfu-topic-selection-server:local nfu-topic-selection-web:local \
+  | gzip > deploy/nfu-topic-selection-images.tar.gz
+scp deploy/nfu-topic-selection-images.tar.gz 用户名@服务器IP:/tmp/
 ```
 
 服务器上先加载镜像，再上传本 `deploy/` 目录（含 `.env`、`Caddyfile`、`docker-compose.yml`）：
 
 ```bash
-docker load -i /tmp/wts-images.tar.gz
+docker load -i /tmp/nfu-topic-selection-images.tar.gz
 cd /path/to/deploy
 ```
 
@@ -65,12 +65,12 @@ cd /path/to/deploy
 只启动数据库，等它健康后导入公开表结构：
 
 ```bash
-docker compose up -d work-mysql work-redis
+docker compose up -d topic-selection-mysql topic-selection-redis
 docker compose ps
 
-docker compose exec -T work-mysql \
-  sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD" work_topic_selection' \
-  < ../work-topic-selection-backend/src/main/resources/sql/schema.sql
+docker compose exec -T topic-selection-mysql \
+  sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD" nfu_topic_selection' \
+  < ../nfu-graduation-topic-selection-backend/src/main/resources/sql/schema.sql
 ```
 
 如果是迁移旧库，请先恢复原有备份，再按需执行仓库中的历史迁移脚本；不要对已有数据重复导入 `schema.sql`。
@@ -80,7 +80,7 @@ docker compose exec -T work-mysql \
 ```bash
 docker compose up -d
 docker compose ps
-docker compose logs -f work-backend
+docker compose logs -f topic-selection-server
 ```
 
 Caddy 会在启动后自动申请 HTTPS 证书。首次签发可能需要几十秒到几分钟。
@@ -89,7 +89,7 @@ Caddy 会在启动后自动申请 HTTPS 证书。首次签发可能需要几十�
 
 ```bash
 curl -I https://${SITE_DOMAIN}
-curl -I https://${SITE_DOMAIN}/work_topic_selection_api/actuator/health
+curl -I https://${SITE_DOMAIN}/api/actuator/health
 ```
 
 浏览器打开 `https://${SITE_DOMAIN}`，用管理员账号登录后检查页面、通知声音与 WebSocket 实时推送是否正常。
@@ -109,9 +109,9 @@ cd deploy
 
 ```bash
 cd deploy
-gzip -dc backups/work_topic_selection-备份时间戳.sql.gz \
-  | docker compose exec -T work-mysql \
-      sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD" work_topic_selection'
+gzip -dc backups/nfu_topic_selection-备份时间戳.sql.gz \
+  | docker compose exec -T topic-selection-mysql \
+      sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD" nfu_topic_selection'
 ```
 
 ## 升级发布
