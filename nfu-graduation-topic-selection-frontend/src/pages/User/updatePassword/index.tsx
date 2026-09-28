@@ -15,7 +15,6 @@ import {
   verifyEmailCode,
 } from '@/services/topic-selection/authController';
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const useStyles = createStyles(({token}) => ({
   container: {
     display: 'flex',
@@ -25,9 +24,76 @@ const useStyles = createStyles(({token}) => ({
     backgroundImage:
       "url('https://mdn.alipayobjects.com/yuyan_qk0oxh/afts/img/V-_oS6r-i7wAAAAAAAAAAAAAFl94AQBr')",
     backgroundSize: '100% 100%',
+    '& .ant-pro-form-login-header': {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '42px',
+      lineHeight: 1,
+      gap: '10px',
+      whiteSpace: 'nowrap',
+    },
+    '& .ant-pro-form-login-logo': {
+      width: '42px',
+      height: '42px',
+      margin: 0,
+      marginRight: 0,
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexShrink: 0,
+      verticalAlign: 'middle',
+      '& > img': {
+        width: '42px',
+        height: '42px',
+        display: 'block',
+        margin: 0,
+        objectFit: 'contain',
+      },
+    },
+    '& .ant-pro-form-login-title': {
+      position: 'static',
+      top: 0,
+      insetBlockStart: 0,
+      margin: 0,
+      display: 'inline-flex',
+      alignItems: 'center',
+      height: '42px',
+      fontSize: '24px',
+      lineHeight: 1,
+      whiteSpace: 'nowrap',
+    },
+    [`@media screen and (max-width: ${token.screenSM}px)`]: {
+      '& .ant-pro-form-login-header': {
+        height: '34px',
+        gap: '8px',
+      },
+      '& .ant-pro-form-login-logo': {
+        width: '34px',
+        height: '34px',
+        '& > img': {
+          width: '34px',
+          height: '34px',
+        },
+      },
+      '& .ant-pro-form-login-title': {
+        height: '34px',
+        fontSize: '19px',
+        lineHeight: 1,
+      },
+      '& .ant-pro-form-login-desc': {
+        fontSize: '13px',
+        marginTop: '8px',
+      },
+    },
   },
 }));
 
+/**
+ * 修改密码与邮箱重置码找回页面组件：
+ * - 默认模式（!useTempPassword）：使用原密码或管理员分配的16位初始临时密码修改密码，并支持验证及首次绑定邮箱；
+ * - 邮箱重置码模式（useTempPassword）：向已绑定邮箱发送12位重置码并凭重置码重置密码。
+ */
 const Register: React.FC = () => {
   const {styles} = useStyles();
   useIntl();
@@ -41,7 +107,9 @@ const Register: React.FC = () => {
   const [showCaptchaInput, setShowCaptchaInput] = useState<boolean>(false); // 是否显示验证码输入框
   const [emailProofToken, setEmailProofToken] = useState<string>('');
 
-  // 发送临时密码
+  /**
+   * 向账号已绑定的邮箱发送 12 位密码重置码，并切换至邮箱重置码表单模式
+   */
   const handleSendCode = async () => {
     const userAccount = formRef.current?.getFieldValue('userAccount');
     if (!userAccount) {
@@ -52,9 +120,13 @@ const Register: React.FC = () => {
     try {
       const res = await sendPasswordResetCode(userAccount);
       if (res.code === 0) {
-        message.success('临时密码已发送，请在下方输入');
+        message.success(res.data || '若账号已绑定邮箱，12位重置码已发送至绑定邮箱');
         setCountdown(60);
-        setUseTempPassword(true); // 激活临时密码模式
+        setUseTempPassword(true); // 切换到邮箱重置码模式
+        setShowCaptchaInput(false);
+        setEmailProofToken('');
+        formRef.current?.setFieldValue('email', undefined);
+        formRef.current?.setFieldValue('emailCaptcha', undefined);
         const timer = setInterval(() => {
           setCountdown(prev => {
             if (prev <= 1) {
@@ -200,17 +272,17 @@ const Register: React.FC = () => {
       let res;
       if (useTempPassword) {
         if (!tempPasswordInput) {
-          message.error('请输入临时密码');
+          message.error('请输入12位邮箱重置码');
           return;
         }
         res = await resetPasswordByCode({
           account: userAccount,
-          resetCode: tempPasswordInput,
+          resetCode: tempPasswordInput.trim(),
           newPassword: updatePassword,
         });
       } else {
         if (!userPassword) {
-          message.error('请输入原密码');
+          message.error('请输入原密码或初始临时密码');
           return;
         }
         if (email && !verifiedProofToken) {
@@ -247,9 +319,9 @@ const Register: React.FC = () => {
           formRef={formRef}
           contentStyle={{minWidth: 280, maxWidth: '75vw'}}
           submitter={{searchConfig: {submitText: '修改密码'}}}
-          logo={<img alt="logo" src="/logo_256.png"/>}
-          title="毕设选题系统"
-          subTitle="毕业设计选题管理"
+          logo={<img alt="logo" src="/nfu-logo-512.png"/>}
+          title="广州南方学院毕设选题管理系统"
+          subTitle="NCG Graduation Topic Selection System"
           onFinish={async values => await handleSubmit(values)}
         >
           <Tabs
@@ -277,12 +349,12 @@ const Register: React.FC = () => {
                   name="userPassword"
                   label={
                     <span>
-                      原密码
+                      原密码 / 初始临时密码
                     </span>
                   }
                   fieldProps={{size: 'large', prefix: <LockOutlined/>}}
-                  placeholder="请输入原密码"
-                  rules={[{required: true, message: '原密码必填'}]}
+                  placeholder="请输入原密码或管理员分配的16位初始临时密码"
+                  rules={[{required: true, message: '请输入原密码或初始临时密码'}]}
                 />
               )}
 
@@ -291,12 +363,15 @@ const Register: React.FC = () => {
                   name="tempPasswordInput"
                   label={
                     <span>
-                    临时密码
-                  </span>
+                      邮箱重置码（12位）
+                    </span>
                   }
                   fieldProps={{size: 'large', prefix: <LockOutlined/>}}
-                  placeholder="请输入临时密码"
-                  rules={[{required: true, message: '临时密码必填'}]}
+                  placeholder="请输入绑定邮箱收到的12位重置码"
+                  rules={[
+                    {required: true, message: '请输入邮箱重置码'},
+                    {len: 12, message: '邮箱重置码长度应为12位（管理员分配的16位初始密码请切换回“原密码/初始临时密码”填写）'},
+                  ]}
                 />
               )}
 
@@ -323,38 +398,40 @@ const Register: React.FC = () => {
                 rules={[{required: true, min: 8, message: '新密码不少于8位'}]}
               />
 
-              <ProFormText
-                name="email"
-                label={<span>邮箱</span>}
-                fieldProps={{
-                  size: 'large',
-                  prefix: <UserOutlined/>,
-                  suffix: (
-                    <Tooltip
-                      title="本系统支持 QQ 邮箱和 Gmail 邮箱，可以用来在忘记密码时获取临时密码，如果没有填写邮箱并且忘记密码时，需要联系管理员进行密码重置。"
-                      placement="right"
-                    >
-                      <InfoCircleOutlined style={{color: 'rgba(0,0,0,.45)'}}/>
-                    </Tooltip>
-                  ),
-                  onChange: (event) => {
-                    const email = event.target.value;
-                    setShowCaptchaInput(Boolean(email));
-                    setEmailForCaptcha('');
-                    setEmailProofToken('');
-                    setEmailCountdown(0);
-                    formRef.current?.setFieldValue('emailCaptcha', undefined);
-                  },
-                }}
-                placeholder="请输入邮箱（选填）"
-                rules={[
-                  {required: false, message: '邮箱选填！'},
-                  {type: 'email', message: '请输入正确的邮箱格式'}
-                ]}
-              />
+              {!useTempPassword && (
+                <ProFormText
+                  name="email"
+                  label={<span>绑定邮箱（选填）</span>}
+                  fieldProps={{
+                    size: 'large',
+                    prefix: <UserOutlined/>,
+                    suffix: (
+                      <Tooltip
+                        title="本系统支持 QQ 邮箱、Gmail 邮箱和校内邮箱（nfu.edu.cn），绑定后可在忘记密码时接收 12 位邮箱重置码；若未绑定邮箱且忘记密码，请联系管理员重置初始临时密码。"
+                        placement="right"
+                      >
+                        <InfoCircleOutlined style={{color: 'rgba(0,0,0,.45)'}}/>
+                      </Tooltip>
+                    ),
+                    onChange: (event) => {
+                      const email = event.target.value;
+                      setShowCaptchaInput(Boolean(email));
+                      setEmailForCaptcha('');
+                      setEmailProofToken('');
+                      setEmailCountdown(0);
+                      formRef.current?.setFieldValue('emailCaptcha', undefined);
+                    },
+                  }}
+                  placeholder="请输入邮箱（选填，首次登录建议绑定）"
+                  rules={[
+                    {required: false, message: '邮箱选填！'},
+                    {type: 'email', message: '请输入正确的邮箱格式'}
+                  ]}
+                />
+              )}
 
               {/* 邮箱验证码区域 */}
-              {showCaptchaInput && (
+              {!useTempPassword && showCaptchaInput && (
                 <div style={{
                   backgroundColor: '#f0f8ff',
                   padding: '16px',
@@ -374,7 +451,8 @@ const Register: React.FC = () => {
                       name="emailCaptcha"
                       fieldProps={{
                         size: 'large',
-                        placeholder: "请输入验证码",
+                        placeholder: "请输入6位数字验证码",
+                        autoComplete: "one-time-code",
                         style: { flex: 1 }
                       }}
                       rules={[{required: false}]}
@@ -406,17 +484,30 @@ const Register: React.FC = () => {
             </>
           )}
 
-          <div style={{marginBottom: 60}}>
-            <div style={{marginBottom: 60, display: 'flex', justifyContent: 'space-between'}}>
-              <a
-                style={{
-                  cursor: countdown > 0 ? 'not-allowed' : 'pointer',
-                  color: countdown > 0 ? '#999' : '#1890ff'
-                }}
-                onClick={() => countdown === 0 && handleSendCode()}
-              >
-                {countdown > 0 ? `重新获取(${countdown}s)` : '忘记密码？获取临时密码！'}
-              </a>
+          <div style={{marginBottom: 24}}>
+            <div style={{marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px'}}>
+              <div style={{display: 'flex', gap: '12px', flexWrap: 'wrap'}}>
+                <a
+                  style={{
+                    cursor: countdown > 0 ? 'not-allowed' : 'pointer',
+                    color: countdown > 0 ? '#999' : '#1890ff'
+                  }}
+                  onClick={() => countdown === 0 && handleSendCode()}
+                >
+                  {countdown > 0 ? `重新获取邮箱重置码(${countdown}s)` : '已绑定邮箱？获取邮箱重置码'}
+                </a>
+                {useTempPassword && (
+                  <a
+                    style={{cursor: 'pointer', color: '#1890ff'}}
+                    onClick={() => {
+                      setUseTempPassword(false);
+                      formRef.current?.setFieldValue('tempPasswordInput', undefined);
+                    }}
+                  >
+                    返回原密码/初始密码修改
+                  </a>
+                )}
+              </div>
               <Link to="/user/login" style={{float: 'right'}}>
                 返回登录页面
               </Link>
