@@ -377,7 +377,7 @@ public class TopicApplicationServiceImpl implements TopicApplicationService {
                     .eq("userRole", UserRoleEnum.TEACHER.getCode())
             );
             if (teacher != null && StringUtils.isNotBlank(teacher.getEmail())) {
-                mailService.sendReasonMail(teacher.getEmail(), "毕业设计选题系统", topic.getReason());
+                mailService.sendReasonMail(teacher.getEmail(), "广州南方学院毕设选题管理系统", topic.getReason());
             }
         }
         return true;

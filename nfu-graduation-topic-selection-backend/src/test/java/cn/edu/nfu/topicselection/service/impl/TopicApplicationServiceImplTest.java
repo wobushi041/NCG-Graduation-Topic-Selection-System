@@ -261,7 +261,7 @@ class TopicApplicationServiceImplTest {
         assertEquals(TopicStatusEnum.REJECTED.getCode(), topic.getStatus());
         assertEquals("李主任", topic.getDeptTeacher());
         assertEquals("题目范围过大，请细化技术指标", topic.getReason());
-        verify(mailService).sendReasonMail("teacher01@example.com", "毕业设计选题系统", "题目范围过大，请细化技术指标");
+        verify(mailService).sendReasonMail("teacher01@example.com", "广州南方学院毕设选题管理系统", "题目范围过大，请细化技术指标");
     }
 
     // 场景：测试课题 AI 审核等级检测受 Redis 每日 30 次限流保护且正常调用 AI 服务

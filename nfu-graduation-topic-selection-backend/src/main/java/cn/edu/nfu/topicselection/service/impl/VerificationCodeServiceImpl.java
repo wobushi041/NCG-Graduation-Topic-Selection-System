@@ -156,7 +156,7 @@ public class VerificationCodeServiceImpl implements VerificationCodeService {
         String key = PASSWORD_RESET_CODE_PREFIX + user.getUserAccount();
         redisManager.setValue(key, code, CODE_TTL_SECONDS);
         try {
-            mailService.sendCodeMail(normalizeEmail(user.getEmail()), "毕业设计选题系统", code);
+            mailService.sendCodeMail(normalizeEmail(user.getEmail()), "广州南方学院毕设选题管理系统", code);
         } catch (RuntimeException exception) {
             redisManager.deleteKey(key);
             throw exception;
@@ -182,7 +182,7 @@ public class VerificationCodeServiceImpl implements VerificationCodeService {
         String key = EMAIL_CODE_PREFIX + normalizedEmail;
         redisManager.setValue(key, code, CODE_TTL_SECONDS);
         try {
-            mailService.sendCaptchaMail(normalizedEmail, "毕业设计选题系统", code);
+            mailService.sendCaptchaMail(normalizedEmail, "广州南方学院毕设选题管理系统", code);
         } catch (RuntimeException exception) {
             redisManager.deleteKey(key);
             throw exception;

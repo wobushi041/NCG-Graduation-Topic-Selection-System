@@ -537,7 +537,7 @@ public class TopicSelectionApplicationServiceImpl implements TopicSelectionAppli
         if (!studentOperation && StringUtils.isNotBlank(lockedStudent.getEmail())) {
             mailService.sendTopicMail(
                     lockedStudent.getEmail(),
-                    "毕业设计选题系统",
+                    "广州南方学院毕设选题管理系统",
                     "您被退选题目 [" + topic.getTopic() + "]，操作人为 " + actor.getUserName()
             );
         }
