@@ -8,6 +8,7 @@ import {
   listUserByPageUsingPost,
 } from '@/services/topic-selection/userController';
 import {adminResetPassword} from '@/services/topic-selection/authController';
+import {useTemporaryPasswordModal} from '@/utils/showTemporaryPasswordModal';
 import {ExclamationCircleOutlined, PlusOutlined, UploadOutlined} from '@ant-design/icons';
 import {ActionType, ProColumns, ProFormText, ProTable} from '@ant-design/pro-components';
 import {ModalForm, ProFormSelect, ProFormUploadButton} from '@ant-design/pro-form';
@@ -27,6 +28,7 @@ export default () => {
   const isMobile = useIsMobile();
 
   const actionRef = useRef<ActionType>();
+  const {showTemporaryPasswordModal, temporaryPasswordModalNode} = useTemporaryPasswordModal();
   const [pageNum, setPageNum] = useState(1);
   const [pageSize, setPageSize] = useState(10); // 默认10
   const [total, setTotal] = useState(0);
@@ -257,7 +259,12 @@ export default () => {
             onFinish={async (values) => {
               const res = await addUserUsingPost({...values, userRole: 0});
               if (res.code === 0) {
-                message.success(res.message);
+                showTemporaryPasswordModal({
+                  title: '学生账号创建成功',
+                  account: values.userAccount,
+                  userName: values.userName,
+                  rawMessage: res.message,
+                });
                 actionRef.current?.reload();
                 return true;
               } else {
@@ -315,7 +322,13 @@ export default () => {
             onFinish={async (values) => {
               const res = await adminResetPassword({account: values.userAccount, name: values.userName});
               if (res.code === 0) {
-                message.success(`重置成功，临时密码：${res.data?.temporaryPassword}`);
+                showTemporaryPasswordModal({
+                  title: '账号密码重置成功',
+                  account: values.userAccount,
+                  userName: values.userName,
+                  temporaryPassword: res.data?.temporaryPassword,
+                  rawMessage: res.message,
+                });
                 actionRef.current?.reload();
                 return true;
               } else {
@@ -327,6 +340,7 @@ export default () => {
             <ProFormText width="md" name="userAccount" label="学号" rules={[{required: true, message: '请输入学号'}]}/>
             <ProFormText width="md" name="userName" label="学生姓名" rules={[{required: true, message: '请输入学生姓名'}]}/>
           </ModalForm>
+          {temporaryPasswordModalNode}
         </div>
       ]}
     />

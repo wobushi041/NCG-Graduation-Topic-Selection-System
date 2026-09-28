@@ -7,6 +7,7 @@ import {
   listUserByPageUsingPost,
 } from '@/services/topic-selection/userController';
 import {adminResetPassword} from '@/services/topic-selection/authController';
+import {useTemporaryPasswordModal} from '@/utils/showTemporaryPasswordModal';
 import {PlusOutlined} from '@ant-design/icons';
 import {ActionType, ProColumns, ProFormSelect, ProFormText, ProTable,} from '@ant-design/pro-components';
 import {ModalForm} from '@ant-design/pro-form';
@@ -25,6 +26,7 @@ export default () => {
   const isMobile = useIsMobile();
 
   const actionRef = useRef<ActionType>();
+  const {showTemporaryPasswordModal, temporaryPasswordModalNode} = useTemporaryPasswordModal();
 
   const columns: ProColumns<GithubIssueItem>[] = [
     {
@@ -160,7 +162,12 @@ export default () => {
               const addDeptTeacher = {...values, userRole: 2};
               const res = await addUserUsingPost(addDeptTeacher);
               if (res.code === 0) {
-                message.success(res.message);
+                showTemporaryPasswordModal({
+                  title: '专业负责人账号创建成功',
+                  account: values.userAccount,
+                  userName: values.userName,
+                  rawMessage: res.message,
+                });
                 actionRef.current?.reload();
                 return true;
               } else {
@@ -232,7 +239,13 @@ export default () => {
             onFinish={async (values) => {
               const res = await adminResetPassword({account: values.userAccount, name: values.userName});
               if (res.code === 0) {
-                message.success(`重置成功，临时密码：${res.data?.temporaryPassword}`);
+                showTemporaryPasswordModal({
+                  title: '账号密码重置成功',
+                  account: values.userAccount,
+                  userName: values.userName,
+                  temporaryPassword: res.data?.temporaryPassword,
+                  rawMessage: res.message,
+                });
                 actionRef.current?.reload();
                 return true;
               } else {
@@ -244,6 +257,7 @@ export default () => {
             <ProFormText width="md" name="userAccount" label="账号" rules={[{required: true, message: '请输入账号'}]}/>
             <ProFormText width="md" name="userName" label="姓名" rules={[{required: true, message: '请输入姓名'}]}/>
           </ModalForm>
+          {temporaryPasswordModalNode}
         </div>
       ]}
     />
