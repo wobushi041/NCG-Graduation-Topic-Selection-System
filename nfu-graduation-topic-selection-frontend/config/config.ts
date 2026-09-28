@@ -69,7 +69,7 @@ export default defineConfig({
    * @name layout 插件
    * @doc https://umijs.org/docs/max/layout-menu
    */
-  title: '毕业设计选题系统',
+  title: '广州南方学院毕设选题管理系统',
   layout: {
     locale: true,
     ...defaultSettings,

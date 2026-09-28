@@ -42,6 +42,68 @@ const useStyles = createStyles(({token}) => {
       backgroundImage:
         "url('https://mdn.alipayobjects.com/yuyan_qk0oxh/afts/img/V-_oS6r-i7wAAAAAAAAAAAAAFl94AQBr')",
       backgroundSize: '100% 100%',
+      '& .ant-pro-form-login-header': {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '42px',
+        lineHeight: 1,
+        gap: '10px',
+        whiteSpace: 'nowrap',
+      },
+      '& .ant-pro-form-login-logo': {
+        width: '42px',
+        height: '42px',
+        margin: 0,
+        marginRight: 0,
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+        verticalAlign: 'middle',
+        '& > img': {
+          width: '42px',
+          height: '42px',
+          display: 'block',
+          margin: 0,
+          objectFit: 'contain',
+        },
+      },
+      '& .ant-pro-form-login-title': {
+        position: 'static',
+        top: 0,
+        insetBlockStart: 0,
+        margin: 0,
+        display: 'inline-flex',
+        alignItems: 'center',
+        height: '42px',
+        fontSize: '24px',
+        lineHeight: 1,
+        whiteSpace: 'nowrap',
+      },
+      [`@media screen and (max-width: ${token.screenSM}px)`]: {
+        '& .ant-pro-form-login-header': {
+          height: '34px',
+          gap: '8px',
+        },
+        '& .ant-pro-form-login-logo': {
+          width: '34px',
+          height: '34px',
+          '& > img': {
+            width: '34px',
+            height: '34px',
+          },
+        },
+        '& .ant-pro-form-login-title': {
+          height: '34px',
+          fontSize: '19px',
+          lineHeight: 1,
+        },
+        '& .ant-pro-form-login-desc': {
+          fontSize: '13px',
+          marginTop: '8px',
+        },
+      },
     },
   };
 });
@@ -83,6 +145,9 @@ const resolveSafeRedirect = (redirect: string | null, userRole?: number): string
   return redirect;
 };
 
+/**
+ * 账号密码登录页面组件（展示广州南方学院校徽 Logo、系统标题与沉底版权页脚）
+ */
 const Login: React.FC = () => {
   const [type, setType] = useState<string>('account');
   // @ts-ignore
@@ -90,7 +155,7 @@ const Login: React.FC = () => {
   const {styles} = useStyles();
 
   /**
-   * 登陆成功后，获取用户登录信息
+   * 登录成功后拉取当前登录用户信息并写入全局状态
    */
   const fetchUserInfo = async () => {
     const res = await getLoginUserUsingGet();
@@ -105,6 +170,10 @@ const Login: React.FC = () => {
     }
     return undefined;
   };
+
+  /**
+   * 提交登录表单，处理初始临时密码强制跳转（40001）与角色安全重定向
+   */
   const handleSubmit = async (values: LoginRequest) => {
     try {
       // 登录
@@ -140,7 +209,7 @@ const Login: React.FC = () => {
       <div
         style={{
           flex: '1',
-          padding: '32px 0',
+          padding: '32px 0 16px',
         }}
       >
         <LoginForm
@@ -148,9 +217,9 @@ const Login: React.FC = () => {
             minWidth: 280,
             maxWidth: '75vw',
           }}
-          logo={<img alt="logo" src="/logo_256.png"/>}
-          title="毕设选题系统"
-          subTitle={'毕业设计选题管理'}
+          logo={<img alt="logo" src="/nfu-logo-512.png"/>}
+          title="广州南方学院毕设选题管理系统"
+          subTitle={'NCG Graduation Topic Selection System'}
           onFinish={async (values) => {
             await handleSubmit(values as LoginRequest);
           }}
@@ -204,7 +273,7 @@ const Login: React.FC = () => {
           )}
           <div
             style={{
-              marginBottom: 60,
+              marginBottom: 24,
             }}
           >
             <div>

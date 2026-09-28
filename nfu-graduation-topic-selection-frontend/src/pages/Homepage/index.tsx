@@ -111,7 +111,7 @@ const Welcome: React.FC = () => {
                 : 'background-image: linear-gradient(75deg, #FBFDFF 0%, #F5F7FF 100%)',
           }}
         >
-          <Title style={{textAlign: 'center'}}>欢迎使用毕业设计选题系统🎉</Title>
+          <Title style={{textAlign: 'center'}}>欢迎使用广州南方学院毕设选题管理系统🎉</Title>
           <div
             style={{
               backgroundPosition: '100% -30%',
@@ -151,8 +151,8 @@ const Welcome: React.FC = () => {
               <InfoCard
                 index={3}
                 title="查看项目源码"
-                href="https://github.com/Lq0412/graduation-topic-selection-system"
-                desc="本仓库用于整理和继续维护毕业设计选题系统，包含本地运行说明、公开数据库结构与后续待办。"
+                href="https://github.com/Lq0412/nfu-graduation-topic-selection"
+                desc="本仓库用于整理和继续维护广州南方学院毕设选题管理系统，包含本地运行说明、公开数据库结构与后续待办。"
               />
             </div>
           </div>
