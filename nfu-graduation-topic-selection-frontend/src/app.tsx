@@ -2,11 +2,37 @@ import { AvatarDropdown, AvatarName, Footer, Question } from '@/components';
 import { getLoginUserUsingGet } from '@/services/topic-selection/userController';
 import { LinkOutlined } from '@ant-design/icons';
 import { SettingDrawer } from '@ant-design/pro-components';
+import type { Settings as LayoutSettings } from '@ant-design/pro-components';
 import type { RunTimeLayoutConfig } from '@umijs/max';
 import { history, Link } from '@umijs/max';
+import defaultSettings from '../config/defaultSettings';
 import { errorConfig } from './requestErrorConfig';
 import { WebSocketNotification } from '@/components/WebSocket';
 import React from 'react';
+
+/**
+ * 复刻 address-card-outline 样式的 18x18 像素对齐矢量 SVG 身份卡片图标组件
+ */
+const AddressCardOutlineIcon: React.FC = () => (
+  <svg
+    viewBox="0 0 18 18"
+    width="18"
+    height="18"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    shapeRendering="geometricPrecision"
+    style={{ display: 'block', flexShrink: 0 }}
+  >
+    <rect x="1.75" y="3.75" width="14.5" height="10.5" rx="1.75" stroke="#595959" strokeWidth="1.5" />
+    <circle cx="6.5" cy="7.25" r="1.75" fill="#595959" />
+    <path
+      d="M4 11.75C4 10.35 5.1 9.5 6.5 9.5C7.9 9.5 9 10.35 9 11.75V12.5H4V11.75Z"
+      fill="#595959"
+    />
+    <rect x="10.25" y="6.5" width="4" height="1.5" rx="0.75" fill="#595959" />
+    <rect x="10.25" y="10" width="4" height="1.5" rx="0.75" fill="#595959" />
+  </svg>
+);
 
 const isLocalDevelopment = ['127.0.0.1', 'localhost'].includes(window.location.hostname);
 const host = isLocalDevelopment
@@ -19,10 +45,13 @@ const loginPath = '/user/login';
 const publicAuthPaths = new Set([loginPath, '/user/register']);
 
 /**
- * @see  https://umijs.org/zh-CN/plugins/plugin-initial-state
- * */
+ * 全局初始状态获取函数：注入 defaultSettings 布局配置并在非公开认证路由下自动拉取当前登录用户信息
+ * @see https://umijs.org/zh-CN/plugins/plugin-initial-state
+ */
 export async function getInitialState(): Promise<{
+  settings?: Partial<LayoutSettings>;
   currentUser?: API.LoginUserVO;
+  collapsed?: boolean;
 }> {
   const fetchUserInfo = async () => {
     try {
@@ -39,21 +68,113 @@ export async function getInitialState(): Promise<{
     const currentUser = await fetchUserInfo();
     return {
       currentUser,
+      collapsed: false,
+      settings: defaultSettings as Partial<LayoutSettings>,
     };
   }
 
-  return {};
+  return {
+    collapsed: false,
+    settings: defaultSettings as Partial<LayoutSettings>,
+  };
 }
 
-// ProLayout 支持的api https://procomponents.ant.design/components/layout
+/**
+ * 全局 ProLayout 运行时布局配置：
+ * - 顶栏/侧栏左上角强制渲染广州南方学院校徽 (/nfu-logo-512.png)，展开时显示单行系统名称，收缩时仅居中展示校徽；
+ * - 扩宽左侧侧边栏宽度 (siderWidth: 280) 容纳完整系统名称；
+ * - 左下角在展开时展示像素级对齐的 AddressCardOutlineIcon + 角色姓名，在收缩时仅居中展示 AddressCardOutlineIcon 图标。
+ * @see https://procomponents.ant.design/components/layout
+ */
 export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) => {
+  const isCollapsed = Boolean(initialState?.collapsed);
+
   return {
+    logo: '/nfu-logo-512.png',
+    title: '广州南方学院毕业选题管理系统',
+    siderWidth: 280,
+    collapsed: isCollapsed,
+    onCollapse: (collapsed: boolean) => {
+      setInitialState((preInitialState) => ({
+        ...preInitialState,
+        collapsed,
+      }));
+    },
+    headerTitleRender: () => {
+      return (
+        <div
+          className="nfu-sider-header-wrapper"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            height: 32,
+            gap: 8,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <img
+            src="/nfu-logo-512.png"
+            alt="logo"
+            style={{
+              width: 32,
+              height: 32,
+              display: 'block',
+              margin: 0,
+              objectFit: 'contain',
+              flexShrink: 0,
+            }}
+          />
+          <span
+            className="nfu-sider-header-title"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              height: 32,
+              fontWeight: 600,
+              fontSize: 16,
+              color: 'rgba(0, 0, 0, 0.88)',
+              lineHeight: 1,
+            }}
+          >
+            广州南方学院毕业选题管理系统
+          </span>
+        </div>
+      );
+    },
     actionsRender: () => [<Question key="doc" />],
     avatarProps: {
-      src: initialState?.currentUser?.userAvatar,
+      src: undefined,
+      size: 'small',
+      icon: <AddressCardOutlineIcon />,
+      style: {
+        backgroundColor: 'transparent',
+        width: 18,
+        height: 18,
+        lineHeight: '18px',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      },
       title: <AvatarName />,
-      render: (_, avatarChildren) => {
-        return <AvatarDropdown>{avatarChildren}</AvatarDropdown>;
+      render: () => {
+        return (
+          <AvatarDropdown>
+            <span
+              className="nfu-sider-avatar-wrapper"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                height: 28,
+                lineHeight: '18px',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <AddressCardOutlineIcon />
+              <AvatarName />
+            </span>
+          </AvatarDropdown>
+        );
       },
     },
     waterMarkProps: {

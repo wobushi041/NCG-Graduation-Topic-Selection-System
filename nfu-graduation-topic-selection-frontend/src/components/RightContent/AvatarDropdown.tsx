@@ -1,6 +1,6 @@
-import {BankOutlined, LogoutOutlined, SettingOutlined, SwapOutlined, TeamOutlined, UserOutlined} from '@ant-design/icons';
+import {LogoutOutlined, SettingOutlined, SwapOutlined, UserOutlined} from '@ant-design/icons';
 import {history, useModel} from '@umijs/max';
-import {message, Modal, Space, Spin, Typography} from 'antd';
+import {message, Modal, Spin} from 'antd';
 import {createStyles} from 'antd-style';
 import type {MenuInfo} from 'rc-menu/lib/interface';
 import React, {useCallback, useEffect, useState} from 'react';
@@ -14,9 +14,9 @@ export type GlobalHeaderRightProps = {
   children?: React.ReactNode;
 };
 
-
-const {Text} = Typography;
-
+/**
+ * 渲染当前登录用户的“角色 - 姓名”文本标签，并与左侧 18x18 身份图标保持像素级垂直居中对齐
+ */
 export const AvatarName = () => {
   const {initialState} = useModel('@@initialState');
   const {currentUser} = initialState || {};
@@ -24,20 +24,22 @@ export const AvatarName = () => {
     ? `${USER_ROLE_MAP[currentUser.userRole as 0 | 1 | 2 | 3]} - ${currentUser.userName}`
     : '';
 
-  // 构建详细的tooltip内容
   return (
     <span
+      className="nfu-sider-avatar-name"
       style={{
-        display: 'inline-block',
-        maxWidth: 120, // 可以根据布局调整
+        display: 'inline-flex',
+        alignItems: 'center',
+        maxWidth: 130,
+        height: 18,
+        lineHeight: '18px',
         overflow: 'hidden',
         textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',
-        verticalAlign: 'middle',
       }}
     >
-        {displayText}
-      </span>
+      {displayText}
+    </span>
   );
 };
 
@@ -56,9 +58,50 @@ const useStyles = createStyles(({token}) => {
         backgroundColor: token.colorBgTextHover,
       },
     },
+    /**
+     * 退出登录下拉卡片宽度收缩及危险操作样式：
+     * - 外部触发区域已横向展示「角色 - 姓名」，卡片内部仅保留退出登录（及可选身份切换），宽度自适应内容；
+     * - 退出登录菜单项的图标与文字统一使用红色 (#ff4d4f)，悬浮时使用淡红底色。
+     */
+    avatarDropdownOverlay: {
+      '& .ant-dropdown-menu': {
+        width: 'max-content',
+        minWidth: '116px',
+        maxWidth: '180px',
+      },
+      '& .ant-dropdown-menu-item-danger': {
+        color: '#ff4d4f !important',
+        '& .ant-dropdown-menu-item-icon': {
+          color: '#ff4d4f !important',
+        },
+        '&:hover': {
+          color: '#ff4d4f !important',
+          backgroundColor: 'rgba(255, 77, 79, 0.08) !important',
+        },
+      },
+      [`@media screen and (max-width: ${token.screenMD}px)`]: {
+        '& .ant-dropdown-menu': {
+          width: 'max-content',
+          minWidth: '112px',
+          maxWidth: '168px',
+        },
+      },
+      [`@media screen and (max-width: ${token.screenXS}px)`]: {
+        '& .ant-dropdown-menu': {
+          width: 'max-content',
+          minWidth: '108px',
+          maxWidth: '160px',
+        },
+      },
+    },
   };
 });
 
+/**
+ * 用户头像与身份下拉菜单组件：
+ * 展示当前登录用户的姓名、角色、系部/专业信息，以及角色切换和退出登录操作，
+ * 并针对桌面端与移动端分别收敛下拉卡片宽度。
+ */
 export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({menu, children}) => {
   /**
    * 退出登录，并且将当前的 url 保存
@@ -208,45 +251,10 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({menu, children
     return loading;
   }
 
-  // 用户基本信息菜单项
-  const userInfoItems = [
-    {
-      key: 'user-info',
-      type: 'group' as const,
-      label: (
-        <Space direction="vertical" size={2} style={{width: '100%'}}>
-          <Text strong style={{fontSize: '14px'}}>
-            <UserOutlined style={{marginRight: 6}}/>
-            {currentUser.userName}
-          </Text>
-          <Text type="secondary" style={{fontSize: '12px'}}>
-            {USER_ROLE_MAP[currentUser.userRole as 0 | 1 | 2 | 3]}
-          </Text>
-          {currentUser.dept && (
-            <Text type="secondary" style={{fontSize: '12px'}}>
-              <BankOutlined style={{marginRight: 4}}/>
-              {currentUser.dept}
-            </Text>
-          )}
-          {currentUser.project && (
-            <Text type="secondary" style={{fontSize: '12px'}}>
-              <TeamOutlined style={{marginRight: 4}}/>
-              {currentUser.project}
-            </Text>
-          )}
-        </Space>
-      ),
-    },
-    {
-      type: 'divider' as const,
-    },
-  ];
-
   // 只有专业负责人和教师角色, 且确实存在已配对的另一角色账号时才显示切换身份按钮
   const showSwitchRole = canToggleRole;
 
   const menuItems = [
-    ...userInfoItems,
     ...(menu
       ? [
         {
@@ -277,22 +285,22 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({menu, children
     ] : []),
     {
       key: 'logout',
-      icon: <LogoutOutlined/>,
-      label: '退出登陆',
+      danger: true,
+      icon: <LogoutOutlined style={{color: '#ff4d4f'}} />,
+      label: <span style={{color: '#ff4d4f'}}>退出登录</span>,
     },
   ];
 
   return (
     <HeaderDropdown
+      overlayClassName={styles.avatarDropdownOverlay}
       menu={{
         selectedKeys: [],
         onClick: onMenuClick,
         items: menuItems,
       }}
       overlayStyle={{
-        maxWidth: '280px',
-        minWidth: '220px',
-        padding: '8px 0'
+        padding: '4px 0',
       }}
     >
       {children}
