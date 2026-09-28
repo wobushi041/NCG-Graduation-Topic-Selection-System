@@ -46,7 +46,7 @@ pwsh "C:/Users/abc/.codex/skills/java-coding-conventions/scripts/verify-style.ps
 
 ## 三、项目概览
 
-本项目是前后端分离的毕业选题管理系统（广州南方学院毕业选题管理系统 / NCG Graduation Topic Selection System），采用单体仓库与 Maven 多模块架构：
+本项目是前后端分离的毕业选题管理系统（广州南方学院毕设选题管理系统 / NCG Graduation Topic Selection System），采用单体仓库与 Maven 多模块架构：
 
 - `nfu-graduation-topic-selection-backend/`：Java 8、Spring Boot 2.5.6、Spring MVC、MyBatis-Plus、MySQL、Redis、Sa-Token、Sentinel、Caffeine、WebSocket（根包 `cn.edu.nfu.topicselection`）。
 - `integration-tests/`：基于 Testcontainers（MySQL 8 + Redis 7）的后端端到端集成测试与 Knife4j 接口文档契约测试模块。

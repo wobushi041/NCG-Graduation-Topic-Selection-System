@@ -1,6 +1,6 @@
 # 生产部署说明
 
-本目录用于把「广州南方学院毕业选题管理系统」以 Docker Compose 方式部署到一台公网服务器。
+本目录用于把「广州南方学院毕设选题管理系统」以 Docker Compose 方式部署到一台公网服务器。
 
 ## 架构
 
@@ -73,7 +73,9 @@ docker compose exec -T topic-selection-mysql \
   < ../nfu-graduation-topic-selection-backend/src/main/resources/sql/schema.sql
 ```
 
-如果是迁移旧库，请先恢复原有备份，再按需执行仓库中的历史迁移脚本；不要对已有数据重复导入 `schema.sql`。
+当前项目以 `schema.sql` 作为全新数据库的完整基线，不需要执行历史迁移脚本。后续已有数据的环境需要升级时，复制
+`../nfu-graduation-topic-selection-backend/src/main/resources/sql/migration-template.sql`，按日期和变更内容命名后编写增量迁移；
+同时将最终表结构同步到 `schema.sql`，供新环境初始化使用。不要对已有数据重复导入 `schema.sql`。
 
 ### 5. 启动全部服务
 
@@ -123,7 +125,7 @@ gzip -dc backups/nfu_topic_selection-备份时间戳.sql.gz \
 
 ## 上线前仍需人工确认
 
-- 页面底部已展示「粤ICP备2026131537号」并链接到 https://beian.miit.gov.cn；如后续完成公安联网备案，还需在页脚补充公网安备号；
+- 页面底部默认仅展示「广州南方学院毕设选题管理系统」版权声明；如部署到公网域名并已完成 ICP 备案或公安联网备案，可在 `nfu-graduation-topic-selection-frontend/src/components/Footer/index.tsx` 中补充对应备案号与链接；
 - 首次管理员登录后立即修改密码，并清空 `.env` 中的引导变量；
 - 需要邮件验证码时填写 SMTP 凭据；需要 AI 审题时填写腾讯云智能体 App Key；
 - 建议确认接口文档（Knife4j）在生产环境已关闭，避免公开暴露接口结构。

@@ -1,7 +1,7 @@
 # Maven 工程命名与模块化重构实施计划
 
 > 状态：计划已确认，尚未实施
-> 目标项目：广州南方学院毕业选题管理系统
+> 目标项目：广州南方学院毕设选题管理系统
 > 英文名称：NCG Graduation Topic Selection System
 > 适用基线：Wave 1 ～ Wave 6 解耦重构完成后的当前仓库
 
@@ -27,7 +27,7 @@
 
 | 对象 | 目标名称 |
 |---|---|
-| 中文项目名 | 广州南方学院毕业选题管理系统 |
+| 中文项目名 | 广州南方学院毕设选题管理系统 |
 | 英文项目名 | NCG Graduation Topic Selection System |
 | 项目简称 | NCG Topic Selection |
 | Git 仓库名 | `nfu-graduation-topic-selection` |

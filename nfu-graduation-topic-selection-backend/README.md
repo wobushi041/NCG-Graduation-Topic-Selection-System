@@ -1,6 +1,6 @@
 # NCG Graduation Topic Selection :: Server
 
-本模块为「广州南方学院毕业选题管理系统」的 Spring Boot 后端服务模块（`cn.edu.nfu:graduation-topic-selection-server`）。
+本模块为「广州南方学院毕设选题管理系统」的 Spring Boot 后端服务模块（`cn.edu.nfu:graduation-topic-selection-server`）。
 
 - **Java 根包**：`cn.edu.nfu.topicselection`
 - **启动类**：`cn.edu.nfu.topicselection.TopicSelectionApplication`
