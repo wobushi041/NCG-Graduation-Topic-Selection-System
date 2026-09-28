@@ -46,10 +46,11 @@ pwsh "C:/Users/abc/.codex/skills/java-coding-conventions/scripts/verify-style.ps
 
 ## 三、项目概览
 
-本项目是前后端分离的毕业选题管理系统，采用单体仓库：
+本项目是前后端分离的毕业选题管理系统（广州南方学院毕业选题管理系统 / NCG Graduation Topic Selection System），采用单体仓库与 Maven 多模块架构：
 
-- `work-topic-selection-backend/`：Java 8、Spring Boot 2.5.6、Spring MVC、MyBatis-Plus、MySQL、Redis、Sa-Token、Sentinel、Caffeine、WebSocket。
-- `work-topic-selection-frontend/`：React、TypeScript、Umi Max、Ant Design Pro，使用 pnpm 管理依赖。
+- `nfu-graduation-topic-selection-backend/`：Java 8、Spring Boot 2.5.6、Spring MVC、MyBatis-Plus、MySQL、Redis、Sa-Token、Sentinel、Caffeine、WebSocket（根包 `cn.edu.nfu.topicselection`）。
+- `integration-tests/`：基于 Testcontainers（MySQL 8 + Redis 7）的后端端到端集成测试与 Knife4j 接口文档契约测试模块。
+- `nfu-graduation-topic-selection-frontend/`：React、TypeScript、Umi Max、Ant Design Pro，使用 pnpm 管理依赖。
 - `deploy/`：Docker Compose、Caddy 与部署相关文件。
 - `AGENTS.md`：项目上下文、协作边界与 Java 规范的渐进式加载入口。
 - `C:/Users/abc/.codex/skills/java-coding-conventions/`：Java 编码规范正文与校验脚本。
@@ -111,10 +112,10 @@ pwsh "C:/Users/abc/.codex/skills/java-coding-conventions/scripts/verify-style.ps
 
 ## 五、前端架构事实
 
-- API 调用主要位于 `src/services/work-topic-selection/`。
-- 全局请求配置位于 `src/app.tsx`，本地开发时后端基础地址指向 `8000` 端口。
-- 请求开启 `withCredentials`，用于携带 Sa-Token Cookie。
-- 全局业务错误处理位于 `src/requestErrorConfig.ts`，按照 `{ code, message, data }` 结构处理响应。
+- API 调用主要位于 `nfu-graduation-topic-selection-frontend/src/services/topic-selection/`。
+- 全局请求配置位于 `nfu-graduation-topic-selection-frontend/src/app.tsx`，本地开发时后端基础地址指向 `8000` 端口，生产反向代理基础地址为 `/api`。
+- 请求开启 `withCredentials`，用于携带 Sa-Token Cookie（`nfu-topic-selection`）。
+- 全局业务错误处理位于 `nfu-graduation-topic-selection-frontend/src/requestErrorConfig.ts`，按照 `{ code, message, data }` 结构处理响应。
 - 修改后端接口路径、请求 DTO 或响应 VO 时，应同步检查前端 service、类型定义和调用页面。
 
 ## 六、修改边界
@@ -129,24 +130,23 @@ pwsh "C:/Users/abc/.codex/skills/java-coding-conventions/scripts/verify-style.ps
 
 ## 七、验证命令
 
-Windows PowerShell 下优先使用以下命令。
+Windows PowerShell 下优先使用以下命令（在仓库根目录执行）。
 
 后端：
 
 ```powershell
-Set-Location work-topic-selection-backend
 .\mvnw.cmd test
-.\mvnw.cmd spring-boot:run
+.\mvnw.cmd verify
+.\mvnw.cmd -pl nfu-graduation-topic-selection-backend spring-boot:run
 ```
 
 前端：
 
 ```powershell
-Set-Location work-topic-selection-frontend
-pnpm install --frozen-lockfile
-pnpm lint
-pnpm test
-pnpm build
+pnpm --dir nfu-graduation-topic-selection-frontend install --frozen-lockfile
+pnpm --dir nfu-graduation-topic-selection-frontend lint
+pnpm --dir nfu-graduation-topic-selection-frontend test
+pnpm --dir nfu-graduation-topic-selection-frontend build
 ```
 
 - 只修改文档时，无需运行完整构建，但应检查 Markdown 内容和 Git diff。
