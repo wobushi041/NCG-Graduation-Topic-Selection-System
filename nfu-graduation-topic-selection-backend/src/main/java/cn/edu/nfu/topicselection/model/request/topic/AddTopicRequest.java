@@ -43,9 +43,9 @@ public class AddTopicRequest implements Serializable {
     private String teacherName;
 
     /**
-     * 总数
+     * 剩余可接收学生数量
      */
-    private Integer amount;
+    private Integer surplusQuantity;
 
     /// 序列化字段 ///
 

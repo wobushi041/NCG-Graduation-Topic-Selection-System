@@ -173,8 +173,8 @@ public class TopicApplicationServiceImpl implements TopicApplicationService {
         final String topicRequirement = request.getRequirement();
         ThrowUtils.throwIf(StringUtils.isBlank(topicRequirement), CodeBindMessageEnums.PARAMS_ERROR, "题目要求不能为空");
 
-        final int topicCapacity = request.getAmount() == null ? 1 : request.getAmount();
-        ThrowUtils.throwIf(topicCapacity < 1 || topicCapacity > 100, CodeBindMessageEnums.PARAMS_ERROR, "题目人数必须在 1 到 100 之间");
+        final int topicSurplusQuantity = request.getSurplusQuantity() == null ? 1 : request.getSurplusQuantity();
+        ThrowUtils.throwIf(topicSurplusQuantity < 1 || topicSurplusQuantity > 100, CodeBindMessageEnums.PARAMS_ERROR, "题目人数必须在 1 到 100 之间");
 
         Topic oldTopic = topicService.getOne(new QueryWrapper<Topic>().eq("topic", topicTitle));
         ThrowUtils.throwIf(oldTopic != null, CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR, "该选题已存在, 请不要重复添加");
@@ -197,7 +197,7 @@ public class TopicApplicationServiceImpl implements TopicApplicationService {
         topic.setTeacherName(loginUser.getUserName());
         topic.setTeacherAccount(loginUser.getUserAccount());
         topic.setTopicGroupId(request.getTopicGroupId());
-        topic.setSurplusQuantity(topicCapacity);
+        topic.setSurplusQuantity(topicSurplusQuantity);
         boolean result = topicService.save(topic);
         ThrowUtils.throwIf(!result, CodeBindMessageEnums.OPERATION_ERROR, "无法添加新的选题");
         return topic.getId();
@@ -477,6 +477,10 @@ public class TopicApplicationServiceImpl implements TopicApplicationService {
         String requirement = request.getRequirement();
         ThrowUtils.throwIf(StringUtils.isBlank(requirement), CodeBindMessageEnums.PARAMS_ERROR, "题目要求不能为空");
 
+        Integer requestedSurplusQuantity = request.getSurplusQuantity();
+        ThrowUtils.throwIf(requestedSurplusQuantity != null && (requestedSurplusQuantity < 1 || requestedSurplusQuantity > 100),
+                CodeBindMessageEnums.PARAMS_ERROR, "题目人数必须在 1 到 100 之间");
+
         // 获取当前登陆的教师
         User loginUser = userService.userGetCurrentLoginUser();
 
@@ -503,6 +507,9 @@ public class TopicApplicationServiceImpl implements TopicApplicationService {
         topic.setDescription(description);
         topic.setRequirement(requirement);
         topic.setTopicGroupId(request.getTopicGroupId());
+        if (requestedSurplusQuantity != null) {
+            topic.setSurplusQuantity(requestedSurplusQuantity);
+        }
         topic.setStatus(TopicStatusEnum.PENDING_REVIEW.getCode());
         topic.setReason("");
         boolean result = topicService.updateById(topic);

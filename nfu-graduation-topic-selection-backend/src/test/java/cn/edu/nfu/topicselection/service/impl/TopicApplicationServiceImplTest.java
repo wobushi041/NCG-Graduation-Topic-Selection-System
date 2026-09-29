@@ -16,6 +16,7 @@ import cn.edu.nfu.topicselection.model.request.topic.CheckTopicRequest;
 import cn.edu.nfu.topicselection.model.request.topic.DeleteTopicRequest;
 import cn.edu.nfu.topicselection.model.request.topic.GetTopicReviewLevelRequest;
 import cn.edu.nfu.topicselection.model.request.topic.SetTeacherTopicAmountRequest;
+import cn.edu.nfu.topicselection.model.request.topic.UpdateTopicRequest;
 import cn.edu.nfu.topicselection.service.MailService;
 import cn.edu.nfu.topicselection.service.StudentTopicSelectionService;
 import cn.edu.nfu.topicselection.service.TeacherGroupService;
@@ -142,7 +143,7 @@ class TopicApplicationServiceImplTest {
         request.setType("研究型");
         request.setDescription("研究卷积神经网络在工业缺陷检测中的应用");
         request.setRequirement("熟悉 Python 与 PyTorch 框架");
-        request.setAmount(2);
+        request.setSurplusQuantity(2);
         request.setTopicGroupId(1L);
 
         TopicGroup topicGroup = new TopicGroup();
@@ -215,6 +216,49 @@ class TopicApplicationServiceImplTest {
         // 3. 断言抛出参数错误异常且未更新教师记录
         assertThrows(BusinessException.class, () -> topicApplicationService.setTeacherTopicAmount(request));
         verify(userService, never()).updateById(any(User.class));
+    }
+
+    // 场景：测试教师修改未发布课题时同步更新可接收学生数量并重新进入待审核状态
+    @Test
+    void updateTopicUpdatesStudentCapacityAndResetsReviewStatus() {
+        // 1. 准备教师、被打回课题与新的可接收学生数量
+        User teacher = teacherUser(10L, "teacher-01", "王老师", "计算机系", 3);
+        Topic topic = new Topic();
+        topic.setId(66L);
+        topic.setTopic("校园预约系统");
+        topic.setTeacherAccount(teacher.getUserAccount());
+        topic.setTopicGroupId(1L);
+        topic.setSurplusQuantity(1);
+        topic.setStatus(TopicStatusEnum.REJECTED.getCode());
+
+        UpdateTopicRequest request = new UpdateTopicRequest();
+        request.setTopicName("校园预约系统");
+        request.setType("软件系统");
+        request.setDescription("实现校园场地预约与审批流程");
+        request.setRequirement("掌握 Java 与 React 开发");
+        request.setTopicGroupId(1L);
+        request.setSurplusQuantity(3);
+
+        TopicGroup topicGroup = new TopicGroup();
+        topicGroup.setId(1L);
+        topicGroup.setCollegeId(1L);
+
+        when(userService.userGetCurrentLoginUser()).thenReturn(teacher);
+        when(topicService.getOne(any())).thenReturn(topic);
+        when(userMapper.selectByIdForUpdate(teacher.getId())).thenReturn(teacher);
+        when(topicMapper.selectByIdForUpdate(topic.getId())).thenReturn(topic);
+        when(topicGroupService.getById(1L)).thenReturn(topicGroup);
+        when(topicService.updateById(topic)).thenReturn(true);
+
+        // 2. 调用修改课题方法
+        String result = topicApplicationService.updateTopic(request);
+
+        // 3. 断言更新可接收学生数量并重置为待审核状态
+        assertEquals("更新成功", result);
+        assertEquals(3, topic.getSurplusQuantity());
+        assertEquals(TopicStatusEnum.PENDING_REVIEW.getCode(), topic.getStatus());
+        verify(teacherGroupService).validate("teacher-01", 1L, 66L);
+        verify(topicService).updateById(topic);
     }
 
     // 场景：测试系主任审核退回课题时记录退回理由并向出题教师发送通知邮件

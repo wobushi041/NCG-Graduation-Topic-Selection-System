@@ -234,14 +234,14 @@ Get-Content -Raw "nfu-graduation-topic-selection-backend/src/main/resources/sql/
   mysql -u YOUR_MYSQL_USER -p nfu_topic_selection
 ```
 
-如需本地演示数据，可单独导入虚构示例数据（集成测试只加载 `schema.sql`，不加载 `demo-data.sql`）：
+如需本地演示数据，可单独导入工学院示例数据（集成测试只加载 `schema.sql`，不加载 `demo-data.sql`）：
 
 ```bash
 mysql -u YOUR_MYSQL_USER -p nfu_topic_selection \
   < nfu-graduation-topic-selection-backend/src/main/resources/sql/demo-data.sql
 ```
 
-> **说明**：`demo-data.sql` 不会创建可登录账号。首次启动时，若数据库中尚无管理员账号，可通过 `.env` 中的引导变量一次性创建初始管理员（见下一节）。当前项目以 `schema.sql` 作为完整数据库基线；后续如需对已有数据的环境做表结构升级，请复制 `nfu-graduation-topic-selection-backend/src/main/resources/sql/migration-template.sql` 编写增量迁移，同时将最终表结构同步至 `schema.sql`。
+> **说明**：`demo-data.sql` 中的学院、专业及教师姓名来自学校官网公开页面，其余身份信息均为虚构；演示账号统一使用初始密码 `12345678`，只能用于本地开发环境。首次启动时，若数据库中尚无管理员账号，可通过 `.env` 中的引导变量一次性创建初始管理员（见下一节）。当前项目以 `schema.sql` 作为完整数据库基线；后续如需对已有数据的环境做表结构升级，请复制 `nfu-graduation-topic-selection-backend/src/main/resources/sql/migration-template.sql` 编写增量迁移，同时将最终表结构同步至 `schema.sql`。
 
 ### 4. 配置环境变量
 
@@ -446,7 +446,7 @@ docker compose --env-file deploy/.env.production.example -f deploy/docker-compos
 
 ## 安全与隐私
 
-- 仓库只保留公开表结构（`schema.sql`）和虚构示例数据（`demo-data.sql`），不包含真实学生/教师名单、可登录账号、密码、私有 SQL、操作截图或生产凭据；
+- 仓库只保留公开表结构（`schema.sql`）和本地演示数据（`demo-data.sql`）；其中学院、专业及教师姓名取自官网公开页面，账号、邮箱、学生名单和题目均为虚构，不包含真实凭据、私有 SQL、操作截图或生产数据；
 - `.env`、`deploy/.env`、构建产物、缓存和本地私有资料已加入 `.gitignore`；
 - 密码统一使用 BCrypt 保存，支持旧版存量散列在成功登录后平滑迁移；
 - 认证接口与关键写操作按 Sentinel 限流（`-300`）、Sa-Token 鉴权（`-200`）、DTO 基础校验（`-100`）顺序执行横切保护，选题操作结合事务、悲观锁与唯一约束保障并发一致性；

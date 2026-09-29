@@ -9,7 +9,7 @@ import {
 } from '@/services/topic-selection/userController';
 import {AntDesignOutlined, PlusOutlined} from '@ant-design/icons';
 import {ActionType, ProColumns, ProFormText, ProTable} from '@ant-design/pro-components';
-import {ModalForm, ProFormSelect, ProFormTextArea} from '@ant-design/pro-form';
+import {ModalForm, ProFormDigit, ProFormSelect, ProFormTextArea} from '@ant-design/pro-form';
 import {Button, ConfigProvider, Divider, message, Modal, Tag, Tooltip, Typography} from 'antd';
 import {useRef, useState} from 'react';
 // @ts-ignore
@@ -18,7 +18,6 @@ import {createStyles} from "antd-style";
 
 type GithubIssueItem = {
   id: number;
-  amount?: number;
   description?: string;
   requirement?: string;
   teacherName?: string;
@@ -96,8 +95,16 @@ export default () => {
     {
       title: '剩余数量',
       dataIndex: 'surplusQuantity',
+      valueType: 'digit',
       search: false,
-      editable: false,
+      fieldProps: {
+        min: 1,
+        max: 100,
+        precision: 0,
+      },
+      formItemProps: {
+        rules: [{required: true, message: '请输入 1–100 的可接收学生数量'}],
+      },
       hideInTable: isMobile,
     },
     {
@@ -275,6 +282,7 @@ export default () => {
             description: record.description,
             requirement: record.requirement,
             topicGroupId: record.topicGroupId,
+            surplusQuantity: record.surplusQuantity,
           });
           if (res.code === 0) {
             message.success(res.message);
@@ -332,6 +340,7 @@ export default () => {
             requirement: string;
             teacherName: string;
             topicGroupId: number;
+            surplusQuantity: number;
           }>
             title="添加题目"
             trigger={
@@ -417,6 +426,17 @@ export default () => {
             <ProFormText width="md" name="type" label="题目类型" colProps={{xs: 24, sm: 12}} rules={[{required: true, message: '请输入题目类型'}]}/>
             <ProFormTextArea width="md" name="description" label="题目描述" colProps={{xs: 24, sm: 12}} rules={[{required: true, message: '请输入题目描述'}]}/>
             <ProFormTextArea width="md" name="requirement" label="题目要求" colProps={{xs: 24, sm: 12}} rules={[{required: true, message: '请输入题目要求'}]}/>
+            <ProFormDigit
+              width="md"
+              name="surplusQuantity"
+              label="可接收学生数量"
+              min={1}
+              max={100}
+              fieldProps={{precision: 0}}
+              initialValue={1}
+              colProps={{xs: 24, sm: 12}}
+              rules={[{required: true, message: '请输入 1–100 的可接收学生数量'}]}
+            />
             <ProFormSelect
               width="md"
               name="topicGroupId"

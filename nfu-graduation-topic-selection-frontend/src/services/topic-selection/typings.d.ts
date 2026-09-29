@@ -5,9 +5,9 @@ declare namespace API {
   };
 
   type AddTopicRequest = {
-    amount?: number;
     description?: string;
     requirement?: string;
+    surplusQuantity?: number;
     teacherName?: string;
     topicGroupId?: number;
     topic?: string;
@@ -561,6 +561,7 @@ declare namespace API {
   type UpdateTopicRequest = {
     description?: string;
     requirement?: string;
+    surplusQuantity?: number;
     topicGroupId?: number;
     topicName?: string;
     type?: string;
