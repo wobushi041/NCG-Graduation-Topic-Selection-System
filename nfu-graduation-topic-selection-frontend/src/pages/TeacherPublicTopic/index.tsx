@@ -97,6 +97,14 @@ export default () => {
       dataIndex: 'surplusQuantity',
       valueType: 'digit',
       search: false,
+      editable: false,
+      hideInTable: isMobile,
+    },
+    {
+      title: '总容量',
+      dataIndex: 'capacity',
+      valueType: 'digit',
+      search: false,
       fieldProps: {
         min: 1,
         max: 100,
@@ -291,7 +299,7 @@ export default () => {
             description: record.description,
             requirement: record.requirement,
             topicGroupId: record.topicGroupId,
-            surplusQuantity: record.surplusQuantity,
+            surplusQuantity: record.capacity,
           });
           if (res.code === 0) {
             message.success(res.message);
@@ -438,7 +446,7 @@ export default () => {
             <ProFormDigit
               width="md"
               name="surplusQuantity"
-              label="可接收学生数量"
+              label="总容量"
               min={1}
               max={100}
               fieldProps={{precision: 0}}

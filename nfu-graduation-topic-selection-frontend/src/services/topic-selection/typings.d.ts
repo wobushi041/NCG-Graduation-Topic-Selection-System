@@ -515,6 +515,7 @@ declare namespace API {
     startTime?: string;
     status?: number;
     surplusQuantity?: number;
+    capacity?: number;
     teacherName?: string;
     teacherAccount?: string;
     topic?: string;
