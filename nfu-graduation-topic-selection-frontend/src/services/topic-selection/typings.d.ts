@@ -232,6 +232,7 @@ declare namespace API {
   };
 
   type TopicLeaderVO = {
+    capacity?: number;
     collegeId?: number;
     collegeName?: string;
     selectAmount?: number;

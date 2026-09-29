@@ -292,12 +292,14 @@ public class SelectionReportServiceImpl implements SelectionReportService {
             int count = (int) topicService.count(topicQueryWrapper);
             List<Topic> topicList = topicService.list(topicQueryWrapper);
 
-            // 计算剩余数量和选择数量
+            // 计算剩余数量、总容量和选择数量
             Integer selectAmount = 0;
             Integer surplusQuantity = 0;
+            Integer capacity = 0;
             for (Topic topic : topicList) {
                 selectAmount += topic.getSelectAmount();
                 surplusQuantity += topic.getSurplusQuantity();
+                capacity += topic.getCapacity() == null ? topic.getSurplusQuantity() : topic.getCapacity();
             }
 
             // 构建 TopicLeaderVO 对象
@@ -307,10 +309,12 @@ public class SelectionReportServiceImpl implements SelectionReportService {
                 teacherVO.setCollegeId(teacherCollegeId);
                 teacherVO.setCollegeName(collegeNames.get(teacherCollegeId));
                 teacherVO.setSurplusQuantity(surplusQuantity);
+                teacherVO.setCapacity(capacity);
                 teacherVO.setSelectAmount(selectAmount);
                 teacherVO.setTopicAmount(count);
                 teacherVOList.add(teacherVO);
             }
+
         }
 
         // 对教师列表进行分页处理
@@ -481,22 +485,26 @@ public class SelectionReportServiceImpl implements SelectionReportService {
             int count = (int) topicService.count(topicQueryWrapper);
             List<Topic> topicList = topicService.list(topicQueryWrapper);
 
-            // 计算剩余数量和选择数量
+            // 计算剩余数量、总容量和选择数量
             Integer surplusQuantity = 0;
             Integer selectAmount = 0;
+            Integer capacity = 0;
             for (Topic topic : topicList) {
                 surplusQuantity += topic.getSurplusQuantity();
                 selectAmount += topic.getSelectAmount();
+                capacity += topic.getCapacity() == null ? topic.getSurplusQuantity() : topic.getCapacity();
             }
             if (count != 0) {
                 // 构建 TopicLeaderVO 对象
                 TopicLeaderVO teacherVO = new TopicLeaderVO();
                 teacherVO.setTeacherName(userName);
                 teacherVO.setSurplusQuantity(surplusQuantity);
+                teacherVO.setCapacity(capacity);
                 teacherVO.setSelectAmount(selectAmount);
                 teacherVO.setTopicAmount(count);
                 teacherVOList.add(teacherVO);
             }
+
         }
 
         // 对教师列表进行分页处理

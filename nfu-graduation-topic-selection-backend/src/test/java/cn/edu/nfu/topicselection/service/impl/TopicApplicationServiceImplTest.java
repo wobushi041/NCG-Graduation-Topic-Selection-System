@@ -218,10 +218,10 @@ class TopicApplicationServiceImplTest {
         verify(userService, never()).updateById(any(User.class));
     }
 
-    // 场景：测试教师修改未发布课题时同步更新可接收学生数量并重新进入待审核状态
+    // 场景：测试教师修改未发布课题时同步更新总容量并重新计算剩余余量进入待审核状态
     @Test
     void updateTopicUpdatesStudentCapacityAndResetsReviewStatus() {
-        // 1. 准备教师、被打回课题与新的可接收学生数量
+        // 1. 准备教师、被打回课题与新的可接收学生数量（初始容量 1，无人已确认选题）
         User teacher = teacherUser(10L, "teacher-01", "王老师", "计算机系", 3);
         Topic topic = new Topic();
         topic.setId(66L);
@@ -229,6 +229,7 @@ class TopicApplicationServiceImplTest {
         topic.setTeacherAccount(teacher.getUserAccount());
         topic.setTopicGroupId(1L);
         topic.setSurplusQuantity(1);
+        topic.setCapacity(1);
         topic.setStatus(TopicStatusEnum.REJECTED.getCode());
 
         UpdateTopicRequest request = new UpdateTopicRequest();
@@ -253,13 +254,15 @@ class TopicApplicationServiceImplTest {
         // 2. 调用修改课题方法
         String result = topicApplicationService.updateTopic(request);
 
-        // 3. 断言更新可接收学生数量并重置为待审核状态
+        // 3. 断言总容量更新为 3，无人占用时剩余余量同为 3，状态重置为待审核
         assertEquals("更新成功", result);
+        assertEquals(3, topic.getCapacity());
         assertEquals(3, topic.getSurplusQuantity());
         assertEquals(TopicStatusEnum.PENDING_REVIEW.getCode(), topic.getStatus());
         verify(teacherGroupService).validate("teacher-01", 1L, 66L);
         verify(topicService).updateById(topic);
     }
+
 
     // 场景：测试系主任审核退回课题时记录退回理由并向出题教师发送通知邮件
     @Test

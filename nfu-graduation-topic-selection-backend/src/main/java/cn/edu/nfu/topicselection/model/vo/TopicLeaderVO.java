@@ -36,8 +36,13 @@ public class TopicLeaderVO {
     private int selectAmount;
 
     /**
-     * 剩余数量
+     * 剩余可选余量
      */
     private int surplusQuantity;
+
+    /**
+     * 可接收学生总容量
+     */
+    private int capacity;
 
 }

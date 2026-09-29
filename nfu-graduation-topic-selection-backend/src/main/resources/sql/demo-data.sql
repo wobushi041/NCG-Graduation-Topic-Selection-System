@@ -277,11 +277,11 @@ VALUES ('基于边缘计算的实验室环境监测系统', '工程设计', '采
 
 INSERT INTO `topic` (
     `topic`, `type`, `description`, `requirement`, `teacherName`, `teacherAccount`,
-    `topicGroupId`, `surplusQuantity`, `startTime`, `endTime`, `status`, `selectAmount`, `isDelete`
+    `topicGroupId`, `surplusQuantity`, `capacity`, `startTime`, `endTime`, `status`, `selectAmount`, `isDelete`
 )
 SELECT seed.topic, seed.type, seed.description, seed.requirement,
        teacher.userName, seed.teacherAccount, g.id,
-       2, '2026-01-01 00:00:00', '2027-12-31 23:59:59', 1, 0, 0
+       2, 2, '2026-01-01 00:00:00', '2027-12-31 23:59:59', 1, 0, 0
 FROM `mock_topic_seed` seed
 JOIN `user` teacher
   ON teacher.`userAccount` = seed.teacherAccount

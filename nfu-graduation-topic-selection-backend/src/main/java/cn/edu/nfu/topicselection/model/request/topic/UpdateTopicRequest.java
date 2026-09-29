@@ -38,7 +38,7 @@ public class UpdateTopicRequest implements Serializable {
     private Long topicGroupId;
 
     /**
-     * 剩余可接收学生数量
+     * 可接收学生总容量
      */
     private Integer surplusQuantity;
 

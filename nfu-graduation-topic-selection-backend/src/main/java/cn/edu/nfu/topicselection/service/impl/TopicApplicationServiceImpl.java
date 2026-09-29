@@ -198,6 +198,8 @@ public class TopicApplicationServiceImpl implements TopicApplicationService {
         topic.setTeacherAccount(loginUser.getUserAccount());
         topic.setTopicGroupId(request.getTopicGroupId());
         topic.setSurplusQuantity(topicSurplusQuantity);
+        topic.setCapacity(topicSurplusQuantity);
+
         boolean result = topicService.save(topic);
         ThrowUtils.throwIf(!result, CodeBindMessageEnums.OPERATION_ERROR, "无法添加新的选题");
         return topic.getId();
@@ -508,8 +510,15 @@ public class TopicApplicationServiceImpl implements TopicApplicationService {
         topic.setRequirement(requirement);
         topic.setTopicGroupId(request.getTopicGroupId());
         if (requestedSurplusQuantity != null) {
-            topic.setSurplusQuantity(requestedSurplusQuantity);
+            // 已占用名额 = 旧总容量 - 旧剩余余量
+            int oldCapacity = topic.getCapacity() == null ? topic.getSurplusQuantity() : topic.getCapacity();
+            int occupied = oldCapacity - (topic.getSurplusQuantity() == null ? 0 : topic.getSurplusQuantity());
+            int newSurplus = requestedSurplusQuantity - occupied;
+            ThrowUtils.throwIf(newSurplus < 0, CodeBindMessageEnums.PARAMS_ERROR, "新容量不能小于已确认选题人数");
+            topic.setCapacity(requestedSurplusQuantity);
+            topic.setSurplusQuantity(newSurplus);
         }
+
         topic.setStatus(TopicStatusEnum.PENDING_REVIEW.getCode());
         topic.setReason("");
         boolean result = topicService.updateById(topic);

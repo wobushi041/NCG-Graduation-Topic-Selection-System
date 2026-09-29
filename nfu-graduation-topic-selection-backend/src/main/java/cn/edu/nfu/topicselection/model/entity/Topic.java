@@ -85,9 +85,14 @@ public class Topic implements Serializable {
     private Integer isDelete;
 
     /**
-     * 剩余数量
+     * 剩余可选余量
      */
     private Integer surplusQuantity;
+
+    /**
+     * 可接收学生总容量
+     */
+    private Integer capacity;
 
     /**
      * 开启时间
