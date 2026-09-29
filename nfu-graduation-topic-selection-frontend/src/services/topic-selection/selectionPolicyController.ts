@@ -2,12 +2,12 @@
 /* eslint-disable */
 import { request } from '@umijs/max';
 
-/** setDeptConfig POST /user/set/dept/config */
-export async function setDeptConfigUsingPost(
-  body: API.SetDeptConfigRequest,
+/** setCollegeConfig POST /user/set/college/config */
+export async function setCollegeConfigUsingPost(
+  body: API.SetCollegeConfigRequest,
   options?: { [key: string]: any },
 ) {
-  return request<API.BaseResponseBoolean_>('/user/set/dept/config', {
+  return request<API.BaseResponseBoolean_>('/user/set/college/config', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -17,17 +17,17 @@ export async function setDeptConfigUsingPost(
   });
 }
 
-/** getDeptConfig GET /user/get/dept/config */
-export async function getDeptConfigUsingGet(options?: { [key: string]: any }) {
-  return request<API.BaseResponseDeptConfigVO_>('/user/get/dept/config', {
+/** getCollegeConfig GET /user/get/college/config */
+export async function getCollegeConfigUsingGet(options?: { [key: string]: any }) {
+  return request<API.BaseResponseCollegeConfigVO_>('/user/get/college/config', {
     method: 'GET',
     ...(options || {}),
   });
 }
 
-/** delDeptConfig POST /user/del/dept/config */
-export async function delDeptConfigUsingPost(options?: { [key: string]: any }) {
-  return request<API.BaseResponseBoolean_>('/user/del/dept/config', {
+/** delCollegeConfig POST /user/del/college/config */
+export async function delCollegeConfigUsingPost(options?: { [key: string]: any }) {
+  return request<API.BaseResponseBoolean_>('/user/del/college/config', {
     method: 'POST',
     ...(options || {}),
   });

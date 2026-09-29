@@ -111,14 +111,14 @@ const useStyles = createStyles(({token}) => {
 /**
  * 路由前缀 → 允许访问的角色集合, 与 config/routes.ts 中的 access 声明保持一致。
  * 未命中的路径视为不限制; 命中但角色不符则回落到首页。
- * 注意顺序: 长前缀必须排在短前缀之前 (如 SelectTopicSituationToDept 要在 SelectTopicSituation 前)。
+ * 注意顺序: 长前缀必须排在短前缀之前 (如 SelectTopicSituationToCollege 要在 SelectTopicSituation 前)。
  */
 const ROUTE_ACCESS_RULES: Array<{ prefix: string; roles: number[] }> = [
   { prefix: '/admin', roles: [3] },
   { prefix: '/schedule', roles: [3] },
   { prefix: '/setTopicTime', roles: [3] },
   { prefix: '/check', roles: [2] },
-  { prefix: '/topic/view/SelectTopicSituationToDept', roles: [2] },
+  { prefix: '/topic/view/SelectTopicSituationToCollege', roles: [2] },
   { prefix: '/topic/view/SelectTopicSituation', roles: [3] },
   { prefix: '/topic/view/topic', roles: [1] },
   { prefix: '/topic/teacher', roles: [1] },

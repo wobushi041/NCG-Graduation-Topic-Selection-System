@@ -3,10 +3,10 @@ import useIsMobile from '@/utils/useIsMobile';
 import {uploadFileUsingPost} from '@/services/topic-selection/fileController';
 import {
   addUserUsingPost,
-  getDeptListUsingPost,
   getTeacherGroupsBatchUsingPost,
   listUserByPageUsingPost,
 } from '@/services/topic-selection/userController';
+import {getCollegeListUsingPost} from '@/services/topic-selection/organizationController';
 import {adminResetPassword} from '@/services/topic-selection/authController';
 import {useTemporaryPasswordModal} from '@/utils/showTemporaryPasswordModal';
 import {ExclamationCircleOutlined, PlusOutlined, UploadOutlined} from '@ant-design/icons';
@@ -18,6 +18,7 @@ import {useRef, useState} from 'react';
 import {AdjustLimitButton} from "@/components/AdjustLimitButton";
 
 type GroupQuotaItem = {
+  topicGroupId: number;
   groupName: string;
   maxTopics: number;
   remaining: number;
@@ -26,7 +27,7 @@ type GroupQuotaItem = {
 type GithubIssueItem = {
   userAccount: string;
   userName: string;
-  dept: string;
+  collegeId: number;
   groupQuota?: GroupQuotaItem[];
 };
 
@@ -36,6 +37,7 @@ export default () => {
 
   const actionRef = useRef<ActionType>();
   const {showTemporaryPasswordModal, temporaryPasswordModalNode} = useTemporaryPasswordModal();
+  const loadColleges = async () => (await getCollegeListUsingPost({})).data || [];
 
   const columns: ProColumns<GithubIssueItem>[] = [
     {
@@ -53,8 +55,10 @@ export default () => {
       dataIndex: 'userName',
     },
     {
-      title: '系部',
-      dataIndex: 'dept',
+      title: '所属学院',
+      dataIndex: 'collegeId',
+      valueType: 'select',
+      request: loadColleges,
       hideInTable: isMobile,
     },
     {
@@ -268,7 +272,7 @@ export default () => {
             </ProFormUploadButton>
           </ModalForm>
           <ModalForm<{
-            deptName: string;
+            collegeId: number;
             userAccount: string;
             userName: string;
           }>
@@ -305,20 +309,11 @@ export default () => {
             <ProFormText width="md" name="userAccount" label="工号" rules={[{required: true, message: '请输入工号'}]}/>
             <ProFormText width="md" name="userName" label="姓名" rules={[{required: true, message: '请输入姓名'}]}/>
             <ProFormSelect
-              request={async () => {
-                const response = await getDeptListUsingPost({});
-                if (response && response.data) {
-                  return response.data.map((item: any) => ({
-                    label: item.label,
-                    value: item.value,
-                  }));
-                }
-                return [];
-              }}
+              request={loadColleges}
               width="md"
-              name="deptName"
-              label="系部"
-              rules={[{required: true, message: '请选择系部'}]}
+              name="collegeId"
+              label="学院"
+              rules={[{required: true, message: '请选择学院'}]}
             />
           </ModalForm>
           <ModalForm<{

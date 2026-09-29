@@ -3,8 +3,6 @@ import {
   addTopicUsingPost,
   checkTopicUsingPost,
   deleteTopicUsingPost,
-  getDeptListUsingPost,
-  getTeacherUsingPost1,
   getTopicListUsingPost,
   getTopicReviewLevelUsingPost,
   updateTopicUsingPost,
@@ -21,14 +19,12 @@ import {createStyles} from "antd-style";
 type GithubIssueItem = {
   id: number;
   amount?: number;
-  deptName?: string;
-  deptTeacher?: string;
   description?: string;
   requirement?: string;
   teacherName?: string;
   topic?: string;
   type?: string;
-  topicGroup?: string;
+  topicGroupId?: number;
   surplusQuantity?: number;
   status?: number;
   reason?: string;
@@ -105,33 +101,20 @@ export default () => {
       hideInTable: isMobile,
     },
     {
-      title: '所属系部',
-      dataIndex: 'deptName',
+      title: '所属选题组',
+      dataIndex: 'topicGroupId',
       valueType: 'select',
       editable: false,
       hideInTable: isMobile,
       request: async () => {
-        const response = await getDeptListUsingPost({});
+        const response = await request<{
+          code: number;
+          data?: { topicGroupId: number; groupName: string }[];
+        }>('/user/teacher/groups');
         return (
           response?.data?.map((item) => ({
-            label: item.label,
-            value: item.value,
-          })) || []
-        );
-      },
-    },
-    {
-      title: '专业负责人',
-      dataIndex: 'deptTeacher',
-      valueType: 'select',
-      editable: false,
-      hideInTable: isMobile,
-      request: async () => {
-        const response = await getTeacherUsingPost1({userRole: 2});
-        return (
-          response?.data?.map((item) => ({
-            label: item.label,
-            value: item.value,
+            label: item.groupName,
+            value: item.topicGroupId,
           })) || []
         );
       },
@@ -291,7 +274,7 @@ export default () => {
             type: record.type,
             description: record.description,
             requirement: record.requirement,
-            topicGroup: record.topicGroup,
+            topicGroupId: record.topicGroupId,
           });
           if (res.code === 0) {
             message.success(res.message);
@@ -348,9 +331,7 @@ export default () => {
             description: string;
             requirement: string;
             teacherName: string;
-            deptName: string;
-            deptTeacher: string;
-            topicGroup?: string;
+            topicGroupId: number;
           }>
             title="添加题目"
             trigger={
@@ -437,30 +418,15 @@ export default () => {
             <ProFormTextArea width="md" name="description" label="题目描述" colProps={{xs: 24, sm: 12}} rules={[{required: true, message: '请输入题目描述'}]}/>
             <ProFormTextArea width="md" name="requirement" label="题目要求" colProps={{xs: 24, sm: 12}} rules={[{required: true, message: '请输入题目要求'}]}/>
             <ProFormSelect
-              request={async () => {
-                const res = await getDeptListUsingPost({});
-                return (
-                  res?.data?.map((item) => ({
-                    label: item.label,
-                    value: item.value,
-                  })) || []
-                );
-              }}
               width="md"
-              name="deptName"
-              label="所属系部"
-              rules={[{required: true, message: '请选择所属系部'}]}
-            />
-            <ProFormSelect
-              width="md"
-              name="topicGroup"
+              name="topicGroupId"
               label="适用选题组"
               rules={[{required: true, message: '请选择选题组'}]}
               request={async () => {
-                const res = await request<{code: number; data: {groupName: string; maxTopics: number; remaining: number}[]}>('/user/teacher/groups');
+                const res = await request<{code: number; data: {topicGroupId: number; groupName: string; maxTopics: number; remaining: number}[]}>('/user/teacher/groups');
                 return res.data.map((group) => ({
                   label: `${group.groupName}（剩余 ${group.remaining} / ${group.maxTopics}）`,
-                  value: group.groupName,
+                   value: group.topicGroupId,
                 }));
               }}
             />

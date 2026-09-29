@@ -1,8 +1,8 @@
 import {
-  addDeptUsingPost,
-  deleteDeptUsingPost,
-  getDeptUsingPost,
-} from '@/services/topic-selection/userController';
+  addCollegeUsingPost,
+  deleteCollegeUsingPost,
+  getCollegeUsingPost,
+} from '@/services/topic-selection/organizationController';
 import { PlusOutlined } from '@ant-design/icons';
 import { ActionType, ProColumns, ProFormText, ProTable } from '@ant-design/pro-components';
 import { ModalForm } from '@ant-design/pro-components';
@@ -11,7 +11,7 @@ import { useRef, useState } from 'react';
 
 type GithubIssueItem = {
   id?: number;
-  deptName: string;
+  collegeName: string;
 };
 
 export default () => {
@@ -24,8 +24,8 @@ export default () => {
       width: 48,
     },
     {
-      title: '系部',
-      dataIndex: 'deptName',
+      title: '学院',
+      dataIndex: 'collegeName',
     },
     {
       title: '操作',
@@ -34,9 +34,9 @@ export default () => {
       render: (text, record, _, action) => [
         <Popconfirm
           key="delete"
-          title="确定要删除该院系系部吗？"
+          title="确定要删除该学院吗？"
           onConfirm={async () => {
-            const res = await deleteDeptUsingPost({ deptName: record.deptName });
+            const res = await deleteCollegeUsingPost({ collegeId: record.id });
             if (res.code === 0) {
               message.success(res.message);
               action?.reload?.();
@@ -65,7 +65,7 @@ export default () => {
       // @ts-ignore
       request={async (params = {}) => {
         try {
-          const response = await getDeptUsingPost(params);
+          const response = await getCollegeUsingPost(params);
           const data = response.data || {};
           return {
             data: data.records || [],
@@ -100,17 +100,17 @@ export default () => {
         showSizeChanger: true,
       }}
       dateFormatter="string"
-      headerTitle="院系系部管理"
+      headerTitle="学院管理"
       toolBarRender={() => [
         // eslint-disable-next-line react/jsx-key
         <ModalForm<{
-          deptName: string;
+          collegeName: string;
         }>
-          title="添加院系系部"
+          title="添加学院"
           trigger={
             <Button type="primary">
               <PlusOutlined />
-              添加院系系部
+              添加学院
             </Button>
           }
           autoFocusFirstInput
@@ -120,7 +120,7 @@ export default () => {
           }}
           submitTimeout={2000}
           onFinish={async (values) => {
-            const res = await addDeptUsingPost(values);
+            const res = await addCollegeUsingPost(values);
             if (res.code === 0) {
               message.success(res.message);
               actionRef.current?.reload();
@@ -133,10 +133,10 @@ export default () => {
         >
           <ProFormText
             width="md"
-            name="deptName"
-            label="系部名称"
-            placeholder="请输入系部名称"
-            rules={[{required: true, message: '请输入系部名称'}]}
+            name="collegeName"
+            label="学院名称"
+            placeholder="请输入学院名称"
+            rules={[{required: true, message: '请输入学院名称'}]}
           />
         </ModalForm>,
       ]}

@@ -14,7 +14,7 @@ import React, {useRef} from 'react';
 type GithubIssueItem = {
   userAccount: string;
   userName: string;
-  dept: string;
+  college: string;
 };
 
 export default () => {

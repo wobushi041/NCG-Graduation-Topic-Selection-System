@@ -91,7 +91,7 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
 
   return {
     logo: '/nfu-logo-512.png',
-    title: '广州南方学院毕业选题管理系统',
+    title: '广州南方学院毕设选题管理系统',
     siderWidth: 280,
     collapsed: isCollapsed,
     onCollapse: (collapsed: boolean) => {
@@ -136,7 +136,7 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
               lineHeight: 1,
             }}
           >
-            广州南方学院毕业选题管理系统
+            广州南方学院毕设选题管理系统
           </span>
         </div>
       );
@@ -179,6 +179,14 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
     },
     waterMarkProps: {
       content: initialState?.currentUser?.userName,
+    },
+    style: {
+      minHeight: '100vh',
+    },
+    contentStyle: {
+      flex: '1 0 auto',
+      display: 'flex',
+      flexDirection: 'column',
     },
     footerRender: () => <Footer />,
     onPageChange: () => {

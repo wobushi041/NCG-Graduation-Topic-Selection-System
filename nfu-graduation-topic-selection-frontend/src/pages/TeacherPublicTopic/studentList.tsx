@@ -10,8 +10,8 @@ import { useParams } from '@umijs/max';
 type GithubIssueItem = {
   userAccount: string;
   userName: string;
-  dept: string;
-  project: string;
+  college: string;
+  major: string;
 };
 
 export default () => {
@@ -38,12 +38,12 @@ export default () => {
       dataIndex: 'userName',
     },
     {
-      title: '系部',
-      dataIndex: 'dept',
+      title: '学院',
+      dataIndex: 'college',
     },
     {
       title: '专业',
-      dataIndex: 'project',
+      dataIndex: 'major',
     },
     {
       title: '操作',

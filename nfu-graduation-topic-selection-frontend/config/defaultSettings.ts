@@ -1,7 +1,7 @@
 import { ProLayoutProps } from '@ant-design/pro-components';
 
 /**
- * 全局布局与主题默认设置（广州南方学院毕业选题管理系统标题、校徽 Logo 与加宽侧边栏宽度）
+ * 全局布局与主题默认设置（广州南方学院毕设选题管理系统标题、校徽 Logo 与加宽侧边栏宽度）
  */
 const Settings: ProLayoutProps & {
   pwa?: boolean;
@@ -16,7 +16,7 @@ const Settings: ProLayoutProps & {
   fixSiderbar: true,
   siderWidth: 280,
   colorWeak: false,
-  title: '广州南方学院毕业选题管理系统',
+  title: '广州南方学院毕设选题管理系统',
   pwa: true,
   logo: '/nfu-logo-512.png',
   iconfontUrl: '',

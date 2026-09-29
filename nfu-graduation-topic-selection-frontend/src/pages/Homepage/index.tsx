@@ -345,7 +345,7 @@ const Welcome: React.FC = () => {
                               color: '#555',
                               fontSize: 14,
                             }}>
-                              3. 点击“提交”按钮后即可发布题目，等待专业负责人审核题目通过
+                              3. 点击“提交”按钮后即可发布题目，等待选题负责人审核题目通过
                             </div>
                           </div>
                           <div>
@@ -406,8 +406,8 @@ const Welcome: React.FC = () => {
                   />
                 </Paragraph>
               </Tabs.TabPane>
-              <Tabs.TabPane tab="专业负责人使用手册" key="3">
-                <Paragraph>专业负责人的操作流程：</Paragraph>
+              <Tabs.TabPane tab="选题负责人使用手册" key="3">
+                <Paragraph>选题负责人的操作流程：</Paragraph>
                 <Paragraph>
                   <Text strong>
                     <ul>
@@ -415,7 +415,7 @@ const Welcome: React.FC = () => {
                         <Text code>审核题目（通过题目、打回题目）</Text>
                       </li>
                       <li>
-                        <Text code>查看本系部学生的选题情况</Text>
+                        <Text code>查看本学院学生的选题情况</Text>
                       </li>
                       <li>
                         <Text code>快速导出选题情况表格文件</Text>
@@ -424,23 +424,23 @@ const Welcome: React.FC = () => {
                   </Text>
                 </Paragraph>
                 <Paragraph>
-                  专业负责人应当 <Text underline>在开启双选之前</Text>，审核本系所提交的所有 <Text
+                  选题负责人应当 <Text underline>在开启双选之前</Text>，审核本选题组提交的所有 <Text
                   code>毕业设计题目（后续简称“题目”）</Text>。教师所出的题目如果被打回，后续再次修改后可以重新提交审核。
                 </Paragraph>
                 <Paragraph>
-                  本系统 <Text mark>提供专业负责人切换角色的特殊功能（满足专业负责人也可以出题的条件），但使用有一些条件</Text>。若右上角下拉菜单里<Text underline>看不到「切换身份」入口</Text>，说明两个账号尚未完成邮箱绑定与配对，需要联系管理员按下列步骤处理。
+                  本系统 <Text mark>提供选题负责人切换角色的特殊功能（满足选题负责人也可以出题的条件），但使用有一些条件</Text>。若右上角下拉菜单里<Text underline>看不到「切换身份」入口</Text>，说明两个账号尚未完成邮箱绑定与配对，需要联系管理员按下列步骤处理。
                 </Paragraph>
                 <Paragraph>
                   <ol>
                     <li>
-                      使用专业负责人帐号登录系统，在初始化帐号的时候，修改密码、绑定邮箱
+                      使用选题负责人帐号登录系统，在初始化帐号的时候，修改密码、绑定邮箱
                     </li>
                     <li>
                       使用另外一个管理员提供的教师帐号登录系统，<Text
-                      style={{color: 'red'}}>确保与专业负责人帐号同名、同系，并绑定相同邮箱；两个帐号无需使用相同密码</Text>，否则将无法切换角色
+                      style={{color: 'red'}}>确保与选题负责人帐号同名、同学院，并绑定相同邮箱；两个帐号无需使用相同密码</Text>，否则将无法切换角色
                     </li>
                     <li>
-                      然后就可以在对应的专业负责人帐号或教师帐号中来回切换登陆（偶尔因为浏览器缓存的缘故需要刷新浏览器才生效，实在无法解决找管理员）
+                      然后就可以在对应的选题负责人帐号或教师帐号中来回切换登陆（偶尔因为浏览器缓存的缘故需要刷新浏览器才生效，实在无法解决找管理员）
                     </li>
                   </ol>
                 </Paragraph>
@@ -450,7 +450,7 @@ const Welcome: React.FC = () => {
                     defaultActiveKey={['1']}
                     items={[{
                       key: '1',
-                      label: '专业负责人端简易演示过程',
+                      label: '选题负责人端简易演示过程',
                       children: (
                         <Carousel
                           autoplay
@@ -468,7 +468,7 @@ const Welcome: React.FC = () => {
                               color: '#555',
                               fontSize: 14,
                             }}>
-                              1. 点击菜单栏的“审核”，即可查看本系教师提交的所有题目
+                              1. 点击菜单栏的“审核”，即可查看本选题组教师提交的所有题目
                             </div>
                           </div>
                           <div>
@@ -494,7 +494,7 @@ const Welcome: React.FC = () => {
                               color: '#555',
                               fontSize: 14,
                             }}>
-                              3. 点击菜单栏“选题 → 选题情况”，可查看本系学生的选题情况，并支持导出详细的表格
+                              3. 点击菜单栏“选题 → 选题情况”，可查看本选题组覆盖专业学生的选题情况，并支持导出详细的表格
                             </div>
                           </div>
                           <div>
@@ -507,7 +507,7 @@ const Welcome: React.FC = () => {
                               color: '#555',
                               fontSize: 14,
                             }}>
-                              4. 左下角（或右上角）可以选择退出登陆，也可以选择切换角色，方便专业负责人可以作为教师出题
+                              4. 左下角（或右上角）可以选择退出登陆，也可以选择切换角色，方便选题负责人可以作为教师出题
                             </div>
                           </div>
                         </Carousel>

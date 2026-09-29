@@ -18,19 +18,23 @@ import {
 import {ClockCircleOutlined, EyeOutlined, MinusOutlined, PlusOutlined} from "@ant-design/icons";
 import {ModalForm} from "@ant-design/pro-form/lib";
 import {ProFormDateTimeRangePicker} from '@ant-design/pro-form';
-import {DeptCrossTopicConfig} from '@/components';
+import {CollegeCrossTopicConfig} from '@/components';
 import {WebSocketSender} from "@/components/WebSocket";
 import useIsMobile, {useTableScroll} from "@/utils/useIsMobile";
+import {getTopicGroupListUsingPost} from '@/services/topic-selection/organizationController';
 
 export type TableListItem = {
   id: number;
   topic: string;
   type: string;
   teacherName: string;
-  deptName: string;
+  topicGroupId: number;
   startTime: string;
   endTime: string;
 };
+
+const loadTopicGroups = async () =>
+  (await getTopicGroupListUsingPost({current: 1, pageSize: 100})).data || [];
 
 // 已发布题目列定义（含开启 / 结束时间）
 // isMobile 时隐藏次要列，让表格在窄屏自适应，不再横向拖动
@@ -55,8 +59,10 @@ const buildColumns = (isMobile?: boolean): ProColumns<TableListItem>[] => [
     title: '指导老师',
   },
   {
-    title: '系部',
-    dataIndex: 'deptName',
+    title: '所属选题组',
+    dataIndex: 'topicGroupId',
+    valueType: 'select',
+    request: loadTopicGroups,
     hideInTable: isMobile,
   },
   {
@@ -94,8 +100,10 @@ const buildUnpublishedColumns = (isMobile?: boolean): ProColumns<TableListItem>[
     title: '指导老师',
   },
   {
-    title: '系部',
-    dataIndex: 'deptName',
+    title: '所属选题组',
+    dataIndex: 'topicGroupId',
+    valueType: 'select',
+    request: loadTopicGroups,
     hideInTable: isMobile,
   }
 ];
@@ -120,7 +128,7 @@ export default () => {
   // 表格引用
   const actionRef1 = useRef<any>();
 
-  // 跨系开关状态
+  // 跨学院开关状态
   const [crossTopicStatus, setCrossTopicStatus] = useState<boolean>(false);
   // 角色模式开关状态
   const [singleChoiceStatus, setSingleChoiceStatus] = useState<boolean>(false);
@@ -136,7 +144,7 @@ export default () => {
   useEffect(() => {
     const fetchStatus = async () => {
       try {
-        // 获取跨系开关状态
+        // 获取跨学院开关状态
         const crossRes = await getCrossTopicStatusUsingGet();
         setCrossTopicStatus(crossRes.data || false);
 
@@ -175,7 +183,7 @@ export default () => {
     });
   }, []);
 
-  // 更新跨系开关状态
+  // 更新跨学院开关状态
   const handleCrossTopicStatusChange = async (checked: boolean) => {
     try {
       setLoading(true);
@@ -183,7 +191,7 @@ export default () => {
       setCrossTopicStatus(checked);
       message.success(res.data);
     } catch (error) {
-      console.error("更新跨系开关状态失败:", error);
+      console.error("更新跨学院开关状态失败:", error);
       message.error("操作失败，请重试");
       // 恢复开关状态
       setCrossTopicStatus(!checked);
@@ -280,7 +288,7 @@ export default () => {
                     alignItems: 'center',
                     marginBottom: '12px'
                   }}>
-                    <span style={{fontWeight: 500}}>是否允许跨系：</span>
+                    <span style={{fontWeight: 500}}>是否允许跨学院：</span>
                     <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
                       <Switch
                         checked={crossTopicStatus}
@@ -403,8 +411,8 @@ export default () => {
                 }}>
                   <WebSocketSender/>
                 </div>
-                {/* 跨系选题配置区域 */}
-                <DeptCrossTopicConfig/>
+                {/* 跨学院选题配置区域 */}
+                <CollegeCrossTopicConfig/>
                 <ProTable<TableListItem>
                   columns={buildUnpublishedColumns(isMobile)}
                   rowSelection={{

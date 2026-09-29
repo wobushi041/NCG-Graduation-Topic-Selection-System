@@ -2,7 +2,7 @@ import {request} from '@umijs/max';
 
 export type ApiResponse<T> = {code?: number; message?: string; data?: T};
 export type LoginRequest = {account: string; password: string};
-export type RoleSwitchAvailability = {available: boolean; targetRole?: 'teacher' | 'dept'};
+export type RoleSwitchAvailability = {available: boolean; targetRole?: 'teacher' | 'college'};
 export type AdminResetPasswordResult = {account: string; temporaryPassword: string};
 export type EmailVerificationResult = {proofToken: string; expiresInSeconds: number};
 
@@ -19,7 +19,7 @@ export const login = (body: LoginRequest, options?: Record<string, unknown>) =>
 
 export const logout = () => post<boolean>('/auth/logout');
 
-export const switchRole = (targetRole: 'teacher' | 'dept') =>
+export const switchRole = (targetRole: 'teacher' | 'college') =>
   post<API.LoginUserVO>('/auth/role-switch', {targetRole});
 
 export const getRoleSwitchAvailability = () =>

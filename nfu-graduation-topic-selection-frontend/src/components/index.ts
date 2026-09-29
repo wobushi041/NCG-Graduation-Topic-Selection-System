@@ -8,6 +8,6 @@
 import Footer from './Footer';
 import { Question } from './RightContent';
 import { AvatarDropdown, AvatarName } from './RightContent/AvatarDropdown';
-import DeptCrossTopicConfig from './DeptCrossTopicConfig';
+import CollegeCrossTopicConfig from './CollegeCrossTopicConfig';
 
-export { AvatarDropdown, AvatarName, Footer, Question, DeptCrossTopicConfig };
+export { AvatarDropdown, AvatarName, Footer, Question, CollegeCrossTopicConfig };

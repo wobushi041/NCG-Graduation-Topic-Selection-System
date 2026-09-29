@@ -7,12 +7,12 @@ import { ProTable } from '@ant-design/pro-components';
 import React, { useRef, useState } from 'react';
 import { Button, Dropdown } from 'antd';
 import { EllipsisOutlined } from '@ant-design/icons';
+import { getTopicGroupListUsingPost } from '@/services/topic-selection/organizationController';
 
 type GithubIssueItem = {
   id?: number;
   amount?: number;
-  depthName?: string;
-  depthTeacher?: string;
+  topicGroupId?: number;
   description?: string;
   requirement?: string;
   teacherName?: string;
@@ -20,6 +20,9 @@ type GithubIssueItem = {
   type?: string;
   status?: number;
 };
+
+const loadTopicGroups = async () =>
+  (await getTopicGroupListUsingPost({ current: 1, pageSize: 100 })).data || [];
 
 export default () => {
   const actionRef = useRef<ActionType>();
@@ -45,8 +48,10 @@ export default () => {
       editable: false,
     },
     {
-      title: '系部',
-      dataIndex: 'deptName',
+      title: '所属选题组',
+      dataIndex: 'topicGroupId',
+      valueType: 'select',
+      request: loadTopicGroups,
     },
     {
       title: '状态',

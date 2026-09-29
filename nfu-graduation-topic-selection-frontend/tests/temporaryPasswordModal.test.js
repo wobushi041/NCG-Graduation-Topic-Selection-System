@@ -38,7 +38,7 @@ describe('temporary password ModalForm integration', () => {
 
   test.each([
     'pages/AdminList/index.tsx',
-    'pages/DeptTeacherList/index.tsx',
+    'pages/TopicLeaderList/index.tsx',
     'pages/TeacherList/index.tsx',
     'pages/StudentList/index.tsx',
   ])('%s mounts temporaryPasswordModalNode and calls showTemporaryPasswordModal', (pagePath) => {

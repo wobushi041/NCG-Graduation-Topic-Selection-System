@@ -47,12 +47,22 @@ export async function getTeacherUsingPost1(
   });
 }
 
-/** getTeacherByAdmin POST /user/get/dept/teacher/by/admin */
-export async function getTeacherByAdminUsingPost(
-  body: API.DeptTeacherQueryRequest,
+/** getTeacher POST /user/get/college/teacher */
+export async function getTeacherUsingPost(
+  body: API.TopicLeaderQueryRequest,
   options?: { [key: string]: any },
 ) {
-  return request<API.BaseResponsePageDeptTeacherVO_>('/user/get/dept/teacher/by/admin', {
+  return request<API.BaseResponsePageTopicLeaderVO_>('/user/get/college/teacher', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, data: body, ...(options || {}),
+  });
+}
+
+/** getTeacherByAdmin POST /user/get/college/teacher/by/admin */
+export async function getTeacherByAdminUsingPost(
+  body: API.TopicLeaderQueryRequest,
+  options?: { [key: string]: any },
+) {
+  return request<API.BaseResponsePageTopicLeaderVO_>('/user/get/college/teacher/by/admin', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

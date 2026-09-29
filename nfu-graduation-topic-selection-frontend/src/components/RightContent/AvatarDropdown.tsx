@@ -99,7 +99,7 @@ const useStyles = createStyles(({token}) => {
 
 /**
  * 用户头像与身份下拉菜单组件：
- * 展示当前登录用户的姓名、角色、系部/专业信息，以及角色切换和退出登录操作，
+ * 展示当前登录用户的姓名、角色、学院/专业信息，以及角色切换和退出登录操作，
  * 并针对桌面端与移动端分别收敛下拉卡片宽度。
  */
 export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({menu, children}) => {
@@ -192,9 +192,9 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({menu, children
           onOk: async () => {
             try {
               // 确定要切换到的角色
-              let targetRole: 'teacher' | 'dept';
+              let targetRole: 'teacher' | 'college';
               if (currentUser.userRole === USER_ROLE_ENUM.TEACHER) {
-                targetRole = 'dept';
+                targetRole = 'college';
               } else if (currentUser.userRole === USER_ROLE_ENUM.DIRECTOR) {
                 targetRole = 'teacher';
               } else {
@@ -251,7 +251,7 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({menu, children
     return loading;
   }
 
-  // 只有专业负责人和教师角色, 且确实存在已配对的另一角色账号时才显示切换身份按钮
+  // 只有选题负责人和教师角色, 且确实存在已配对的另一角色账号时才显示切换身份按钮
   const showSwitchRole = canToggleRole;
 
   const menuItems = [
@@ -277,7 +277,7 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({menu, children
       {
         key: 'switch-role',
         icon: <SwapOutlined />,
-        label: `切换${currentUser.userRole === USER_ROLE_ENUM.TEACHER ? '专业负责人' : '教师'}`,
+        label: `切换${currentUser.userRole === USER_ROLE_ENUM.TEACHER ? '选题负责人' : '教师'}`,
       },
       {
         type: 'divider' as const,

@@ -3,14 +3,13 @@ import {uploadFileUsingPost} from '@/services/topic-selection/fileController';
 import {
   addUserUsingPost,
   deleteUserUsingPost,
-  getDeptListUsingPost,
-  getProjectListUsingPost,
   listUserByPageUsingPost,
 } from '@/services/topic-selection/userController';
+import {getCollegeListUsingPost, getMajorListUsingPost} from '@/services/topic-selection/organizationController';
 import {adminResetPassword} from '@/services/topic-selection/authController';
 import {useTemporaryPasswordModal} from '@/utils/showTemporaryPasswordModal';
 import {ExclamationCircleOutlined, PlusOutlined, UploadOutlined} from '@ant-design/icons';
-import {ActionType, ProColumns, ProFormText, ProTable} from '@ant-design/pro-components';
+import {ActionType, ProColumns, ProFormDependency, ProFormText, ProTable} from '@ant-design/pro-components';
 import {ModalForm, ProFormSelect, ProFormUploadButton} from '@ant-design/pro-form';
 import {Button, Dropdown, MenuProps, message, Modal, Popconfirm} from 'antd';
 import {useRef, useState} from 'react';
@@ -19,8 +18,8 @@ type GithubIssueItem = {
   id: number;
   userAccount: string;
   userName: string;
-  dept: string;
-  project: string;
+  collegeId: number;
+  majorId: number;
 };
 
 export default () => {
@@ -29,6 +28,9 @@ export default () => {
 
   const actionRef = useRef<ActionType>();
   const {showTemporaryPasswordModal, temporaryPasswordModalNode} = useTemporaryPasswordModal();
+  const loadColleges = async () => (await getCollegeListUsingPost({})).data || [];
+  const loadMajors = async () =>
+    (await getMajorListUsingPost({current: 1, pageSize: 100})).data || [];
   const [pageNum, setPageNum] = useState(1);
   const [pageSize, setPageSize] = useState(10); // 默认10
   const [total, setTotal] = useState(0);
@@ -49,13 +51,17 @@ export default () => {
       dataIndex: 'userName',
     },
     {
-      title: '系部',
-      dataIndex: 'dept',
+      title: '所属学院',
+      dataIndex: 'collegeId',
+      valueType: 'select',
+      request: loadColleges,
       hideInTable: isMobile,
     },
     {
-      title: '专业',
-      dataIndex: 'project',
+      title: '所属专业',
+      dataIndex: 'majorId',
+      valueType: 'select',
+      request: loadMajors,
     },
     {
       title: '操作',
@@ -241,10 +247,10 @@ export default () => {
             </ProFormUploadButton>
           </ModalForm>
           <ModalForm<{
-            deptName: string;
+            collegeId: number;
             userAccount: string;
             userName: string;
-            project: string;
+            majorId: number;
           }>
             title="添加学生账号"
             trigger={
@@ -276,37 +282,21 @@ export default () => {
             <ProFormText width="md" name="userAccount" label="学号" rules={[{required: true, message: '请输入学号'}]}/>
             <ProFormText width="md" name="userName" label="学生姓名" rules={[{required: true, message: '请输入学生姓名'}]}/>
             <ProFormSelect
-              request={async () => {
-                const response = await getDeptListUsingPost({});
-                if (response && response.data) {
-                  return response.data.map((item) => ({
-                    label: item.label,
-                    value: item.value,
-                  }));
-                }
-                return [];
-              }}
+              request={loadColleges}
               width="md"
-              name="deptName"
-              label="系部"
-              rules={[{required: true, message: '请选择系部'}]}
+              name="collegeId"
+              label="学院"
+              rules={[{required: true, message: '请选择学院'}]}
             />
-            <ProFormSelect
-              request={async () => {
-                const response = await getProjectListUsingPost({});
-                if (response && response.data) {
-                  return response.data.map((item) => ({
-                    label: item.label,
-                    value: item.value,
-                  }));
-                }
-                return [];
-              }}
-              width="md"
-              name="project"
-              label="专业"
-              rules={[{required: true, message: '请选择专业'}]}
-            />
+            <ProFormDependency name={['collegeId']}>
+              {({collegeId}) => <ProFormSelect
+                request={async () => collegeId ? (await getMajorListUsingPost({collegeId})).data || [] : []}
+                width="md"
+                name="majorId"
+                label="专业"
+                rules={[{required: true, message: '请选择专业'}]}
+              />}
+            </ProFormDependency>
           </ModalForm>
           <ModalForm<{ userAccount: string; userName: string }>
             title="重置账号密码"

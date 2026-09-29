@@ -1,4 +1,4 @@
-﻿export default [
+export default [
   {
     name: '登录',
     path: '/user',
@@ -25,15 +25,21 @@
     icon: 'FormOutlined',
     routes: [
       {
-        name: '院系系部管理',
-        path: '/admin/dept',
-        component: './DeptList',
+        name: '学院管理',
+        path: '/admin/college',
+        component: './CollegeList',
         access: 'canAccessAdmin',
       },
       {
-        name: '系部专业管理',
-        path: '/admin/project',
-        component: './ProjectList',
+        name: '专业管理',
+        path: '/admin/major',
+        component: './MajorList',
+        access: 'canAccessAdmin',
+      },
+      {
+        name: '选题组管理',
+        path: '/admin/topic-group',
+        component: './TopicGroupList',
         access: 'canAccessAdmin',
       },
       {
@@ -43,9 +49,9 @@
         access: 'canAccessAdmin',
       },
       {
-        name: '专业负责人账号管理',
-        path: '/admin/deptTeacher',
-        component: './DeptTeacherList',
+        name: '选题负责人账号管理',
+        path: '/admin/topic-leader',
+        component: './TopicLeaderList',
         access: 'canAccessAdmin',
       },
       {
@@ -96,14 +102,14 @@
     path: '/schedule',
     icon: 'FieldTimeOutlined',
     component: './setTopicTime',
-    access: 'canAccessNotStudentAndTeacher',
+    access: 'canAccessAdmin',
   },
   {
     name: '审核',
     path: '/check',
     icon: 'CheckSquareOutlined',
     component: './CheckTopic/index',
-    access: 'canAccessDept',
+    access: 'canAccessTopicLeader',
   },
   {
     name: '学生选题',
@@ -153,9 +159,9 @@
       },
       {
         name: '选题情况',
-        path: '/topic/view/SelectTopicSituationToDept',
-        component: './SelectTopicSituationToDept',
-        access: 'canAccessDept',
+        path: '/topic/view/SelectTopicSituationToCollege',
+        component: './SelectTopicSituationToCollege',
+        access: 'canAccessTopicLeader',
       },
     ],
   },

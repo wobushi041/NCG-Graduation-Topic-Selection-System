@@ -11,7 +11,7 @@ const SystemInfoVisualization = () => {
     jvmMemoryUsage: '0 MB/0 GB',
     totalStudentCount: 0,
     totalTeacherCount: 0,
-    totalDeptCount: 0,
+    totalCollegeCount: 0,
     releaseTopicCount: 0,
     auditPassTopicCount: 0,
     auditBackTopicCount: 0,
@@ -30,7 +30,7 @@ const SystemInfoVisualization = () => {
           jvmMemoryUsage: response.data.jvmMemoryUsage || '0 MB/0 GB',
           totalStudentCount: response.data.totalStudentCount || 0,
           totalTeacherCount: response.data.totalTeacherCount || 0,
-          totalDeptCount: response.data.totalDeptCount || 0,
+          totalCollegeCount: response.data.totalCollegeCount || 0,
           releaseTopicCount: response.data.releaseTopicCount || 0,
           auditPassTopicCount: response.data.auditPassTopicCount || 0,
           auditBackTopicCount: response.data.auditBackTopicCount || 0,
@@ -322,8 +322,8 @@ const SystemInfoVisualization = () => {
         <div style={{ flex: '1 1 calc(25% - 24px)', minWidth: '150px' }}>
           <StatisticCard
             statistic={{
-              title: '专业负责人',
-              value: systemInfo.totalDeptCount.toString(),
+              title: '选题负责人',
+              value: systemInfo.totalCollegeCount.toString(),
               valueStyle: { color: '#d18aec' }
             }}
           />

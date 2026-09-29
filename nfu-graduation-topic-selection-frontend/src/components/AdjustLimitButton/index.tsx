@@ -1,33 +1,46 @@
-import { useState, useRef } from 'react';
-import { Button, Input, message, Popconfirm, Space } from 'antd';
-import { deleteUserUsingPost, getTeacherTopicAmountUsingPost, setTeacherTopicAmountUsingPost } from '@/services/topic-selection/userController';
+import { useState } from 'react';
+import { Button, Input, message, Popconfirm, Select, Space } from 'antd';
+import {
+  deleteUserUsingPost,
+  updateTeacherGroupQuotaUsingPost,
+} from '@/services/topic-selection/userController';
+
+type GroupQuotaItem = {
+  topicGroupId: number;
+  groupName: string;
+  maxTopics: number;
+};
 
 // @ts-ignore
 const AdjustLimitButton = ({ record, action }) => {
   const [editing, setEditing] = useState(false); // 是否显示输入框
   const [value, setValue] = useState('');        // 输入框当前值
   const [loading, setLoading] = useState(false); // 确认按钮 loading
-  const currentValueRef = useRef('');            // 保存原始值，方便对比
+  const [topicGroupId, setTopicGroupId] = useState<number>();
+
+  const groupQuota = (record.groupQuota || []) as GroupQuotaItem[];
 
   // 点击确认时提交
   const handleConfirm = async () => {
     setLoading(true);
     try {
-      if (value === currentValueRef.current) {
+      const selectedGroup = groupQuota.find((item) => item.topicGroupId === topicGroupId);
+      if (!selectedGroup) {
+        message.error('请选择需要调整的选题组');
+        return;
+      }
+      const numValue = Number(value);
+      if (!Number.isInteger(numValue) || numValue < 0 || numValue > 20) {
+        message.error('请输入0-20之间的有效整数');
+        return;
+      }
+      if (numValue === selectedGroup.maxTopics) {
         message.info('值未修改');
       } else {
-        // 验证输入值是否为有效数字
-        const numValue = parseInt(value, 10);
-        if (isNaN(numValue) || numValue < 0 || numValue > 20) {
-          message.error('请输入0-20之间的有效数字');
-          setLoading(false);
-          return;
-        }
-
-        // 调用接口设置教师题目上限
-        const res = await setTeacherTopicAmountUsingPost({
-          teacherId: record.id,
-          topicAmount: numValue
+        const res = await updateTeacherGroupQuotaUsingPost({
+          teacherAccount: record.userAccount,
+          topicGroupId: selectedGroup.topicGroupId,
+          maxTopics: numValue,
         });
 
         if (res.code === 0) {
@@ -45,27 +58,35 @@ const AdjustLimitButton = ({ record, action }) => {
     }
   };
 
-  // 点击"调整选题数量上限"，读取当前值并打开输入框
-  const handleModifyClick = async () => {
-    try {
-      // 从接口获取当前教师的题目上限
-      const res = await getTeacherTopicAmountUsingPost({ teacherId: record.id });
-      if (res.code === 0) {
-        const currentValue = String(res.data || 0);
-        currentValueRef.current = currentValue;
-        setValue(currentValue);
-        setEditing(true);
-      } else {
-        message.error(res.message || '获取当前值失败');
-      }
-    } catch (err) {
-      message.error('获取当前值失败');
+  // 点击“调整组选题额度”，使用列表已加载的选题组额度打开输入框
+  const handleModifyClick = () => {
+    if (groupQuota.length === 0) {
+      message.error('该教师尚未配置选题组额度');
+      return;
     }
+    setTopicGroupId(groupQuota[0].topicGroupId);
+    setValue(String(groupQuota[0].maxTopics));
+    setEditing(true);
   };
 
   if (editing) {
     return (
       <Space>
+        {groupQuota.length > 1 && (
+          <Select
+            value={topicGroupId}
+            style={{ width: 160 }}
+            options={groupQuota.map((item) => ({
+              label: item.groupName,
+              value: item.topicGroupId,
+            }))}
+            onChange={(nextTopicGroupId) => {
+              const nextGroup = groupQuota.find((item) => item.topicGroupId === nextTopicGroupId);
+              setTopicGroupId(nextTopicGroupId);
+              setValue(String(nextGroup?.maxTopics ?? 0));
+            }}
+          />
+        )}
         <Input
           value={value}
           onChange={(e) => setValue(e.target.value)}
@@ -85,7 +106,7 @@ const AdjustLimitButton = ({ record, action }) => {
   return (
     <Space>
       <a style={{ color: '#454be3' }} onClick={handleModifyClick}>
-        <span className="desktop-only-label">调整剩余出题数量</span>
+        <span className="desktop-only-label">调整组选题额度</span>
         <span className="mobile-only-label">调整额度</span>
       </a>
       <Popconfirm

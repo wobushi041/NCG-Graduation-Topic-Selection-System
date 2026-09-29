@@ -10,6 +10,7 @@ import { createStyles } from 'antd-style';
 type GithubIssueItem = {
   topicAmount: number;
   teacherName: string;
+  collegeName?: string;
   selectAmount: number;
   index: number;
 };
@@ -62,8 +63,8 @@ export default () => {
       dataIndex: 'teacherName',
     },
     {
-      title: '系部',
-      dataIndex: 'deptName',
+      title: '所属学院',
+      dataIndex: 'collegeName',
     },
     {
       title: '题目数量',

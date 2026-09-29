@@ -285,7 +285,7 @@ export default () => {
               <Descriptions.Item label="题目描述">{topic.description}</Descriptions.Item>
               <Descriptions.Item label="学生要求">{topic.requirement}</Descriptions.Item>
               <Descriptions.Item label="指导老师">{topic.teacherName}</Descriptions.Item>
-              <Descriptions.Item label="所属学院">{topic.deptName}</Descriptions.Item>
+              <Descriptions.Item label="所属选题组">{topic.topicGroupName || '未配置'}</Descriptions.Item>
               {selectTime && (
                 <Descriptions.Item label="选题时间">
                   {formatSelectTime()}

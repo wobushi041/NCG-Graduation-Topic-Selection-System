@@ -6,12 +6,10 @@ declare namespace API {
 
   type AddTopicRequest = {
     amount?: number;
-    deptName?: string;
-    deptTeacher?: string;
     description?: string;
     requirement?: string;
     teacherName?: string;
-    topicGroup?: string;
+    topicGroupId?: number;
     topic?: string;
     type?: string;
   };
@@ -37,9 +35,9 @@ declare namespace API {
     message?: string;
   };
 
-  type BaseResponseDeptConfigVO_ = {
+  type BaseResponseCollegeConfigVO_ = {
     code?: number;
-    data?: DeptConfigVO;
+    data?: CollegeConfigVO;
     message?: string;
   };
 
@@ -49,15 +47,15 @@ declare namespace API {
     message?: string;
   };
 
-  type BaseResponseListDeptVO_ = {
+  type BaseResponseListCollegeVO_ = {
     code?: number;
-    data?: DeptVO[];
+    data?: CollegeVO[];
     message?: string;
   };
 
-  type BaseResponseListProjectVO_ = {
+  type BaseResponseListMajorVO_ = {
     code?: number;
-    data?: ProjectVO[];
+    data?: MajorVO[];
     message?: string;
   };
 
@@ -97,21 +95,21 @@ declare namespace API {
     message?: string;
   };
 
-  type BaseResponsePageDept_ = {
+  type BaseResponsePageCollege_ = {
     code?: number;
-    data?: PageDept_;
+    data?: PageCollege_;
     message?: string;
   };
 
-  type BaseResponsePageDeptTeacherVO_ = {
+  type BaseResponsePageTopicLeaderVO_ = {
     code?: number;
-    data?: PageDeptTeacherVO_;
+    data?: PageTopicLeaderVO_;
     message?: string;
   };
 
-  type BaseResponsePageProject_ = {
+  type BaseResponsePageMajor_ = {
     code?: number;
-    data?: PageProject_;
+    data?: PageMajor_;
     message?: string;
   };
 
@@ -184,12 +182,12 @@ declare namespace API {
     status?: number;
   };
 
-  type DeleteDeptRequest = {
-    deptName?: string;
+  type DeleteCollegeRequest = {
+    collegeId?: number;
   };
 
-  type DeleteProjectRequest = {
-    projectName?: string;
+  type DeleteMajorRequest = {
+    majorId?: number;
   };
 
   type DeleteRequest = {
@@ -200,50 +198,51 @@ declare namespace API {
     id?: number;
   };
 
-  type Dept = {
+  type College = {
     createTime?: string;
-    deptName?: string;
+    collegeName?: string;
     id?: number;
     isDelete?: number;
     updateTime?: string;
   };
 
-  type DeptAddRequest = {
-    deptName?: string;
+  type CollegeAddRequest = {
+    collegeName?: string;
   };
 
-  type DeptConfigVO = {
-    enableSelectDeptsList?: Record<string, any>;
+  type CollegeConfigVO = {
+    enableSelectCollegesList?: Record<string, any>;
   };
 
-  type DeptQueryRequest = {
+  type CollegeQueryRequest = {
     current?: number;
-    deptName?: string;
+    collegeName?: string;
     pageSize?: number;
     sortField?: string;
     sortOrder?: string;
   };
 
-  type DeptTeacherQueryRequest = {
+  type TopicLeaderQueryRequest = {
     current?: number;
-    deptName?: string;
+    collegeId?: number;
     pageSize?: number;
     sortField?: string;
     sortOrder?: string;
     teacherName?: string;
   };
 
-  type DeptTeacherVO = {
-    deptName?: string;
+  type TopicLeaderVO = {
+    collegeId?: number;
+    collegeName?: string;
     selectAmount?: number;
     surplusQuantity?: number;
     teacherName?: string;
     topicAmount?: number;
   };
 
-  type DeptVO = {
+  type CollegeVO = {
     label?: string;
-    value?: string;
+    value?: number;
   };
 
   type GetSelectTopicById = {
@@ -263,8 +262,6 @@ declare namespace API {
   };
 
   type GetTopicReviewLevelRequest = {
-    deptName?: string;
-    deptTeacher?: string;
     description?: string;
     requirement?: string;
     topic?: string;
@@ -287,10 +284,11 @@ declare namespace API {
 
   type LoginUserVO = {
     createTime?: string;
-    dept?: string;
+    collegeId?: number;
     email?: string;
     id?: number;
-    project?: string;
+    majorId?: number;
+    topicGroupId?: number;
     updateTime?: string;
     userAvatar?: string;
     userName?: string;
@@ -302,40 +300,40 @@ declare namespace API {
     column?: string;
   };
 
-  type PageDept_ = {
+  type PageCollege_ = {
     countId?: string;
     current?: number;
     maxLimit?: number;
     optimizeCountSql?: boolean;
     orders?: OrderItem[];
     pages?: number;
-    records?: Dept[];
+    records?: College[];
     searchCount?: boolean;
     size?: number;
     total?: number;
   };
 
-  type PageDeptTeacherVO_ = {
+  type PageTopicLeaderVO_ = {
     countId?: string;
     current?: number;
     maxLimit?: number;
     optimizeCountSql?: boolean;
     orders?: OrderItem[];
     pages?: number;
-    records?: DeptTeacherVO[];
+    records?: TopicLeaderVO[];
     searchCount?: boolean;
     size?: number;
     total?: number;
   };
 
-  type PageProject_ = {
+  type PageMajor_ = {
     countId?: string;
     current?: number;
     maxLimit?: number;
     optimizeCountSql?: boolean;
     orders?: OrderItem[];
     pages?: number;
-    records?: Project[];
+    records?: Major[];
     searchCount?: boolean;
     size?: number;
     total?: number;
@@ -380,39 +378,40 @@ declare namespace API {
     total?: number;
   };
 
-  type Project = {
+  type Major = {
     createTime?: string;
-    deptName?: string;
-    groupName?: string;
+    collegeId?: number;
+    topicGroupId?: number;
     id?: number;
     isDelete?: number;
-    projectName?: string;
+    majorName?: string;
     updateTime?: string;
   };
 
-  type ProjectAddRequest = {
-    deptName?: string;
-    groupName?: string;
-    projectName?: string;
+  type MajorAddRequest = {
+    collegeId?: number;
+    topicGroupId?: number;
+    majorName?: string;
   };
 
-  type ProjectGroupUpdateRequest = {
-    groupName?: string;
-    projectName?: string;
+  type MajorGroupUpdateRequest = {
+    topicGroupId?: number;
+    majorId?: number;
   };
 
-  type ProjectQueryRequest = {
+  type MajorQueryRequest = {
     current?: number;
-    deptName?: string;
+    collegeId?: number;
+    topicGroupId?: number;
     pageSize?: number;
-    projectName?: string;
+    majorName?: string;
     sortField?: string;
     sortOrder?: string;
   };
 
-  type ProjectVO = {
+  type MajorVO = {
     label?: string;
-    value?: string;
+    value?: number;
   };
 
   type ResetPasswordRequest = {
@@ -439,8 +438,8 @@ declare namespace API {
     enabled: boolean;
   };
 
-  type SetDeptConfigRequest = {
-    enableSelectDeptsList?: Record<string, any>;
+  type SetCollegeConfigRequest = {
+    enableSelectCollegesList?: Record<string, any>;
   };
 
   type setSwitchSingleChoiceStatusUsingPOSTParams = {
@@ -496,16 +495,15 @@ declare namespace API {
     loginUserCount?: number;
     memoryUsage?: string;
     releaseTopicCount?: number;
-    totalDeptCount?: number;
+    totalCollegeCount?: number;
     totalStudentCount?: number;
     totalTeacherCount?: number;
   };
 
   type Topic = {
     createTime?: string;
-    topicGroup?: string;
-    deptName?: string;
-    deptTeacher?: string;
+    topicGroupId?: number;
+    topicGroupName?: string;
     description?: string;
     endTime?: string;
     id?: number;
@@ -517,6 +515,7 @@ declare namespace API {
     status?: number;
     surplusQuantity?: number;
     teacherName?: string;
+    teacherAccount?: string;
     topic?: string;
     type?: string;
     updateTime?: string;
@@ -529,7 +528,7 @@ declare namespace API {
 
   type TopicQueryByAdminRequest = {
     current?: number;
-    deptName?: string;
+    topicGroupId?: number;
     endTime?: string;
     pageSize?: number;
     sortField?: string;
@@ -542,7 +541,7 @@ declare namespace API {
 
   type TopicQueryRequest = {
     current?: number;
-    deptName?: string;
+    topicGroupId?: number;
     endTime?: string;
     isNoOneSelectedTopic?: boolean;
     pageSize?: number;
@@ -562,7 +561,7 @@ declare namespace API {
   type UpdateTopicRequest = {
     description?: string;
     requirement?: string;
-    topicGroup?: string;
+    topicGroupId?: number;
     topicName?: string;
     type?: string;
   };
@@ -578,11 +577,12 @@ declare namespace API {
 
   type User = {
     createTime?: string;
-    dept?: string;
+    collegeId?: number;
     email?: string;
     id?: number;
     isDelete?: number;
-    project?: string;
+    majorId?: number;
+    topicGroupId?: number;
     status?: string;
     topicAmount?: number;
     updateTime?: string;
@@ -593,8 +593,9 @@ declare namespace API {
   };
 
   type UserAddRequest = {
-    deptName?: string;
-    project?: string;
+    collegeId?: number;
+    majorId?: number;
+    topicGroupId?: number;
     userAccount?: string;
     userName?: string;
     userRole?: number;
@@ -611,7 +612,9 @@ declare namespace API {
 
   type UserQueryRequest = {
     current?: number;
-    dept?: string;
+    collegeId?: number;
+    majorId?: number;
+    topicGroupId?: number;
     pageSize?: number;
     sortField?: string;
     sortOrder?: string;
@@ -634,10 +637,11 @@ declare namespace API {
 
   type UserUpdateRequest = {
     id?: number;
-    userAvatar?: string;
     userName?: string;
-    userProfile?: string;
-    userRole?: string;
+    userRole?: number;
+    collegeId?: number;
+    majorId?: number;
+    topicGroupId?: number;
   };
 
   type UserVO = {
@@ -647,5 +651,26 @@ declare namespace API {
     userAvatar?: string;
     userName?: string;
     userRole?: number;
+    collegeId?: number;
+    majorId?: number;
+    topicGroupId?: number;
   };
+
+  type TopicGroup = {
+    id?: number;
+    collegeId?: number;
+    groupName?: string;
+    createTime?: string;
+    updateTime?: string;
+    isDelete?: number;
+  };
+
+  type TopicGroupVO = { label?: string; value?: number; collegeId?: number };
+  type TopicGroupAddRequest = { collegeId?: number; groupName?: string };
+  type TopicGroupUpdateRequest = { id?: number; collegeId?: number; groupName?: string };
+  type TopicGroupDeleteRequest = { id?: number };
+  type TopicGroupQueryRequest = { current?: number; pageSize?: number; collegeId?: number; groupName?: string; sortField?: string; sortOrder?: string };
+  type PageTopicGroup_ = { current?: number; size?: number; total?: number; records?: TopicGroup[] };
+  type BaseResponsePageTopicGroup_ = { code?: number; data?: PageTopicGroup_; message?: string };
+  type BaseResponseListTopicGroupVO_ = { code?: number; data?: TopicGroupVO[]; message?: string };
 }
