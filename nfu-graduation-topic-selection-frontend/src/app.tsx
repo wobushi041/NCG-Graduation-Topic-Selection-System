@@ -21,16 +21,16 @@ const AddressCardOutlineIcon: React.FC = () => (
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
     shapeRendering="geometricPrecision"
-    style={{ display: 'block', flexShrink: 0 }}
+    style={{ display: 'block', flexShrink: 0, transition: 'stroke 0.2s ease, fill 0.2s ease' }}
   >
-    <rect x="1.75" y="3.75" width="14.5" height="10.5" rx="1.75" stroke="#595959" strokeWidth="1.5" />
-    <circle cx="6.5" cy="7.25" r="1.75" fill="#595959" />
+    <rect x="1.75" y="3.75" width="14.5" height="10.5" rx="1.75" stroke="currentColor" strokeWidth="1.5" />
+    <circle cx="6.5" cy="7.25" r="1.75" fill="currentColor" />
     <path
       d="M4 11.75C4 10.35 5.1 9.5 6.5 9.5C7.9 9.5 9 10.35 9 11.75V12.5H4V11.75Z"
-      fill="#595959"
+      fill="currentColor"
     />
-    <rect x="10.25" y="6.5" width="4" height="1.5" rx="0.75" fill="#595959" />
-    <rect x="10.25" y="10" width="4" height="1.5" rx="0.75" fill="#595959" />
+    <rect x="10.25" y="6.5" width="4" height="1.5" rx="0.75" fill="currentColor" />
+    <rect x="10.25" y="10" width="4" height="1.5" rx="0.75" fill="currentColor" />
   </svg>
 );
 
@@ -166,8 +166,12 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
                 alignItems: 'center',
                 gap: 8,
                 height: 28,
+                padding: '0 6px',
+                borderRadius: 6,
+                cursor: 'pointer',
                 lineHeight: '18px',
                 whiteSpace: 'nowrap',
+                transition: 'all 0.2s cubic-bezier(0.645, 0.045, 0.355, 1)',
               }}
             >
               <AddressCardOutlineIcon />
