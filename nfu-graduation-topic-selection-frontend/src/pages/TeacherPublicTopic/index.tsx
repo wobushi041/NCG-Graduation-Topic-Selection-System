@@ -25,6 +25,7 @@ type GithubIssueItem = {
   type?: string;
   topicGroupId?: number;
   surplusQuantity?: number;
+  capacity?: number;
   status?: number;
   reason?: string;
 };
