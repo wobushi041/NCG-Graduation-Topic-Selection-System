@@ -16,7 +16,9 @@ import cn.edu.nfu.topicselection.model.request.topic.CheckTopicRequest;
 import cn.edu.nfu.topicselection.model.request.topic.DeleteTopicRequest;
 import cn.edu.nfu.topicselection.model.request.topic.GetTopicReviewLevelRequest;
 import cn.edu.nfu.topicselection.model.request.topic.SetTeacherTopicAmountRequest;
+import cn.edu.nfu.topicselection.model.request.topic.UnSetTimeRequest;
 import cn.edu.nfu.topicselection.model.request.topic.UpdateTopicRequest;
+import cn.edu.nfu.topicselection.model.vo.UnpublishTopicResultVO;
 import cn.edu.nfu.topicselection.service.MailService;
 import cn.edu.nfu.topicselection.service.StudentTopicSelectionService;
 import cn.edu.nfu.topicselection.service.TeacherGroupService;
@@ -29,6 +31,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Arrays;
+import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -263,6 +268,55 @@ class TopicApplicationServiceImplTest {
         verify(topicService).updateById(topic);
     }
 
+    // 场景：测试批量取消发布时成功处理无占用题目并返回被学生占用题目的跳过原因
+    @Test
+    void unsetTimeByIdReturnsCancelledAndSkippedTopicsForMixedBatch() {
+        // 1. 准备一个无学生占用题目、一个已有学生选题的题目与批量请求
+        Topic cancellableTopic = publishedTopic(11L, "边缘计算实验平台", "王老师");
+        Topic occupiedTopic = publishedTopic(12L, "校园物联网平台", "李老师");
+        UnSetTimeRequest request = new UnSetTimeRequest();
+        request.setTopicIds(Arrays.asList(11L, 12L));
+
+        when(topicMapper.selectByIdForUpdate(11L)).thenReturn(cancellableTopic);
+        when(topicMapper.selectByIdForUpdate(12L)).thenReturn(occupiedTopic);
+        when(studentTopicSelectionService.count(any())).thenReturn(0L, 2L);
+        when(topicService.update(any())).thenReturn(true);
+
+        // 2. 调用批量取消发布方法
+        UnpublishTopicResultVO result = topicApplicationService.unsetTimeById(request);
+
+        // 3. 断言无占用题目取消成功，占用题目保留并返回可读原因
+        assertEquals(Collections.singletonList(11L), result.getCancelledTopicIds());
+        assertEquals(1, result.getSkippedTopics().size());
+        assertEquals(12L, result.getSkippedTopics().get(0).getTopicId());
+        assertEquals("校园物联网平台", result.getSkippedTopics().get(0).getTopicName());
+        assertEquals(2L, result.getSkippedTopics().get(0).getActiveSelectionCount());
+        assertEquals("题目已有 2 名学生预选或确认选择，无法取消发布", result.getSkippedTopics().get(0).getReason());
+        verify(topicService).update(any());
+    }
+
+    // 场景：测试全部题目均被学生占用时仅返回跳过结果且不更新课题状态
+    @Test
+    void unsetTimeByIdDoesNotUpdateWhenAllTopicsAreOccupied() {
+        // 1. 准备一个已有学生选题的已发布题目与取消发布请求
+        Topic occupiedTopic = publishedTopic(21L, "智能排课系统", "周老师");
+        UnSetTimeRequest request = new UnSetTimeRequest();
+        request.setTopicIds(Collections.singletonList(21L));
+
+        when(topicMapper.selectByIdForUpdate(21L)).thenReturn(occupiedTopic);
+        when(studentTopicSelectionService.count(any())).thenReturn(3L);
+
+        // 2. 调用批量取消发布方法
+        UnpublishTopicResultVO result = topicApplicationService.unsetTimeById(request);
+
+        // 3. 断言没有题目被取消发布、返回占用原因且不执行状态更新
+        assertTrue(result.getCancelledTopicIds().isEmpty());
+        assertEquals(1, result.getSkippedTopics().size());
+        assertEquals(21L, result.getSkippedTopics().get(0).getTopicId());
+        assertEquals(3L, result.getSkippedTopics().get(0).getActiveSelectionCount());
+        verify(topicService, never()).update(any());
+    }
+
 
     // 场景：测试系主任审核退回课题时记录退回理由并向出题教师发送通知邮件
     @Test
@@ -350,6 +404,23 @@ class TopicApplicationServiceImplTest {
         user.setUserRole(UserRoleEnum.TEACHER.getCode());
         user.setTopicAmount(topicAmount);
         return user;
+    }
+
+    /**
+     * 构造已发布课题实体
+     *
+     * @param id          课题 ID
+     * @param topicName   课题名称
+     * @param teacherName 指导教师姓名
+     * @return 已发布课题实体
+     */
+    private static Topic publishedTopic(Long id, String topicName, String teacherName) {
+        Topic topic = new Topic();
+        topic.setId(id);
+        topic.setTopic(topicName);
+        topic.setTeacherName(teacherName);
+        topic.setStatus(TopicStatusEnum.PUBLISHED.getCode());
+        return topic;
     }
 
 }

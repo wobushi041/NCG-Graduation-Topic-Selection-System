@@ -10,6 +10,7 @@ import cn.edu.nfu.topicselection.model.request.topic.SetTeacherTopicAmountReques
 import cn.edu.nfu.topicselection.model.request.topic.SetTimeRequest;
 import cn.edu.nfu.topicselection.model.request.topic.UnSetTimeRequest;
 import cn.edu.nfu.topicselection.model.request.topic.UpdateTopicRequest;
+import cn.edu.nfu.topicselection.model.vo.UnpublishTopicResultVO;
 
 /**
  * 定义课题维护、审核流转、开放时间发布、教师配额管理与 AI 查重检测的应用服务契约
@@ -70,9 +71,9 @@ public interface TopicApplicationService {
      * 按课题 id 列表批量取消已发布课题并清空开放时间窗口
      *
      * @param request 取消设置选题开放时间请求
-     * @return 操作结果提示信息
+     * @return 成功取消与因业务限制跳过的课题处理结果
      */
-    String unsetTimeById(UnSetTimeRequest request);
+    UnpublishTopicResultVO unsetTimeById(UnSetTimeRequest request);
 
     /**
      * 更新本人课题信息并重置为待审核状态

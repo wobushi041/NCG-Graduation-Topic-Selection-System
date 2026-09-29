@@ -12,6 +12,7 @@ import cn.edu.nfu.topicselection.model.request.topic.SetTeacherTopicAmountReques
 import cn.edu.nfu.topicselection.model.request.topic.SetTimeRequest;
 import cn.edu.nfu.topicselection.model.request.topic.UnSetTimeRequest;
 import cn.edu.nfu.topicselection.model.request.topic.UpdateTopicRequest;
+import cn.edu.nfu.topicselection.model.vo.UnpublishTopicResultVO;
 import cn.edu.nfu.topicselection.response.BaseResponse;
 import cn.edu.nfu.topicselection.service.TopicApplicationService;
 import cn.dev33.satoken.annotation.SaCheckLogin;
@@ -30,6 +31,7 @@ import java.util.Arrays;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -106,6 +108,7 @@ class TopicControllerContractTest {
         UpdateTopicRequest updateRequest = new UpdateTopicRequest();
         GetTopicReviewLevelRequest aiReviewRequest = new GetTopicReviewLevelRequest();
         AIResult aiResult = new AIResult();
+        UnpublishTopicResultVO unpublishResult = new UnpublishTopicResultVO();
 
         when(topicApplicationService.addTopic(addRequest)).thenReturn(101L);
         when(topicApplicationService.deleteTopic(deleteRequest)).thenReturn(true);
@@ -113,7 +116,7 @@ class TopicControllerContractTest {
         when(topicApplicationService.setTeacherTopicAmount(setQuotaRequest)).thenReturn(true);
         when(topicApplicationService.checkTopic(checkRequest)).thenReturn(true);
         when(topicApplicationService.setTimeById(setTimeRequest)).thenReturn("成功开放题目!");
-        when(topicApplicationService.unsetTimeById(unsetTimeRequest)).thenReturn("成功取消发布!");
+        when(topicApplicationService.unsetTimeById(unsetTimeRequest)).thenReturn(unpublishResult);
         when(topicApplicationService.updateTopic(updateRequest)).thenReturn("更新成功");
         when(topicApplicationService.getTopicReviewLevel(aiReviewRequest)).thenReturn(aiResult);
 
@@ -124,7 +127,7 @@ class TopicControllerContractTest {
         BaseResponse<Boolean> setQuotaResponse = topicController.setTeacherTopicAmount(setQuotaRequest);
         BaseResponse<Boolean> checkResponse = topicController.checkTopic(checkRequest);
         BaseResponse<String> setTimeResponse = topicController.setTimeById(setTimeRequest);
-        BaseResponse<String> unsetTimeResponse = topicController.unsetTimeById(unsetTimeRequest);
+        BaseResponse<UnpublishTopicResultVO> unsetTimeResponse = topicController.unsetTimeById(unsetTimeRequest);
         BaseResponse<String> updateResponse = topicController.updateTopic(updateRequest);
         BaseResponse<AIResult> aiReviewResponse = topicController.getTopicReviewLevel(aiReviewRequest);
 
@@ -136,7 +139,7 @@ class TopicControllerContractTest {
         assertTrue(setQuotaResponse.getData());
         assertTrue(checkResponse.getData());
         assertEquals("成功开放题目!", setTimeResponse.getData());
-        assertEquals("成功取消发布!", unsetTimeResponse.getData());
+        assertSame(unpublishResult, unsetTimeResponse.getData());
         assertEquals("更新成功", updateResponse.getData());
         assertEquals(aiResult, aiReviewResponse.getData());
 

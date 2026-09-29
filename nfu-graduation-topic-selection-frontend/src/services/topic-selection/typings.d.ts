@@ -143,6 +143,12 @@ declare namespace API {
     message?: string;
   };
 
+  type BaseResponseUnpublishTopicResultVO_ = {
+    code?: number;
+    data?: UnpublishTopicResultVO;
+    message?: string;
+  };
+
   type BaseResponseTheSystemInfoVO_ = {
     code?: number;
     data?: TheSystemInfoVO;
@@ -558,6 +564,19 @@ declare namespace API {
 
   type UnSetTimeRequest = {
     topicIds?: number[];
+  };
+
+  type UnpublishTopicResultVO = {
+    cancelledTopicIds?: number[];
+    skippedTopics?: UnpublishTopicSkippedVO[];
+  };
+
+  type UnpublishTopicSkippedVO = {
+    activeSelectionCount?: number;
+    reason?: string;
+    teacherName?: string;
+    topicId?: number;
+    topicName?: string;
   };
 
   type UpdateTopicRequest = {
