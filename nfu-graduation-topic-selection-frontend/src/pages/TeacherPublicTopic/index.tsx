@@ -68,8 +68,10 @@ export default () => {
   const columns: ProColumns<GithubIssueItem>[] = [
     {
       title: '序号',
-      dataIndex: 'id',
+      dataIndex: 'index',
       valueType: 'indexBorder',
+      width: 48,
+      editable: false,
     },
     {
       title: '题目标题',
