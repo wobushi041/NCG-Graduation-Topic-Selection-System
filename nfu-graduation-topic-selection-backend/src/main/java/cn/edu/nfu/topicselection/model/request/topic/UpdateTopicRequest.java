@@ -33,9 +33,9 @@ public class UpdateTopicRequest implements Serializable {
     private String requirement;
 
     /**
-     * 题目适用的选题组（为空时兼容历史题目）
+     * 所属选题组 id
      */
-    private String topicGroup;
+    private Long topicGroupId;
 
     /// 序列化字段 ///
 

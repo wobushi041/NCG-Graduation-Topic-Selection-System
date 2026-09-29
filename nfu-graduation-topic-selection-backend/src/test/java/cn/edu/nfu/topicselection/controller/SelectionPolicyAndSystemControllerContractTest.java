@@ -2,13 +2,13 @@ package cn.edu.nfu.topicselection.controller;
 
 import cn.edu.nfu.topicselection.annotation.SentinelRateLimit;
 import cn.edu.nfu.topicselection.model.entity.User;
-import cn.edu.nfu.topicselection.model.request.policy.SetDeptConfigRequest;
+import cn.edu.nfu.topicselection.model.request.policy.SetCollegeConfigRequest;
 import cn.edu.nfu.topicselection.model.request.user.DeleteRequest;
 import cn.edu.nfu.topicselection.model.request.user.TeacherQueryRequest;
 import cn.edu.nfu.topicselection.model.request.user.UserAddRequest;
 import cn.edu.nfu.topicselection.model.request.user.UserQueryRequest;
 import cn.edu.nfu.topicselection.model.request.user.UserUpdateRequest;
-import cn.edu.nfu.topicselection.model.vo.DeptConfigVO;
+import cn.edu.nfu.topicselection.model.vo.CollegeConfigVO;
 import cn.edu.nfu.topicselection.model.vo.LoginUserVO;
 import cn.edu.nfu.topicselection.model.vo.TeacherVO;
 import cn.edu.nfu.topicselection.model.vo.TheSystemInfoVO;
@@ -89,9 +89,9 @@ class SelectionPolicyAndSystemControllerContractTest {
         Method setSingleMethod = SelectionPolicyController.class.getMethod("setSwitchSingleChoiceStatus", boolean.class);
         Method getLockMethod = SelectionPolicyController.class.getMethod("getTopicLock");
         Method setLockMethod = SelectionPolicyController.class.getMethod("setTopicLock", boolean.class, String.class);
-        Method getDeptCfgMethod = SelectionPolicyController.class.getMethod("getDeptConfig");
-        Method setDeptCfgMethod = SelectionPolicyController.class.getMethod("setDeptConfig", SetDeptConfigRequest.class);
-        Method delDeptCfgMethod = SelectionPolicyController.class.getMethod("delDeptConfig");
+        Method getCollegeCfgMethod = SelectionPolicyController.class.getMethod("getCollegeConfig");
+        Method setCollegeCfgMethod = SelectionPolicyController.class.getMethod("setCollegeConfig", SetCollegeConfigRequest.class);
+        Method delCollegeCfgMethod = SelectionPolicyController.class.getMethod("delCollegeConfig");
         Method testMethod = SystemController.class.getMethod("test");
         Method getSystemInfoMethod = SystemController.class.getMethod("getSystemInfo");
 
@@ -104,9 +104,9 @@ class SelectionPolicyAndSystemControllerContractTest {
         assertNotNull(setSingleMethod.getAnnotation(SaCheckLogin.class));
         assertNotNull(getLockMethod.getAnnotation(SaCheckLogin.class));
         assertNotNull(setLockMethod.getAnnotation(SaCheckLogin.class));
-        assertNotNull(getDeptCfgMethod.getAnnotation(SaCheckLogin.class));
-        assertNotNull(setDeptCfgMethod.getAnnotation(SaCheckLogin.class));
-        assertNotNull(delDeptCfgMethod.getAnnotation(SaCheckLogin.class));
+        assertNotNull(getCollegeCfgMethod.getAnnotation(SaCheckLogin.class));
+        assertNotNull(setCollegeCfgMethod.getAnnotation(SaCheckLogin.class));
+        assertNotNull(delCollegeCfgMethod.getAnnotation(SaCheckLogin.class));
         assertNotNull(testMethod.getAnnotation(SaIgnore.class));
         assertNotNull(getSystemInfoMethod.getAnnotation(SaCheckLogin.class));
         assertNotNull(getSystemInfoMethod.getAnnotation(SaCheckRole.class));
@@ -120,9 +120,9 @@ class SelectionPolicyAndSystemControllerContractTest {
         assertEquals("policy.single-choice.update", setSingleMethod.getAnnotation(SentinelRateLimit.class).resource());
         assertEquals("policy.topic-lock.query", getLockMethod.getAnnotation(SentinelRateLimit.class).resource());
         assertEquals("policy.topic-lock.update", setLockMethod.getAnnotation(SentinelRateLimit.class).resource());
-        assertEquals("policy.dept-config.query", getDeptCfgMethod.getAnnotation(SentinelRateLimit.class).resource());
-        assertEquals("policy.dept-config.update", setDeptCfgMethod.getAnnotation(SentinelRateLimit.class).resource());
-        assertEquals("policy.dept-config.delete", delDeptCfgMethod.getAnnotation(SentinelRateLimit.class).resource());
+        assertEquals("policy.college-config.query", getCollegeCfgMethod.getAnnotation(SentinelRateLimit.class).resource());
+        assertEquals("policy.college-config.update", setCollegeCfgMethod.getAnnotation(SentinelRateLimit.class).resource());
+        assertEquals("policy.college-config.delete", delCollegeCfgMethod.getAnnotation(SentinelRateLimit.class).resource());
         assertEquals("system.diagnostics.test", testMethod.getAnnotation(SentinelRateLimit.class).resource());
         assertEquals("system.info.query", getSystemInfoMethod.getAnnotation(SentinelRateLimit.class).resource());
     }
@@ -166,7 +166,7 @@ class SelectionPolicyAndSystemControllerContractTest {
     @Test
     void controllers_shouldDelegateToApplicationServices() {
         // 1. 准备测试数据
-        SetDeptConfigRequest deptConfigRequest = new SetDeptConfigRequest();
+        SetCollegeConfigRequest collegeConfigRequest = new SetCollegeConfigRequest();
         UserAddRequest userAddRequest = new UserAddRequest();
         DeleteRequest deleteRequest = new DeleteRequest();
         UserUpdateRequest updateRequest = new UserUpdateRequest();
@@ -181,9 +181,9 @@ class SelectionPolicyAndSystemControllerContractTest {
         when(selectionPolicyService.setSwitchSingleChoiceStatus(true)).thenReturn("当前单选模式切换为学生单选模式");
         when(selectionPolicyService.getTopicLock()).thenReturn(new TopicLockVO());
         when(selectionPolicyService.setTopicLock(false, null)).thenReturn("当前是否退选加锁为允许退选题目");
-        when(selectionPolicyService.getDeptConfig()).thenReturn(new DeptConfigVO());
-        when(selectionPolicyService.setDeptConfig(deptConfigRequest)).thenReturn(true);
-        when(selectionPolicyService.delDeptConfig()).thenReturn(true);
+        when(selectionPolicyService.getCollegeConfig()).thenReturn(new CollegeConfigVO());
+        when(selectionPolicyService.setCollegeConfig(collegeConfigRequest)).thenReturn(true);
+        when(selectionPolicyService.delCollegeConfig()).thenReturn(true);
         when(selectionPolicyService.getSystemInfo()).thenReturn(new TheSystemInfoVO());
 
         when(userApplicationService.addUser(userAddRequest)).thenReturn(new BaseResponse<>(0, "成功；临时密码（仅显示一次）：Abc12345", 10L));
@@ -204,9 +204,9 @@ class SelectionPolicyAndSystemControllerContractTest {
         assertEquals("当前单选模式切换为学生单选模式", selectionPolicyController.setSwitchSingleChoiceStatus(true).getData());
         assertNotNull(selectionPolicyController.getTopicLock().getData());
         assertEquals("当前是否退选加锁为允许退选题目", selectionPolicyController.setTopicLock(false, null).getData());
-        assertNotNull(selectionPolicyController.getDeptConfig().getData());
-        assertTrue(selectionPolicyController.setDeptConfig(deptConfigRequest).getData());
-        assertTrue(selectionPolicyController.delDeptConfig().getData());
+        assertNotNull(selectionPolicyController.getCollegeConfig().getData());
+        assertTrue(selectionPolicyController.setCollegeConfig(collegeConfigRequest).getData());
+        assertTrue(selectionPolicyController.delCollegeConfig().getData());
         assertNotNull(systemController.test());
         assertNotNull(systemController.getSystemInfo().getData());
 

@@ -4,21 +4,20 @@ import cn.edu.nfu.topicselection.constant.TopicConstant;
 import cn.edu.nfu.topicselection.exception.BusinessException;
 import cn.edu.nfu.topicselection.exception.CodeBindMessageEnums;
 import cn.edu.nfu.topicselection.manager.redis.RedisManager;
-import cn.edu.nfu.topicselection.model.entity.Dept;
+import cn.edu.nfu.topicselection.model.entity.College;
 import cn.edu.nfu.topicselection.model.entity.Topic;
 import cn.edu.nfu.topicselection.model.entity.User;
-import cn.edu.nfu.topicselection.model.request.policy.SetDeptConfigRequest;
-import cn.edu.nfu.topicselection.model.vo.DeptConfigVO;
+import cn.edu.nfu.topicselection.model.request.policy.SetCollegeConfigRequest;
+import cn.edu.nfu.topicselection.model.vo.CollegeConfigVO;
 import cn.edu.nfu.topicselection.model.vo.TheSystemInfoVO;
 import cn.edu.nfu.topicselection.model.vo.TopicLockVO;
-import cn.edu.nfu.topicselection.service.DeptService;
+import cn.edu.nfu.topicselection.service.CollegeService;
 import cn.edu.nfu.topicselection.service.SelectionPolicyService;
 import cn.edu.nfu.topicselection.service.SwitchService;
 import cn.edu.nfu.topicselection.service.TopicService;
 import cn.edu.nfu.topicselection.service.UserService;
 import cn.edu.nfu.topicselection.utils.ThrowUtils;
 import cn.hutool.json.JSONUtil;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
@@ -52,9 +51,9 @@ public class SelectionPolicyServiceImpl implements SelectionPolicyService {
     private final RedisManager redisManager;
 
     /**
-     * 注入系部服务依赖
+     * 注入学院服务依赖
      */
-    private final DeptService deptService;
+    private final CollegeService collegeService;
 
     /**
      * 注入用户服务依赖
@@ -71,16 +70,16 @@ public class SelectionPolicyServiceImpl implements SelectionPolicyService {
      *
      * @param switchService 开关服务
      * @param redisManager  Redis 管理组件
-     * @param deptService   系部服务
+     * @param collegeService 学院服务
      * @param userService   用户服务
      * @param topicService  课题服务
      */
     public SelectionPolicyServiceImpl(SwitchService switchService, RedisManager redisManager,
-                                      DeptService deptService, UserService userService,
+                                      CollegeService collegeService, UserService userService,
                                       TopicService topicService) {
         this.switchService = switchService;
         this.redisManager = redisManager;
-        this.deptService = deptService;
+        this.collegeService = collegeService;
         this.userService = userService;
         this.topicService = topicService;
     }
@@ -90,7 +89,7 @@ public class SelectionPolicyServiceImpl implements SelectionPolicyService {
     /**
      * 从 SwitchService 读取 TopicConstant.CROSS_TOPIC_SWITCH 开关状态
      *
-     * @return 是否开启跨系选题
+     * @return 是否开启跨学院选题
      */
     @Override
     public Boolean getCrossTopicStatus() {
@@ -100,13 +99,13 @@ public class SelectionPolicyServiceImpl implements SelectionPolicyService {
     /**
      * 更新 TopicConstant.CROSS_TOPIC_SWITCH 开关状态并返回提示文案
      *
-     * @param enabled 是否开启跨系选题
+     * @param enabled 是否开启跨学院选题
      * @return 操作结果提示信息
      */
     @Override
     public String setCrossTopicStatus(boolean enabled) {
         switchService.setEnabled(TopicConstant.CROSS_TOPIC_SWITCH, enabled);
-        return "跨系选题功能已" + (enabled ? "开启" : "关闭");
+        return "跨学院选题功能已" + (enabled ? "开启" : "关闭");
     }
 
     /**
@@ -193,99 +192,117 @@ public class SelectionPolicyServiceImpl implements SelectionPolicyService {
         return "当前是否退选加锁为" + (enabled ? "禁止退选题目" : "允许退选题目");
     }
 
-    /// 系部跨选规则配置 ///
+    /// 学院跨选规则配置 ///
 
     /**
-     * 在跨系开关启用时扫描 Redis 中 DEPT_CROSS_TOPIC_CONFIG:* 键并反序列化为 DeptConfigVO
+     * 在跨学院开关启用时扫描 Redis 中学院跨选配置键并反序列化为 CollegeConfigVO
      *
-     * @return 系部跨选配置视图对象
+     * @return 学院跨选配置视图对象
      */
     @Override
-    public DeptConfigVO getDeptConfig() {
-        DeptConfigVO deptConfigVO = new DeptConfigVO();
+    public CollegeConfigVO getCollegeConfig() {
+        CollegeConfigVO collegeConfigVO = new CollegeConfigVO();
         if (switchService.isEnabled(TopicConstant.CROSS_TOPIC_SWITCH)) {
-            Set<String> keys = redisManager.getKeysByPattern(TopicConstant.DEPT_CROSS_TOPIC_CONFIG + ":*");
+            Set<String> keys = redisManager.getKeysByPattern(TopicConstant.COLLEGE_CROSS_TOPIC_CONFIG + ":*");
             if (keys != null && !keys.isEmpty()) {
-                Map<String, List<String>> enableSelectDeptsList = new HashMap<>();
+                Map<String, List<Long>> enableSelectCollegesList = new HashMap<>();
 
                 for (String key : keys) {
                     String value = redisManager.getValue(key);
                     if (value != null) {
-                        // key 格式为 DEPT_CROSS_TOPIC_CONFIG:<deptId>
-                        String objectDeptName = key.split(":")[1];
+                        // key 格式为 COLLEGE_CROSS_TOPIC_CONFIG:<collegeId>
+                        String sourceCollegeId = key.substring(key.lastIndexOf(':') + 1);
 
                         // value 存储的是 JSON 字符串，需要反序列化
-                        List<String> enableSelectDepts = JSONUtil.toList(value, String.class);
+                        List<Long> enableSelectColleges = JSONUtil.toList(value, Long.class);
 
-                        enableSelectDeptsList.put(objectDeptName, enableSelectDepts);
+                        enableSelectCollegesList.put(sourceCollegeId, enableSelectColleges);
                     }
                 }
 
-                deptConfigVO.setEnableSelectDeptsList(enableSelectDeptsList);
+                collegeConfigVO.setEnableSelectCollegesList(enableSelectCollegesList);
             }
         }
-        return deptConfigVO;
+        return collegeConfigVO;
     }
 
     /**
-     * 校验跨系开关与源/目标系部存在性后全量替换 Redis 中的 DEPT_CROSS_TOPIC_CONFIG:* 映射
+     * 校验跨学院开关与源、目标学院存在性后全量替换 Redis 中的学院跨选映射
      *
-     * @param request 设置系部跨选配置请求
+     * @param request 设置学院跨选配置请求
      * @return 是否设置成功
      */
     @Override
-    public Boolean setDeptConfig(SetDeptConfigRequest request) {
+    public Boolean setCollegeConfig(SetCollegeConfigRequest request) {
         // 检查参数
         ThrowUtils.throwIf(request == null, CodeBindMessageEnums.PARAMS_ERROR, "请求体不能为空");
         assert request != null;
 
-        // 取出没有开启跨系开关的情况
-        ThrowUtils.throwIf(!switchService.isEnabled(TopicConstant.CROSS_TOPIC_SWITCH), CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR, "请先开启跨系开关后再配置选题规则");
+        // 取出没有开启跨学院开关的情况
+        ThrowUtils.throwIf(!switchService.isEnabled(TopicConstant.CROSS_TOPIC_SWITCH), CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR, "请先开启跨学院开关后再配置选题规则");
 
-        Map<String, List<String>> enableSelectDeptsList = request.getEnableSelectDeptsList();
-        ThrowUtils.throwIf(enableSelectDeptsList == null || enableSelectDeptsList.isEmpty(), CodeBindMessageEnums.PARAMS_ERROR, "请至少选择一个系部后再配置");
+        Map<String, List<Long>> enableSelectCollegesList = request.getEnableSelectCollegesList();
+        ThrowUtils.throwIf(enableSelectCollegesList == null || enableSelectCollegesList.isEmpty(), CodeBindMessageEnums.PARAMS_ERROR, "请至少选择一个学院后再配置");
         boolean hasRule = false;
-        for (Map.Entry<String, List<String>> entry : enableSelectDeptsList.entrySet()) {
-            ThrowUtils.throwIf(StringUtils.isBlank(entry.getKey()), CodeBindMessageEnums.PARAMS_ERROR, "配置中的系部名称不能为空");
-            ThrowUtils.throwIf(entry.getValue() == null, CodeBindMessageEnums.PARAMS_ERROR, "系部可选范围不能为空");
-            ThrowUtils.throwIf(deptService.getOne(new QueryWrapper<Dept>().eq("deptName", entry.getKey())) == null, CodeBindMessageEnums.PARAMS_ERROR, "配置中包含不存在的系部");
-            for (String targetDept : entry.getValue()) {
-                ThrowUtils.throwIf(StringUtils.isBlank(targetDept), CodeBindMessageEnums.PARAMS_ERROR, "可选系部名称不能为空");
-                ThrowUtils.throwIf(deptService.getOne(new QueryWrapper<Dept>().eq("deptName", targetDept)) == null, CodeBindMessageEnums.PARAMS_ERROR, "配置中包含不存在的可选系部");
+        for (Map.Entry<String, List<Long>> entry : enableSelectCollegesList.entrySet()) {
+            Long sourceCollegeId = parseCollegeId(entry.getKey());
+            ThrowUtils.throwIf(collegeService.getById(sourceCollegeId) == null,
+                    CodeBindMessageEnums.PARAMS_ERROR, "配置中包含不存在的学院");
+            ThrowUtils.throwIf(entry.getValue() == null, CodeBindMessageEnums.PARAMS_ERROR, "学院可选范围不能为空");
+            for (Long targetCollegeId : entry.getValue()) {
+                ThrowUtils.throwIf(targetCollegeId == null || collegeService.getById(targetCollegeId) == null,
+                        CodeBindMessageEnums.PARAMS_ERROR, "配置中包含不存在的可选学院");
             }
             hasRule = hasRule || !entry.getValue().isEmpty();
         }
-        ThrowUtils.throwIf(!hasRule, CodeBindMessageEnums.PARAMS_ERROR, "请至少选择一个系部后再配置");
+        ThrowUtils.throwIf(!hasRule, CodeBindMessageEnums.PARAMS_ERROR, "请至少选择一个学院后再配置");
 
         // 全部校验通过后再替换全量配置
-        Set<String> keys = redisManager.getKeysByPattern(TopicConstant.DEPT_CROSS_TOPIC_CONFIG + ":*");
+        Set<String> keys = redisManager.getKeysByPattern(TopicConstant.COLLEGE_CROSS_TOPIC_CONFIG + ":*");
         redisManager.deleteKeys(keys);
 
         // 配置规则
-        for (Map.Entry<String, List<String>> entry : enableSelectDeptsList.entrySet()) {
-            String objectDeptName = entry.getKey();
-            List<String> enableSelectDepts = entry.getValue();
-            if (!enableSelectDepts.isEmpty()) {
-                redisManager.setValue(TopicConstant.DEPT_CROSS_TOPIC_CONFIG + ":" + objectDeptName, JSONUtil.toJsonStr(enableSelectDepts));
+        for (Map.Entry<String, List<Long>> entry : enableSelectCollegesList.entrySet()) {
+            Long sourceCollegeId = parseCollegeId(entry.getKey());
+            List<Long> enableSelectColleges = entry.getValue();
+            if (!enableSelectColleges.isEmpty()) {
+                redisManager.setValue(TopicConstant.COLLEGE_CROSS_TOPIC_CONFIG + ":" + sourceCollegeId,
+                        JSONUtil.toJsonStr(enableSelectColleges));
             }
         }
         return true;
     }
 
     /**
-     * 校验跨系开关开启后删除 Redis 中全部 DEPT_CROSS_TOPIC_CONFIG:* 规则键
+     * 校验跨学院开关开启后删除 Redis 中全部学院跨选规则键
      *
      * @return 是否清除成功
      */
     @Override
-    public Boolean delDeptConfig() {
+    public Boolean delCollegeConfig() {
         // 必须开启跨选开关
-        ThrowUtils.throwIf(!switchService.isEnabled(TopicConstant.CROSS_TOPIC_SWITCH), CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR, "请先开启跨系开关后再清除跨选规则");
+        ThrowUtils.throwIf(!switchService.isEnabled(TopicConstant.CROSS_TOPIC_SWITCH), CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR, "请先开启跨学院开关后再清除跨选规则");
 
         // 清理所有的跨选规则
-        Set<String> keys = redisManager.getKeysByPattern(TopicConstant.DEPT_CROSS_TOPIC_CONFIG + ":*");
+        Set<String> keys = redisManager.getKeysByPattern(TopicConstant.COLLEGE_CROSS_TOPIC_CONFIG + ":*");
         redisManager.deleteKeys(keys);
         return true;
+    }
+
+    /**
+     * 将配置对象键转换为学院 id。
+     *
+     * @param rawCollegeId 原始学院 id 字符串
+     * @return 学院 id
+     */
+    private Long parseCollegeId(String rawCollegeId) {
+        ThrowUtils.throwIf(StringUtils.isBlank(rawCollegeId), CodeBindMessageEnums.PARAMS_ERROR,
+                "配置中的学院 id 不能为空");
+        try {
+            return Long.valueOf(rawCollegeId);
+        } catch (NumberFormatException e) {
+            throw new BusinessException(CodeBindMessageEnums.PARAMS_ERROR, "配置中的学院 id 格式不正确");
+        }
     }
 
     /// 系统监控面板 ///
@@ -301,7 +318,7 @@ public class SelectionPolicyServiceImpl implements SelectionPolicyService {
         TheSystemInfoVO theSystemInfoVo = new TheSystemInfoVO();
 
         // 选题信息
-        theSystemInfoVo.setTotalDeptCount(userService
+        theSystemInfoVo.setTotalCollegeCount(userService
                 .lambdaQuery()
                 .eq(User::getUserRole, 2)
                 .count()

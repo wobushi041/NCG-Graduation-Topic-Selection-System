@@ -53,7 +53,7 @@ public interface UserApplicationService {
     LoginUserVO getLoginUser();
 
     /**
-     * 按角色范围分页查询用户列表（管理员可查全部，教师仅限查看本系学生）
+     * 按角色范围分页查询用户列表（管理员可查全部，教师仅限查看本学院学生）
      *
      * @param request 用户分页查询请求
      * @return 用户分页数据
@@ -61,7 +61,7 @@ public interface UserApplicationService {
     Page<User> listUserByPage(UserQueryRequest request);
 
     /**
-     * 查询指定角色的教师或系部主任脱敏下拉列表（教师查询主任时仅限本系部）
+     * 查询指定角色的教师或选题负责人脱敏下拉列表（教师查询主任时仅限本学院）
      *
      * @param request 教师查询请求
      * @return 教师脱敏下拉列表数据

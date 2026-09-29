@@ -2,8 +2,8 @@ package cn.edu.nfu.topicselection.controller;
 
 import cn.edu.nfu.topicselection.annotation.SentinelRateLimit;
 import cn.edu.nfu.topicselection.exception.CodeBindMessageEnums;
-import cn.edu.nfu.topicselection.model.request.policy.SetDeptConfigRequest;
-import cn.edu.nfu.topicselection.model.vo.DeptConfigVO;
+import cn.edu.nfu.topicselection.model.request.policy.SetCollegeConfigRequest;
+import cn.edu.nfu.topicselection.model.vo.CollegeConfigVO;
 import cn.edu.nfu.topicselection.model.vo.TopicLockVO;
 import cn.edu.nfu.topicselection.response.BaseResponse;
 import cn.edu.nfu.topicselection.response.TheResult;
@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 系统选题开关与跨系策略配置控制层
+ * 系统选题开关与跨学院策略配置控制层
  *
  * @author wobushi041
  */
@@ -41,12 +41,12 @@ public class SelectionPolicyController {
         this.selectionPolicyService = selectionPolicyService;
     }
 
-    /// 跨系选题、看题、单选与退选加锁开关 ///
+    /// 跨学院选题、看题、单选与退选加锁开关 ///
 
     /**
-     * 查询是否允许跨系状态
+     * 查询是否允许跨学院状态
      *
-     * @return 是否开启跨系选题
+     * @return 是否开启跨学院选题
      */
     @SentinelRateLimit(resource = "policy.cross-topic.query")
     @SaCheckLogin
@@ -57,9 +57,9 @@ public class SelectionPolicyController {
     }
 
     /**
-     * 设置是否允许跨系开关
+     * 设置是否允许跨学院开关
      *
-     * @param enabled 是否开启跨系选题
+     * @param enabled 是否开启跨学院选题
      * @return 操作结果提示信息
      */
     @SentinelRateLimit(resource = "policy.cross-topic.update")
@@ -152,46 +152,46 @@ public class SelectionPolicyController {
         return TheResult.success(CodeBindMessageEnums.SUCCESS, selectionPolicyService.setTopicLock(enabled, timestamp));
     }
 
-    /// 系部跨系选题配置 ///
+    /// 学院跨学院选题配置 ///
 
     /**
-     * 查看系部选跨选配置
+     * 查看学院选跨选配置
      *
-     * @return 系部跨选配置视图对象
+     * @return 学院跨选配置视图对象
      */
-    @SentinelRateLimit(resource = "policy.dept-config.query")
+    @SentinelRateLimit(resource = "policy.college-config.query")
     @SaCheckLogin
     @SaCheckRole(value = {"admin"}, mode = SaMode.OR)
-    @GetMapping("/get/dept/config")
-    public BaseResponse<DeptConfigVO> getDeptConfig() {
-        return TheResult.success(CodeBindMessageEnums.SUCCESS, selectionPolicyService.getDeptConfig());
+    @GetMapping("/get/college/config")
+    public BaseResponse<CollegeConfigVO> getCollegeConfig() {
+        return TheResult.success(CodeBindMessageEnums.SUCCESS, selectionPolicyService.getCollegeConfig());
     }
 
     /**
-     * 设置系部选跨选配置
+     * 设置学院选跨选配置
      *
-     * @param request 设置系部跨选配置请求
+     * @param request 设置学院跨选配置请求
      * @return 是否设置成功
      */
-    @SentinelRateLimit(resource = "policy.dept-config.update")
+    @SentinelRateLimit(resource = "policy.college-config.update")
     @SaCheckLogin
     @SaCheckRole(value = {"admin"}, mode = SaMode.OR)
-    @PostMapping("/set/dept/config")
-    public BaseResponse<Boolean> setDeptConfig(@RequestBody SetDeptConfigRequest request) {
-        return TheResult.success(CodeBindMessageEnums.SUCCESS, selectionPolicyService.setDeptConfig(request));
+    @PostMapping("/set/college/config")
+    public BaseResponse<Boolean> setCollegeConfig(@RequestBody SetCollegeConfigRequest request) {
+        return TheResult.success(CodeBindMessageEnums.SUCCESS, selectionPolicyService.setCollegeConfig(request));
     }
 
     /**
-     * 清除系部选跨选配置
+     * 清除学院选跨选配置
      *
      * @return 是否清除成功
      */
-    @SentinelRateLimit(resource = "policy.dept-config.delete")
+    @SentinelRateLimit(resource = "policy.college-config.delete")
     @SaCheckLogin
     @SaCheckRole(value = {"admin"}, mode = SaMode.OR)
-    @PostMapping("/del/dept/config")
-    public BaseResponse<Boolean> delDeptConfig() {
-        return TheResult.success(CodeBindMessageEnums.SUCCESS, selectionPolicyService.delDeptConfig());
+    @PostMapping("/del/college/config")
+    public BaseResponse<Boolean> delCollegeConfig() {
+        return TheResult.success(CodeBindMessageEnums.SUCCESS, selectionPolicyService.delCollegeConfig());
     }
 
 }

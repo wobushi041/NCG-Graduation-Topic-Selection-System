@@ -13,16 +13,6 @@ import java.io.Serializable;
 public class GetTopicReviewLevelRequest implements Serializable {
 
     /**
-     * 题目系部
-     */
-    private String deptName;
-
-    /**
-     * 题目主任
-     */
-    private String deptTeacher;
-
-    /**
      * 题目要求
      */
     private String requirement;

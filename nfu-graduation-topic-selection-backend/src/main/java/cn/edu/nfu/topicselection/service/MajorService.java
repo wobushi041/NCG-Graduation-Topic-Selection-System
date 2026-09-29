@@ -1,7 +1,7 @@
 package cn.edu.nfu.topicselection.service;
 
-import cn.edu.nfu.topicselection.model.request.organization.ProjectQueryRequest;
-import cn.edu.nfu.topicselection.model.entity.Project;
+import cn.edu.nfu.topicselection.model.request.organization.MajorQueryRequest;
+import cn.edu.nfu.topicselection.model.entity.Major;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.IService;
 
@@ -10,14 +10,14 @@ import com.baomidou.mybatisplus.extension.service.IService;
  *
  * @author wobushi041
  */
-public interface ProjectService extends IService<Project> {
+public interface MajorService extends IService<Major> {
 
     /**
      * 根据专业查询请求构建查询条件封装
      *
-     * @param projectQueryRequest 专业查询请求参数
+     * @param majorQueryRequest 专业查询请求参数
      * @return 专业查询条件包装器
      */
-    QueryWrapper<Project> getQueryWrapper(ProjectQueryRequest projectQueryRequest);
+    QueryWrapper<Major> getQueryWrapper(MajorQueryRequest majorQueryRequest);
 
 }

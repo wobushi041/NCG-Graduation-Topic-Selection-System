@@ -109,14 +109,14 @@ public class AuthController {
     /// 角色切换 ///
 
     /**
-     * 在教师与专业负责人身份之间切换认证会话
+     * 在教师与选题负责人身份之间切换认证会话
      *
      * @param request        角色切换请求
      * @param servletRequest HTTP 请求
      * @return 切换后的登录用户信息响应
      */
     @SaCheckLogin
-    @SaCheckRole(value = {"teacher", "dept"}, mode = SaMode.OR)
+    @SaCheckRole(value = {"teacher", "topic_leader"}, mode = SaMode.OR)
     @ValidateRequest
     @SentinelRateLimit(resource = "auth.role-switch")
     @PostMapping("/role-switch")

@@ -38,14 +38,9 @@ public class UpdateTopicListRequest implements Serializable {
     private String requirement;
 
     /**
-     * 系部名
+     * 选题组 id
      */
-    private String deptName;
-
-    /**
-     * 系部主任
-     */
-    private String deptTeacher;
+    private Long topicGroupId;
 
     /**
      * 指导老师

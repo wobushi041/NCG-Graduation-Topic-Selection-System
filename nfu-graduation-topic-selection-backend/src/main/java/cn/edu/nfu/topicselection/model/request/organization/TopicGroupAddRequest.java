@@ -5,17 +5,22 @@ import lombok.Data;
 import java.io.Serializable;
 
 /**
- * 删除系部请求
+ * 选题组创建请求
  *
  * @author wobushi041
  */
 @Data
-public class DeleteDeptRequest implements Serializable {
+public class TopicGroupAddRequest implements Serializable {
 
     /**
-     * 系部名称
+     * 所属学院 id
      */
-    private String deptName;
+    private Long collegeId;
+
+    /**
+     * 选题组名称
+     */
+    private String groupName;
 
     /// 序列化字段 ///
 

@@ -6,20 +6,22 @@ import cn.edu.nfu.topicselection.manager.redis.RedisManager;
 import cn.edu.nfu.topicselection.mapper.StudentTopicSelectionMapper;
 import cn.edu.nfu.topicselection.mapper.TopicMapper;
 import cn.edu.nfu.topicselection.mapper.UserMapper;
-import cn.edu.nfu.topicselection.model.entity.Project;
+import cn.edu.nfu.topicselection.model.entity.Major;
 import cn.edu.nfu.topicselection.model.entity.StudentTopicSelection;
 import cn.edu.nfu.topicselection.model.entity.Topic;
+import cn.edu.nfu.topicselection.model.entity.TopicGroup;
 import cn.edu.nfu.topicselection.model.entity.User;
 import cn.edu.nfu.topicselection.model.enums.StudentTopicSelectionStatusEnum;
 import cn.edu.nfu.topicselection.model.enums.TopicStatusEnum;
 import cn.edu.nfu.topicselection.model.enums.UserRoleEnum;
 import cn.edu.nfu.topicselection.model.request.selection.SelectTopicByIdRequest;
 import cn.edu.nfu.topicselection.service.MailService;
-import cn.edu.nfu.topicselection.service.ProjectService;
+import cn.edu.nfu.topicselection.service.MajorService;
 import cn.edu.nfu.topicselection.service.StudentTopicSelectionService;
 import cn.edu.nfu.topicselection.service.SwitchService;
 import cn.edu.nfu.topicselection.service.TeacherGroupService;
 import cn.edu.nfu.topicselection.service.TopicService;
+import cn.edu.nfu.topicselection.service.TopicGroupService;
 import cn.edu.nfu.topicselection.service.UserService;
 import cn.edu.nfu.topicselection.service.impl.TopicApplicationServiceImpl;
 import cn.edu.nfu.topicselection.service.impl.TopicSelectionApplicationServiceImpl;
@@ -91,7 +93,13 @@ class UserControllerTopicSelectionTest {
      * 模拟专业服务
      */
     @Mock
-    private ProjectService projectService;
+    private MajorService majorService;
+
+    /**
+     * 模拟选题组服务
+     */
+    @Mock
+    private TopicGroupService topicGroupService;
 
     /**
      * 模拟课题服务
@@ -131,6 +139,14 @@ class UserControllerTopicSelectionTest {
 
     @BeforeEach
     void setUp() {
+        Major defaultMajor = new Major();
+        defaultMajor.setId(1L);
+        defaultMajor.setTopicGroupId(1L);
+        TopicGroup defaultTopicGroup = new TopicGroup();
+        defaultTopicGroup.setId(1L);
+        defaultTopicGroup.setCollegeId(1L);
+        org.mockito.Mockito.lenient().when(majorService.getById(1L)).thenReturn(defaultMajor);
+        org.mockito.Mockito.lenient().when(topicGroupService.getById(1L)).thenReturn(defaultTopicGroup);
         topicApplicationService = new TopicApplicationServiceImpl(
                 userMapper,
                 topicMapper,
@@ -138,7 +154,7 @@ class UserControllerTopicSelectionTest {
                 topicService,
                 selectionService,
                 teacherGroupService,
-                projectService,
+                topicGroupService,
                 mailService,
                 redisManager,
                 null
@@ -148,7 +164,8 @@ class UserControllerTopicSelectionTest {
                 topicMapper,
                 selectionMapper,
                 userService,
-                projectService,
+                majorService,
+                topicGroupService,
                 topicService,
                 selectionService,
                 switchService,
@@ -162,14 +179,14 @@ class UserControllerTopicSelectionTest {
     void studentCanSelectTopicFromTheSameConfiguredGroup() {
         // 1. 准备同选题组的学生、专业和课题测试数据
         User student = user(1L, "student-1", "学生甲", "计算机系", UserRoleEnum.STUDENT);
-        student.setProject("计算机科学与技术");
+        student.setMajorId(1L);
         Topic topic = publishedTopic(10L, 1);
-        topic.setTopicGroup("第一组");
-        Project project = new Project();
-        project.setProjectName(student.getProject());
-        project.setGroupName("第一组");
+        topic.setTopicGroupId(1L);
+        Major major = new Major();
+        major.setId(student.getMajorId());
+        major.setTopicGroupId(1L);
 
-        when(projectService.getOne(any())).thenReturn(project);
+        when(majorService.getById(student.getMajorId())).thenReturn(major);
 
         // 2. 调用选题组校验方法
         // 3. 断言校验通过且不抛出业务异常
@@ -181,18 +198,18 @@ class UserControllerTopicSelectionTest {
     void preselectionRejectsTopicFromAnotherConfiguredGroup() {
         // 1. 准备不同选题组的学生与课题测试数据
         User student = user(1L, "student-1", "学生甲", "计算机系", UserRoleEnum.STUDENT);
-        student.setProject("计算机科学与技术");
+        student.setMajorId(1L);
         Topic topic = publishedTopic(10L, 1);
-        topic.setTopicGroup("第二组");
-        Project project = new Project();
-        project.setProjectName(student.getProject());
-        project.setGroupName("第一组");
+        topic.setTopicGroupId(1L);
+        Major major = new Major();
+        major.setId(student.getMajorId());
+        major.setTopicGroupId(2L);
 
         when(userService.userGetCurrentLoginUser()).thenReturn(student);
         when(userMapper.selectByIdForUpdate(student.getId())).thenReturn(student);
         when(userService.userIsStudent(student)).thenReturn(true);
         when(topicMapper.selectByIdForUpdate(topic.getId())).thenReturn(topic);
-        when(projectService.getOne(any())).thenReturn(project);
+        when(majorService.getById(student.getMajorId())).thenReturn(major);
 
         SelectTopicByIdRequest request = new SelectTopicByIdRequest();
         request.setId(topic.getId());
@@ -209,18 +226,18 @@ class UserControllerTopicSelectionTest {
     void finalSelectionRejectsTopicFromAnotherConfiguredGroup() {
         // 1. 准备不同选题组的学生与课题测试数据
         User student = user(1L, "student-1", "学生甲", "计算机系", UserRoleEnum.STUDENT);
-        student.setProject("计算机科学与技术");
+        student.setMajorId(1L);
         Topic topic = publishedTopic(10L, 1);
-        topic.setTopicGroup("第二组");
-        Project project = new Project();
-        project.setProjectName(student.getProject());
-        project.setGroupName("第一组");
+        topic.setTopicGroupId(1L);
+        Major major = new Major();
+        major.setId(student.getMajorId());
+        major.setTopicGroupId(1L);
 
         when(userService.userGetCurrentLoginUser()).thenReturn(student);
         when(userMapper.selectByIdForUpdate(student.getId())).thenReturn(student);
         when(userService.userIsStudent(student)).thenReturn(true);
         when(topicMapper.selectByIdForUpdate(topic.getId())).thenReturn(topic);
-        when(projectService.getOne(any())).thenReturn(project);
+        when(majorService.getById(student.getMajorId())).thenReturn(major);
 
         SelectTopicByIdRequest request = new SelectTopicByIdRequest();
         request.setId(topic.getId());
@@ -238,32 +255,32 @@ class UserControllerTopicSelectionTest {
         // 1. 准备不同系部与角色的教师、主任和课题数据
         User teacher = user(1L, "teacher-1", "张老师", "计算机系", UserRoleEnum.TEACHER);
         User otherTeacher = user(2L, "teacher-2", "张老师", "计算机系", UserRoleEnum.TEACHER);
-        User dept = user(3L, "dept-1", "王主任", "计算机系", UserRoleEnum.DEPT);
-        User otherDept = user(4L, "dept-2", "赵主任", "外语系", UserRoleEnum.DEPT);
+        User college = user(3L, "college-1", "王主任", "计算机系", UserRoleEnum.TOPIC_LEADER);
+        User otherCollege = user(4L, "college-2", "赵主任", "外语系", UserRoleEnum.TOPIC_LEADER);
         Topic topic = publishedTopic(10L, 1);
         topic.setTeacherName(teacher.getUserName());
         topic.setTeacherAccount(teacher.getUserAccount());
-        topic.setDeptName(teacher.getDept());
 
         // 2. 调用课题归属权与状态流转判断方法
         assertTrue(selectionApplicationService.isTopicOwner(teacher, topic));
         assertFalse(selectionApplicationService.isTopicOwner(otherTeacher, topic));
 
-        dept.setProject("计科");
-        Project project = new Project();
-        project.setGroupName("第一组");
-        when(projectService.getOne(any())).thenReturn(project);
-        topic.setTopicGroup("第一组");
+        college.setMajorId(1L);
+        college.setTopicGroupId(1L);
+        otherCollege.setTopicGroupId(2L);
+        Major major = new Major();
+        major.setTopicGroupId(1L);
+        topic.setTopicGroupId(1L);
         topic.setStatus(TopicStatusEnum.PENDING_REVIEW.getCode());
 
         // 3. 断言课题审核状态转换权限符合角色与分组约束
-        assertTrue(topicApplicationService.isAllowedTopicStatusTransition(dept, topic, TopicStatusEnum.NOT_PUBLISHED));
-        assertTrue(topicApplicationService.isAllowedTopicStatusTransition(dept, topic, TopicStatusEnum.REJECTED));
-        assertFalse(topicApplicationService.isAllowedTopicStatusTransition(otherDept, topic, TopicStatusEnum.REJECTED));
+        assertTrue(topicApplicationService.isAllowedTopicStatusTransition(college, topic, TopicStatusEnum.NOT_PUBLISHED));
+        assertTrue(topicApplicationService.isAllowedTopicStatusTransition(college, topic, TopicStatusEnum.REJECTED));
+        assertFalse(topicApplicationService.isAllowedTopicStatusTransition(otherCollege, topic, TopicStatusEnum.REJECTED));
         assertFalse(topicApplicationService.isAllowedTopicStatusTransition(teacher, topic, TopicStatusEnum.NOT_PUBLISHED));
-        topic.setTopicGroup("第二组");
-        assertFalse(topicApplicationService.isAllowedTopicStatusTransition(dept, topic, TopicStatusEnum.NOT_PUBLISHED));
-        topic.setTopicGroup("第一组");
+        topic.setTopicGroupId(2L);
+        assertFalse(topicApplicationService.isAllowedTopicStatusTransition(college, topic, TopicStatusEnum.NOT_PUBLISHED));
+        topic.setTopicGroupId(1L);
 
         topic.setStatus(TopicStatusEnum.REJECTED.getCode());
         assertTrue(topicApplicationService.isAllowedTopicStatusTransition(teacher, topic, TopicStatusEnum.PENDING_REVIEW));
@@ -355,7 +372,6 @@ class UserControllerTopicSelectionTest {
         Topic topic = publishedTopic(10L, 1);
         topic.setTeacherName(teacher.getUserName());
         topic.setTeacherAccount(teacher.getUserAccount());
-        topic.setDeptName(teacher.getDept());
         StudentTopicSelection preselection = selection(20L, student.getUserAccount(), topic.getId(), StudentTopicSelectionStatusEnum.EN_PRESELECT);
 
         when(userMapper.selectByIdForUpdate(student.getId())).thenReturn(student);
@@ -385,17 +401,20 @@ class UserControllerTopicSelectionTest {
      * @param id      用户 ID
      * @param account 用户账号
      * @param name    用户姓名
-     * @param dept    所属系部
+     * @param college    所属系部
      * @param role    用户角色枚举
      * @return 测试用户实体
      */
-    private static User user(Long id, String account, String name, String dept, UserRoleEnum role) {
+    private static User user(Long id, String account, String name, String college, UserRoleEnum role) {
         User user = new User();
         user.setId(id);
         user.setUserAccount(account);
         user.setUserName(name);
-        user.setDept(dept);
+        user.setCollegeId("计算机系".equals(college) ? 1L : 2L);
         user.setUserRole(role.getCode());
+        if (UserRoleEnum.STUDENT.equals(role)) {
+            user.setMajorId(1L);
+        }
         return user;
     }
 
@@ -410,7 +429,7 @@ class UserControllerTopicSelectionTest {
         Topic topic = new Topic();
         topic.setId(id);
         topic.setStatus(TopicStatusEnum.PUBLISHED.getCode());
-        topic.setDeptName("计算机系");
+        topic.setTopicGroupId(1L);
         topic.setSurplusQuantity(surplus);
         topic.setSelectAmount(0);
         topic.setStartTime(new Date(System.currentTimeMillis() - 60_000));

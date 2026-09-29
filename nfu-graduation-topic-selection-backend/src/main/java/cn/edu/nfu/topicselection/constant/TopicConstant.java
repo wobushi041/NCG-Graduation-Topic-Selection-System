@@ -18,7 +18,7 @@ public interface TopicConstant {
     String VIEW_TOPIC_SWITCH = "view-topic-switch";
 
     /**
-     * 跨系选题开关缓存 Key
+     * 跨学院选题开关缓存 Key
      */
     String CROSS_TOPIC_SWITCH = "cross-topic-switch";
 
@@ -38,8 +38,8 @@ public interface TopicConstant {
     String TOPIC_LOCK_TIME = "topic-lock-time";
 
     /**
-     * 跨系选题配置缓存 Key
+     * 跨学院选题配置缓存 Key
      */
-    String DEPT_CROSS_TOPIC_CONFIG = "dept-cross-topic-config";
+    String COLLEGE_CROSS_TOPIC_CONFIG = "college-cross-topic-config";
 
 }

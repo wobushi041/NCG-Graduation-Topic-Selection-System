@@ -155,49 +155,49 @@ public class SentinelRateLimitProperties {
     private double topicReviewAiLevel = 20;
 
     /**
-     * 添加系部接口 QPS 阈值
+     * 添加学院接口 QPS 阈值
      */
-    private double organizationDeptAdd = 50;
+    private double organizationCollegeAdd = 50;
 
     /**
      * 添加专业接口 QPS 阈值
      */
-    private double organizationProjectAdd = 50;
+    private double organizationMajorAdd = 50;
 
     /**
      * 更新专业所属选题组接口 QPS 阈值
      */
-    private double organizationProjectUpdateGroup = 50;
+    private double organizationMajorUpdateGroup = 50;
 
     /**
-     * 删除系部接口 QPS 阈值
+     * 删除学院接口 QPS 阈值
      */
-    private double organizationDeptDelete = 50;
+    private double organizationCollegeDelete = 50;
 
     /**
      * 删除专业接口 QPS 阈值
      */
-    private double organizationProjectDelete = 50;
+    private double organizationMajorDelete = 50;
 
     /**
-     * 分页查询系部接口 QPS 阈值
+     * 分页查询学院接口 QPS 阈值
      */
-    private double organizationDeptQueryPage = 200;
+    private double organizationCollegeQueryPage = 200;
 
     /**
-     * 查询系部下拉列表接口 QPS 阈值
+     * 查询学院下拉列表接口 QPS 阈值
      */
-    private double organizationDeptQueryList = 300;
+    private double organizationCollegeQueryList = 300;
 
     /**
      * 分页查询专业接口 QPS 阈值
      */
-    private double organizationProjectQueryPage = 200;
+    private double organizationMajorQueryPage = 200;
 
     /**
      * 查询专业下拉列表接口 QPS 阈值
      */
-    private double organizationProjectQueryList = 300;
+    private double organizationMajorQueryList = 300;
 
     /**
      * 查询当前登录教师选题组列表接口 QPS 阈值
@@ -217,12 +217,12 @@ public class SentinelRateLimitProperties {
     /// 系统开关、配置与系统诊断接口流控配置 ///
 
     /**
-     * 查询跨系选题开关接口 QPS 阈值
+     * 查询跨学院选题开关接口 QPS 阈值
      */
     private double policyCrossTopicQuery = 120;
 
     /**
-     * 设置跨系选题开关接口 QPS 阈值
+     * 设置跨学院选题开关接口 QPS 阈值
      */
     private double policyCrossTopicUpdate = 30;
 
@@ -257,19 +257,19 @@ public class SentinelRateLimitProperties {
     private double policyTopicLockUpdate = 30;
 
     /**
-     * 查询系部跨选配置接口 QPS 阈值
+     * 查询学院跨选配置接口 QPS 阈值
      */
-    private double policyDeptConfigQuery = 60;
+    private double policyCollegeConfigQuery = 60;
 
     /**
-     * 设置系部跨选配置接口 QPS 阈值
+     * 设置学院跨选配置接口 QPS 阈值
      */
-    private double policyDeptConfigUpdate = 30;
+    private double policyCollegeConfigUpdate = 30;
 
     /**
-     * 清除系部跨选配置接口 QPS 阈值
+     * 清除学院跨选配置接口 QPS 阈值
      */
-    private double policyDeptConfigDelete = 30;
+    private double policyCollegeConfigDelete = 30;
 
     /**
      * 系统连通性测试诊断接口 QPS 阈值
@@ -336,9 +336,9 @@ public class SentinelRateLimitProperties {
     private double querySelectionSituation = 120;
 
     /**
-     * 分页查询系部教师接口 QPS 阈值
+     * 分页查询学院教师接口 QPS 阈值
      */
-    private double queryDeptTeacher = 150;
+    private double queryCollegeTeacher = 150;
 
     /**
      * 查询本系未选题学生列表接口 QPS 阈值
@@ -361,9 +361,9 @@ public class SentinelRateLimitProperties {
     private double queryUserNameList = 150;
 
     /**
-     * 查询待审核课题相关系部教师接口 QPS 阈值
+     * 查询待审核课题相关学院教师接口 QPS 阈值
      */
-    private double queryDeptPendingTeacher = 120;
+    private double queryCollegePendingTeacher = 120;
 
     /// 文件导入导出与 AI 域接口流控配置 ///
 

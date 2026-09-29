@@ -128,7 +128,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     /// 角色切换 ///
 
     /**
-     * 根据同名、同系和同邮箱账号匹配结果切换 Sa-Token 会话
+     * 根据同名、同学院和同邮箱账号匹配结果切换 Sa-Token 会话
      *
      * @param request 角色切换请求
      * @param device  登录设备类型
@@ -142,13 +142,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         ThrowUtils.throwIf(Objects.equals(loginUser.getUserRole(), targetRole.getCode()),
                 CodeBindMessageEnums.PARAMS_ERROR, "当前用户已经是该角色了, 无需切换帐号");
         ThrowUtils.throwIf(!isAllowedRoleToggle(loginUser.getUserRole(), targetRole.getCode()),
-                CodeBindMessageEnums.NO_AUTH_ERROR, "只允许教师帐号和专业负责人帐号互相切换");
+                CodeBindMessageEnums.NO_AUTH_ERROR, "只允许教师帐号和选题负责人帐号互相切换");
         ThrowUtils.throwIf(StringUtils.isBlank(loginUser.getEmail()), CodeBindMessageEnums.USER_INIT_PASSWD,
                 "本帐号必须先绑定邮箱");
 
         List<User> candidates = findCounterpart(loginUser, targetRole.getCode());
         ThrowUtils.throwIf(candidates.size() != 1, CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR,
-                "无法唯一确定要切换的帐号, 请联系管理员检查同名、同系、同邮箱的帐号数据");
+                "无法唯一确定要切换的帐号, 请联系管理员检查同名、同学院、同邮箱的帐号数据");
         authSessionManager.logoutUser(loginUser.getId());
         User target = candidates.get(0);
         authSessionManager.login(target, device);
@@ -166,7 +166,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         if (loginUser == null || StringUtils.isBlank(loginUser.getEmail())) {
             return new RoleSwitchAvailabilityVO(false, null);
         }
-        for (UserRoleEnum candidate : new UserRoleEnum[]{UserRoleEnum.TEACHER, UserRoleEnum.DEPT}) {
+        for (UserRoleEnum candidate : new UserRoleEnum[]{UserRoleEnum.TEACHER, UserRoleEnum.TOPIC_LEADER}) {
             if (isAllowedRoleToggle(loginUser.getUserRole(), candidate.getCode())
                     && findCounterpart(loginUser, candidate.getCode()).size() == 1) {
                 return new RoleSwitchAvailabilityVO(true, candidate.getDescription());
@@ -187,7 +187,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .ne("id", loginUser.getId())
                 .eq("status", "老用户")
                 .eq("userName", loginUser.getUserName())
-                .eq("dept", loginUser.getDept())
+                .eq("collegeId", loginUser.getCollegeId())
                 .eq("email", loginUser.getEmail())
                 .eq("userRole", targetRole));
     }
@@ -201,8 +201,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
      */
     private static boolean isAllowedRoleToggle(Integer currentRole, Integer targetRole) {
         return (Objects.equals(currentRole, UserRoleEnum.TEACHER.getCode())
-                && Objects.equals(targetRole, UserRoleEnum.DEPT.getCode()))
-                || (Objects.equals(currentRole, UserRoleEnum.DEPT.getCode())
+                && Objects.equals(targetRole, UserRoleEnum.TOPIC_LEADER.getCode()))
+                || (Objects.equals(currentRole, UserRoleEnum.TOPIC_LEADER.getCode())
                 && Objects.equals(targetRole, UserRoleEnum.TEACHER.getCode()));
     }
 

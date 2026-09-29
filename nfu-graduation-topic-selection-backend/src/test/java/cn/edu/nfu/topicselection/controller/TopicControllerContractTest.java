@@ -71,7 +71,7 @@ class TopicControllerContractTest {
         assertEndpointContract("deleteTopic", DeleteTopicRequest.class, "/delete/topic", "topic.delete", new String[]{"teacher"});
         assertEndpointContract("getTeacherTopicAmount", GetTeacherTopicAmountRequest.class, "/get/teacher/topicAmount", "topic.quota.get", new String[]{"admin"});
         assertEndpointContract("setTeacherTopicAmount", SetTeacherTopicAmountRequest.class, "/set/teacher/topicAmount", "topic.quota.set", new String[]{"admin"});
-        assertEndpointContract("checkTopic", CheckTopicRequest.class, "/check/topic", "topic.review.check", new String[]{"dept", "teacher"});
+        assertEndpointContract("checkTopic", CheckTopicRequest.class, "/check/topic", "topic.review.check", new String[]{"topic_leader", "teacher"});
         assertEndpointContract("setTimeById", SetTimeRequest.class, "/set/time/by/id", "topic.publication.publish", new String[]{"admin"});
         assertEndpointContract("unsetTimeById", UnSetTimeRequest.class, "/unset/time/by/id", "topic.publication.unpublish", new String[]{"admin"});
         assertEndpointContract("updateTopic", UpdateTopicRequest.class, "/update/topic", "topic.update", new String[]{"teacher"});

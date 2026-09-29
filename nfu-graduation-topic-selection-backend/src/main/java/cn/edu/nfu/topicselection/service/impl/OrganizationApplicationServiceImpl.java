@@ -1,25 +1,32 @@
 package cn.edu.nfu.topicselection.service.impl;
 
 import cn.edu.nfu.topicselection.exception.CodeBindMessageEnums;
-import cn.edu.nfu.topicselection.model.entity.Dept;
-import cn.edu.nfu.topicselection.model.entity.Project;
+import cn.edu.nfu.topicselection.model.entity.College;
+import cn.edu.nfu.topicselection.model.entity.Major;
 import cn.edu.nfu.topicselection.model.entity.Topic;
+import cn.edu.nfu.topicselection.model.entity.TopicGroup;
 import cn.edu.nfu.topicselection.model.entity.User;
-import cn.edu.nfu.topicselection.model.enums.UserRoleEnum;
-import cn.edu.nfu.topicselection.model.request.organization.DeleteDeptRequest;
-import cn.edu.nfu.topicselection.model.request.organization.DeleteProjectRequest;
-import cn.edu.nfu.topicselection.model.request.organization.DeptAddRequest;
-import cn.edu.nfu.topicselection.model.request.organization.DeptQueryRequest;
-import cn.edu.nfu.topicselection.model.request.organization.ProjectAddRequest;
-import cn.edu.nfu.topicselection.model.request.organization.ProjectGroupUpdateRequest;
-import cn.edu.nfu.topicselection.model.request.organization.ProjectQueryRequest;
+import cn.edu.nfu.topicselection.model.request.organization.CollegeAddRequest;
+import cn.edu.nfu.topicselection.model.request.organization.CollegeQueryRequest;
+import cn.edu.nfu.topicselection.model.request.organization.DeleteCollegeRequest;
+import cn.edu.nfu.topicselection.model.request.organization.DeleteMajorRequest;
+import cn.edu.nfu.topicselection.model.request.organization.MajorAddRequest;
+import cn.edu.nfu.topicselection.model.request.organization.MajorGroupUpdateRequest;
+import cn.edu.nfu.topicselection.model.request.organization.MajorQueryRequest;
+import cn.edu.nfu.topicselection.model.request.organization.TeacherGroupQuotaUpdateRequest;
 import cn.edu.nfu.topicselection.model.request.organization.TeacherGroupsBatchRequest;
-import cn.edu.nfu.topicselection.model.vo.DeptVO;
-import cn.edu.nfu.topicselection.model.vo.ProjectVO;
-import cn.edu.nfu.topicselection.service.DeptService;
+import cn.edu.nfu.topicselection.model.request.organization.TopicGroupAddRequest;
+import cn.edu.nfu.topicselection.model.request.organization.TopicGroupDeleteRequest;
+import cn.edu.nfu.topicselection.model.request.organization.TopicGroupQueryRequest;
+import cn.edu.nfu.topicselection.model.request.organization.TopicGroupUpdateRequest;
+import cn.edu.nfu.topicselection.model.vo.CollegeVO;
+import cn.edu.nfu.topicselection.model.vo.MajorVO;
+import cn.edu.nfu.topicselection.model.vo.TopicGroupVO;
+import cn.edu.nfu.topicselection.service.CollegeService;
+import cn.edu.nfu.topicselection.service.MajorService;
 import cn.edu.nfu.topicselection.service.OrganizationApplicationService;
-import cn.edu.nfu.topicselection.service.ProjectService;
 import cn.edu.nfu.topicselection.service.TeacherGroupService;
+import cn.edu.nfu.topicselection.service.TopicGroupService;
 import cn.edu.nfu.topicselection.service.TopicService;
 import cn.edu.nfu.topicselection.service.UserService;
 import cn.edu.nfu.topicselection.utils.ThrowUtils;
@@ -30,13 +37,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * 基于级联引用校验、方法级写事务与角色数据隔离实现组织（系部/专业）与教师选题组应用服务
+ * 基于 ID 关联和引用校验实现学院、专业及选题组应用服务
  *
  * @author wobushi041
  */
@@ -44,14 +52,19 @@ import java.util.stream.Collectors;
 public class OrganizationApplicationServiceImpl implements OrganizationApplicationService {
 
     /**
-     * 注入系部服务依赖
+     * 注入学院服务依赖
      */
-    private final DeptService deptService;
+    private final CollegeService collegeService;
 
     /**
      * 注入专业服务依赖
      */
-    private final ProjectService projectService;
+    private final MajorService majorService;
+
+    /**
+     * 注入选题组服务依赖
+     */
+    private final TopicGroupService topicGroupService;
 
     /**
      * 注入用户服务依赖
@@ -59,306 +72,352 @@ public class OrganizationApplicationServiceImpl implements OrganizationApplicati
     private final UserService userService;
 
     /**
-     * 注入课题服务依赖
+     * 注入题目服务依赖
      */
     private final TopicService topicService;
 
     /**
-     * 注入教师选题组服务依赖
+     * 注入教师选题组额度服务依赖
      */
     private final TeacherGroupService teacherGroupService;
 
     /**
-     * 初始化组织与教师选题组应用服务实现
+     * 初始化组织应用服务
      *
-     * @param deptService         系部服务
-     * @param projectService      专业服务
+     * @param collegeService      学院服务
+     * @param majorService        专业服务
+     * @param topicGroupService   选题组服务
      * @param userService         用户服务
-     * @param topicService        课题服务
-     * @param teacherGroupService 教师选题组服务
+     * @param topicService        题目服务
+     * @param teacherGroupService 教师选题组额度服务
      */
-    public OrganizationApplicationServiceImpl(DeptService deptService, ProjectService projectService,
-                                              UserService userService, TopicService topicService,
-                                              TeacherGroupService teacherGroupService) {
-        this.deptService = deptService;
-        this.projectService = projectService;
+    public OrganizationApplicationServiceImpl(CollegeService collegeService, MajorService majorService,
+                                              TopicGroupService topicGroupService, UserService userService,
+                                              TopicService topicService, TeacherGroupService teacherGroupService) {
+        this.collegeService = collegeService;
+        this.majorService = majorService;
+        this.topicGroupService = topicGroupService;
         this.userService = userService;
         this.topicService = topicService;
         this.teacherGroupService = teacherGroupService;
     }
 
-    /// 系部与专业写用例 ///
+    /// 组织写用例 ///
 
     /**
-     * 校验系部名称非空与唯一性并在事务中保存新系部记录
+     * 校验学院名称唯一性后保存学院记录
      *
-     * @param request 添加系部请求
-     * @return 新添加的系部 id
+     * @param request 学院创建请求
+     * @return 新增学院 id
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Long addDept(DeptAddRequest request) {
-        // 参数检查
+    public Long addCollege(CollegeAddRequest request) {
         ThrowUtils.throwIf(request == null, CodeBindMessageEnums.PARAMS_ERROR, "请求体不能为空");
         assert request != null;
-
-        String deptName = request.getDeptName();
-        ThrowUtils.throwIf(deptName == null, CodeBindMessageEnums.PARAMS_ERROR, "系部名称不能为空");
-
-        Dept dept = deptService.getOne(new QueryWrapper<Dept>().eq("deptName", deptName));
-        ThrowUtils.throwIf(dept != null, CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR, "该系部已存在, 请不要重复添加");
-
-        // 添加新的系部
-        Dept newDept = new Dept();
-        newDept.setDeptName(deptName);
-        boolean result = deptService.save(newDept);
-        ThrowUtils.throwIf(!result, CodeBindMessageEnums.OPERATION_ERROR, "无法添加新的系部");
-        return newDept.getId();
+        String collegeName = StringUtils.trimToNull(request.getCollegeName());
+        ThrowUtils.throwIf(collegeName == null, CodeBindMessageEnums.PARAMS_ERROR, "学院名称不能为空");
+        ThrowUtils.throwIf(collegeService.count(new QueryWrapper<College>().eq("collegeName", collegeName)) > 0,
+                CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR, "该学院已存在, 请不要重复添加");
+        College college = new College();
+        college.setCollegeName(collegeName);
+        ThrowUtils.throwIf(!collegeService.save(college), CodeBindMessageEnums.OPERATION_ERROR, "无法添加新的学院");
+        return college.getId();
     }
 
     /**
-     * 校验专业名称与系部名称非空及唯一性并在事务中保存新专业记录
+     * 校验学院和选题组关系后保存专业记录
      *
-     * @param request 添加专业请求
-     * @return 新添加的专业 id
+     * @param request 专业创建请求
+     * @return 新增专业 id
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Long addProject(ProjectAddRequest request) {
-        // 参数检查
+    public Long addMajor(MajorAddRequest request) {
         ThrowUtils.throwIf(request == null, CodeBindMessageEnums.PARAMS_ERROR, "请求体不能为空");
         assert request != null;
-
-        String projectName = request.getProjectName();
-        ThrowUtils.throwIf(projectName == null, CodeBindMessageEnums.PARAMS_ERROR, "专业名称不能为空");
-
-        String deptName = request.getDeptName();
-        ThrowUtils.throwIf(deptName == null, CodeBindMessageEnums.PARAMS_ERROR, "系部名称不能为空");
-
-        Project project = projectService.getOne(new QueryWrapper<Project>().eq("projectName", projectName));
-        ThrowUtils.throwIf(project != null, CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR, "该专业已存在, 请不要重复添加");
-
-        // 添加新的专业
-        Project newProject = new Project();
-        newProject.setProjectName(projectName);
-        newProject.setDeptName(deptName);
-        newProject.setGroupName(StringUtils.trimToNull(request.getGroupName()));
-        boolean result = projectService.save(newProject);
-        ThrowUtils.throwIf(!result, CodeBindMessageEnums.OPERATION_ERROR, "无法添加新的专业");
-        return newProject.getId();
+        String majorName = StringUtils.trimToNull(request.getMajorName());
+        ThrowUtils.throwIf(majorName == null || request.getCollegeId() == null || request.getTopicGroupId() == null,
+                CodeBindMessageEnums.PARAMS_ERROR, "专业名称、学院和选题组不能为空");
+        College college = requireCollege(request.getCollegeId());
+        TopicGroup topicGroup = requireTopicGroup(request.getTopicGroupId());
+        ThrowUtils.throwIf(!college.getId().equals(topicGroup.getCollegeId()),
+                CodeBindMessageEnums.PARAMS_ERROR, "选题组不属于所选学院");
+        ThrowUtils.throwIf(majorService.count(new QueryWrapper<Major>()
+                        .eq("collegeId", college.getId()).eq("majorName", majorName)) > 0,
+                CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR, "该专业已存在, 请不要重复添加");
+        Major major = new Major();
+        major.setMajorName(majorName);
+        major.setCollegeId(college.getId());
+        major.setTopicGroupId(topicGroup.getId());
+        ThrowUtils.throwIf(!majorService.save(major), CodeBindMessageEnums.OPERATION_ERROR, "无法添加新的专业");
+        return major.getId();
     }
 
     /**
-     * 校验专业存在性并在事务中更新其绑定的选题组名称
+     * 校验专业和选题组属于同一学院后更新专业归属
      *
-     * @param request 更新专业选题组请求
+     * @param request 专业选题组更新请求
      * @return 是否更新成功
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean updateProjectGroup(ProjectGroupUpdateRequest request) {
-        // 参数检查
-        ThrowUtils.throwIf(request == null, CodeBindMessageEnums.PARAMS_ERROR, "请求体不能为空");
+    public Boolean updateMajorGroup(MajorGroupUpdateRequest request) {
+        ThrowUtils.throwIf(request == null || request.getMajorId() == null || request.getTopicGroupId() == null,
+                CodeBindMessageEnums.PARAMS_ERROR, "专业和选题组不能为空");
         assert request != null;
-        String projectName = StringUtils.trimToNull(request.getProjectName());
-        ThrowUtils.throwIf(projectName == null, CodeBindMessageEnums.PARAMS_ERROR, "专业名称不能为空");
-
-        Project project = projectService.getOne(new QueryWrapper<Project>().eq("projectName", projectName));
-        ThrowUtils.throwIf(project == null, CodeBindMessageEnums.NOT_FOUND_ERROR, "专业不存在");
-
-        project.setGroupName(StringUtils.trimToNull(request.getGroupName()));
-        boolean updated = projectService.updateById(project);
-        ThrowUtils.throwIf(!updated, CodeBindMessageEnums.OPERATION_ERROR, "无法保存专业选题组");
+        Major major = majorService.getById(request.getMajorId());
+        ThrowUtils.throwIf(major == null, CodeBindMessageEnums.NOT_FOUND_ERROR, "专业不存在");
+        TopicGroup topicGroup = requireTopicGroup(request.getTopicGroupId());
+        ThrowUtils.throwIf(!major.getCollegeId().equals(topicGroup.getCollegeId()),
+                CodeBindMessageEnums.PARAMS_ERROR, "选题组不属于专业所在学院");
+        major.setTopicGroupId(topicGroup.getId());
+        ThrowUtils.throwIf(!majorService.updateById(major), CodeBindMessageEnums.OPERATION_ERROR, "无法保存专业选题组");
         return true;
     }
 
     /**
-     * 依次检查系部下是否存在关联专业、用户和选题，确认无引用后在事务中删除系部
+     * 校验学院和名称唯一性后保存选题组
      *
-     * @param request 删除系部请求
+     * @param request 选题组创建请求
+     * @return 新增选题组 id
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Long addTopicGroup(TopicGroupAddRequest request) {
+        ThrowUtils.throwIf(request == null, CodeBindMessageEnums.PARAMS_ERROR, "请求体不能为空");
+        assert request != null;
+        String groupName = StringUtils.trimToNull(request.getGroupName());
+        ThrowUtils.throwIf(request.getCollegeId() == null || groupName == null,
+                CodeBindMessageEnums.PARAMS_ERROR, "学院和选题组名称不能为空");
+        requireCollege(request.getCollegeId());
+        ThrowUtils.throwIf(topicGroupService.count(new QueryWrapper<TopicGroup>()
+                        .eq("collegeId", request.getCollegeId()).eq("groupName", groupName)) > 0,
+                CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR, "该学院已存在同名选题组");
+        TopicGroup topicGroup = new TopicGroup();
+        topicGroup.setCollegeId(request.getCollegeId());
+        topicGroup.setGroupName(groupName);
+        ThrowUtils.throwIf(!topicGroupService.save(topicGroup), CodeBindMessageEnums.OPERATION_ERROR, "无法添加选题组");
+        return topicGroup.getId();
+    }
+
+    /**
+     * 禁止跨学院移动并更新选题组名称
+     *
+     * @param request 选题组更新请求
+     * @return 是否更新成功
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateTopicGroup(TopicGroupUpdateRequest request) {
+        ThrowUtils.throwIf(request == null || request.getId() == null,
+                CodeBindMessageEnums.PARAMS_ERROR, "选题组 id 不能为空");
+        assert request != null;
+        TopicGroup topicGroup = requireTopicGroup(request.getId());
+        Long collegeId = request.getCollegeId() == null ? topicGroup.getCollegeId() : request.getCollegeId();
+        ThrowUtils.throwIf(!topicGroup.getCollegeId().equals(collegeId),
+                CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR, "不允许将选题组移动到其他学院");
+        String groupName = StringUtils.trimToNull(request.getGroupName());
+        ThrowUtils.throwIf(groupName == null, CodeBindMessageEnums.PARAMS_ERROR, "选题组名称不能为空");
+        ThrowUtils.throwIf(topicGroupService.count(new QueryWrapper<TopicGroup>()
+                        .eq("collegeId", collegeId).eq("groupName", groupName).ne("id", topicGroup.getId())) > 0,
+                CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR, "该学院已存在同名选题组");
+        topicGroup.setGroupName(groupName);
+        ThrowUtils.throwIf(!topicGroupService.updateById(topicGroup),
+                CodeBindMessageEnums.OPERATION_ERROR, "无法更新选题组");
+        return true;
+    }
+
+    /**
+     * 校验专业、负责人、题目和额度均未引用后删除选题组
+     *
+     * @param request 选题组删除请求
      * @return 是否删除成功
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean deleteDept(DeleteDeptRequest request) {
-        // 参数检查
-        ThrowUtils.throwIf(request == null, CodeBindMessageEnums.PARAMS_ERROR, "请求体不能为空");
+    public Boolean deleteTopicGroup(TopicGroupDeleteRequest request) {
+        ThrowUtils.throwIf(request == null || request.getId() == null,
+                CodeBindMessageEnums.PARAMS_ERROR, "选题组 id 不能为空");
         assert request != null;
-
-        String deptName = request.getDeptName();
-        ThrowUtils.throwIf(deptName == null, CodeBindMessageEnums.PARAMS_ERROR, "系部名称不能为空");
-
-        // 保证先删除专业才能删除系部
-        List<Project> projectList = projectService.list(new QueryWrapper<Project>().eq("deptName", deptName));
-        if (!projectList.isEmpty()) {
-            String projectNames = projectList.stream().map(Project::getProjectName).collect(Collectors.joining(", "));
-            ThrowUtils.throwIf(true, CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR, "先删除属于该系部的所有专业（" + projectNames + "）后才能删除该系部");
-        }
-
-        // 保证先删除相关角色才能删除系部
-        List<User> userList = userService.list(new QueryWrapper<User>().eq("dept", deptName));
-        if (!userList.isEmpty()) {
-            String userNames = userList.stream().limit(5).map(User::getUserName).collect(Collectors.joining(", "));
-            if (userList.size() > 5) {
-                userNames += "...";
-            }
-            ThrowUtils.throwIf(true, CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR, "先删除属于该系部的所有角色（" + userNames + "）后才能删除该系部");
-        }
-
-        // 保证先删除相关选题才能删除系部
-        List<Topic> topicList = topicService.list(new QueryWrapper<Topic>().eq("deptName", deptName));
-        if (!topicList.isEmpty()) {
-            String topicNames = topicList.stream().limit(5).map(Topic::getTopic).collect(Collectors.joining(", "));
-            if (topicList.size() > 5) {
-                topicNames += "...";
-            }
-            ThrowUtils.throwIf(true, CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR, "先删除属于该系部的所有选题（" + topicNames + "）后才能删除该系部");
-        }
-
-        // 删除系部
-        boolean resalt = deptService.remove(new QueryWrapper<Dept>().eq("deptName", deptName));
-        ThrowUtils.throwIf(!resalt, CodeBindMessageEnums.NOT_FOUND_ERROR, "找不到该系部");
+        Long topicGroupId = request.getId();
+        requireTopicGroup(topicGroupId);
+        ThrowUtils.throwIf(majorService.count(new QueryWrapper<Major>().eq("topicGroupId", topicGroupId)) > 0,
+                CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR, "请先解除该选题组关联的专业");
+        ThrowUtils.throwIf(userService.count(new QueryWrapper<User>().eq("topicGroupId", topicGroupId)) > 0,
+                CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR, "请先解除该选题组关联的负责人");
+        ThrowUtils.throwIf(topicService.count(new QueryWrapper<Topic>().eq("topicGroupId", topicGroupId)) > 0,
+                CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR, "请先删除该选题组关联的题目");
+        ThrowUtils.throwIf(!teacherGroupService.teacherAccountsForGroup(topicGroupId).isEmpty(),
+                CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR, "请先删除该选题组的教师额度配置");
+        ThrowUtils.throwIf(!topicGroupService.removeById(topicGroupId),
+                CodeBindMessageEnums.OPERATION_ERROR, "无法删除选题组");
         return true;
     }
 
     /**
-     * 检查专业下是否存在关联用户，确认无引用后在事务中删除专业
+     * 校验学院不存在专业、选题组和用户引用后删除学院
      *
-     * @param request 删除专业请求
+     * @param request 学院删除请求
      * @return 是否删除成功
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean deleteProject(DeleteProjectRequest request) {
-        // 参数检查
-        ThrowUtils.throwIf(request == null, CodeBindMessageEnums.PARAMS_ERROR, "请求体不能为空");
+    public Boolean deleteCollege(DeleteCollegeRequest request) {
+        ThrowUtils.throwIf(request == null || request.getCollegeId() == null,
+                CodeBindMessageEnums.PARAMS_ERROR, "学院 id 不能为空");
         assert request != null;
-
-        String projectName = request.getProjectName();
-        ThrowUtils.throwIf(projectName == null, CodeBindMessageEnums.PARAMS_ERROR, "专业名称不能为空");
-
-        // 保证先删除相关角色才能删除专业
-        List<User> userList = userService.list(new QueryWrapper<User>().eq("project", projectName));
-        if (!userList.isEmpty()) {
-            String userNames = userList.stream().limit(5).map(User::getUserName).collect(Collectors.joining(", "));
-            if (userList.size() > 5) {
-                userNames += "...";
-            }
-            ThrowUtils.throwIf(true, CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR, "先删除属于该专业的所有角色（" + userNames + "）后才能删除该专业");
-        }
-
-        // 删除专业
-        boolean resalt = projectService.remove(new QueryWrapper<Project>().eq("projectName", projectName));
-        ThrowUtils.throwIf(!resalt, CodeBindMessageEnums.NOT_FOUND_ERROR, "找不到该专业");
+        Long collegeId = request.getCollegeId();
+        requireCollege(collegeId);
+        ThrowUtils.throwIf(majorService.count(new QueryWrapper<Major>().eq("collegeId", collegeId)) > 0,
+                CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR, "请先删除学院下的所有专业");
+        ThrowUtils.throwIf(topicGroupService.count(new QueryWrapper<TopicGroup>().eq("collegeId", collegeId)) > 0,
+                CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR, "请先删除学院下的所有选题组");
+        ThrowUtils.throwIf(userService.count(new QueryWrapper<User>().eq("collegeId", collegeId)) > 0,
+                CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR, "请先删除学院下的所有用户");
+        ThrowUtils.throwIf(!collegeService.removeById(collegeId), CodeBindMessageEnums.OPERATION_ERROR, "无法删除学院");
         return true;
     }
 
-    /// 系部、专业与选题组读用例 ///
-
     /**
-     * 校验分页参数并调用 DeptService 执行分页查询
+     * 校验专业不存在用户引用后删除专业
      *
-     * @param request 系部查询请求
-     * @return 系部分页数据
+     * @param request 专业删除请求
+     * @return 是否删除成功
      */
     @Override
-    public Page<Dept> getDeptPage(DeptQueryRequest request) {
-        // 参数检查
-        long current = request.getCurrent();
-        ThrowUtils.throwIf(current < 1, CodeBindMessageEnums.PARAMS_ERROR, "页码号必须大于 0");
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean deleteMajor(DeleteMajorRequest request) {
+        ThrowUtils.throwIf(request == null || request.getMajorId() == null,
+                CodeBindMessageEnums.PARAMS_ERROR, "专业 id 不能为空");
+        assert request != null;
+        Long majorId = request.getMajorId();
+        ThrowUtils.throwIf(majorService.getById(majorId) == null, CodeBindMessageEnums.NOT_FOUND_ERROR, "专业不存在");
+        ThrowUtils.throwIf(userService.count(new QueryWrapper<User>().eq("majorId", majorId)) > 0,
+                CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR, "请先删除该专业关联的用户");
+        ThrowUtils.throwIf(!majorService.removeById(majorId), CodeBindMessageEnums.OPERATION_ERROR, "无法删除专业");
+        return true;
+    }
 
-        long size = request.getPageSize();
-        ThrowUtils.throwIf(size < 1 || size > 100, CodeBindMessageEnums.PARAMS_ERROR, "页大小必须在 1 到 100 之间");
+    /// 组织读用例 ///
 
-        // 获取系部数据
-        return deptService.page(new Page<>(current, size), deptService.getQueryWrapper(request));
+    /**
+     * 使用 MyBatis-Plus 分页查询学院记录
+     *
+     * @param request 学院查询请求
+     * @return 学院分页数据
+     */
+    @Override
+    public Page<College> getCollegePage(CollegeQueryRequest request) {
+        validatePage(request.getCurrent(), request.getPageSize());
+        return collegeService.page(new Page<>(request.getCurrent(), request.getPageSize()),
+                collegeService.getQueryWrapper(request));
     }
 
     /**
-     * 按当前登录用户是否为管理员决定返回全部系部或仅返回同系部，并封装为 DeptVO 列表
+     * 按管理员或当前用户学院范围组装学院下拉选项
      *
-     * @param request 系部查询请求
-     * @return 系部下拉列表数据
+     * @param request 学院查询请求
+     * @return 学院下拉选项
      */
     @Override
-    public List<DeptVO> getDeptList(DeptQueryRequest request) {
-        // 参数检查
+    public List<CollegeVO> getCollegeList(CollegeQueryRequest request) {
         ThrowUtils.throwIf(request == null, CodeBindMessageEnums.PARAMS_ERROR, "请求体不能为空");
-
-        // 获取当前用户
-        User user = userService.userGetCurrentLoginUser();
-
-        // 获取当前用户的系部
-        String deptName = user.getDept();
-
-        // 查询所有 dept 列表
-        List<Dept> deptList = deptService.list(userService.userIsAdmin(user) ? null : new QueryWrapper<Dept>().eq("deptName", deptName));
-
-        // 脱敏数据
-        List<DeptVO> deptVOList = new ArrayList<>();
-        for (Dept dept : deptList) {
-            DeptVO deptVO = new DeptVO();
-            deptVO.setLabel(dept.getDeptName());
-            deptVO.setValue(dept.getDeptName());
-            deptVOList.add(deptVO);
+        User loginUser = userService.userGetCurrentLoginUser();
+        QueryWrapper<College> query = new QueryWrapper<>();
+        if (!userService.userIsAdmin(loginUser)) {
+            ThrowUtils.throwIf(loginUser.getCollegeId() == null,
+                    CodeBindMessageEnums.NO_AUTH_ERROR, "当前用户未配置所属学院");
+            query.eq("id", loginUser.getCollegeId());
         }
-        return deptVOList;
+        List<CollegeVO> result = new ArrayList<>();
+        for (College college : collegeService.list(query)) {
+            CollegeVO option = new CollegeVO();
+            option.setValue(college.getId());
+            option.setLabel(college.getCollegeName());
+            result.add(option);
+        }
+        return result;
     }
 
     /**
-     * 校验分页参数并调用 ProjectService 执行分页查询
+     * 使用 MyBatis-Plus 分页查询专业记录
      *
      * @param request 专业查询请求
      * @return 专业分页数据
      */
     @Override
-    public Page<Project> getProjectPage(ProjectQueryRequest request) {
-        // 参数检查
-        long current = request.getCurrent();
-        ThrowUtils.throwIf(current < 1, CodeBindMessageEnums.PARAMS_ERROR, "页码号必须大于 0");
-
-        long size = request.getPageSize();
-        ThrowUtils.throwIf(size < 1 || size > 100, CodeBindMessageEnums.PARAMS_ERROR, "页大小必须在 1 到 100 之间");
-
-        // 获取专业数据
-        return projectService.page(new Page<>(current, size), projectService.getQueryWrapper(request));
+    public Page<Major> getMajorPage(MajorQueryRequest request) {
+        validatePage(request.getCurrent(), request.getPageSize());
+        return majorService.page(new Page<>(request.getCurrent(), request.getPageSize()),
+                majorService.getQueryWrapper(request));
     }
 
     /**
-     * 校验分页参数、查询专业记录并封装为 ProjectVO 下拉列表
+     * 按学院条件查询专业并组装下拉选项
      *
      * @param request 专业查询请求
-     * @return 专业下拉列表数据
+     * @return 专业下拉选项
      */
     @Override
-    public List<ProjectVO> getProjectList(ProjectQueryRequest request) {
-        // 参数检查
+    public List<MajorVO> getMajorList(MajorQueryRequest request) {
         ThrowUtils.throwIf(request == null, CodeBindMessageEnums.PARAMS_ERROR, "请求体不能为空");
-        assert request != null;
-
-        long current = request.getCurrent();
-        ThrowUtils.throwIf(current < 1, CodeBindMessageEnums.PARAMS_ERROR, "页码号必须大于 0");
-
-        long size = request.getPageSize();
-        ThrowUtils.throwIf(size < 1 || size > 100, CodeBindMessageEnums.PARAMS_ERROR, "页大小必须在 1 到 100 之间");
-
-        // 获取专业数据
-        Page<Project> projectPage = projectService.page(new Page<>(current, size), projectService.getQueryWrapper(request));
-        List<ProjectVO> projectVOList = new ArrayList<>();
-        for (Project project : projectPage.getRecords()) {
-            final String projectName = project.getProjectName();
-            final ProjectVO projectVO = new ProjectVO();
-            projectVO.setLabel(projectName);
-            projectVO.setValue(projectName);
-            projectVOList.add(projectVO);
+        validatePage(request.getCurrent(), request.getPageSize());
+        User loginUser = userService.userGetCurrentLoginUser();
+        if (!userService.userIsAdmin(loginUser)) {
+            request.setCollegeId(loginUser.getCollegeId());
         }
-        return projectVOList;
+        Page<Major> page = majorService.page(new Page<>(request.getCurrent(), request.getPageSize()),
+                majorService.getQueryWrapper(request));
+        return page.getRecords().stream().map(major -> {
+            MajorVO option = new MajorVO();
+            option.setValue(major.getId());
+            option.setLabel(major.getMajorName());
+            return option;
+        }).collect(Collectors.toList());
     }
 
     /**
-     * 获取当前登录教师账号并委托 TeacherGroupService 查询其选题组及额度列表
+     * 使用 MyBatis-Plus 分页查询选题组记录
      *
-     * @return 当前教师的选题组信息列表
+     * @param request 选题组查询请求
+     * @return 选题组分页数据
+     */
+    @Override
+    public Page<TopicGroup> getTopicGroupPage(TopicGroupQueryRequest request) {
+        validatePage(request.getCurrent(), request.getPageSize());
+        QueryWrapper<TopicGroup> query = buildTopicGroupQuery(request);
+        return topicGroupService.page(new Page<>(request.getCurrent(), request.getPageSize()), query);
+    }
+
+    /**
+     * 按学院和当前用户范围查询选题组选项
+     *
+     * @param request 选题组查询请求
+     * @return 选题组选项
+     */
+    @Override
+    public List<TopicGroupVO> getTopicGroupList(TopicGroupQueryRequest request) {
+        ThrowUtils.throwIf(request == null, CodeBindMessageEnums.PARAMS_ERROR, "请求体不能为空");
+        User loginUser = userService.userGetCurrentLoginUser();
+        if (!userService.userIsAdmin(loginUser)) {
+            request.setCollegeId(loginUser.getCollegeId());
+        }
+        return topicGroupService.list(buildTopicGroupQuery(request)).stream().map(group -> {
+            TopicGroupVO option = new TopicGroupVO();
+            option.setValue(group.getId());
+            option.setLabel(group.getGroupName());
+            option.setCollegeId(group.getCollegeId());
+            return option;
+        }).collect(Collectors.toList());
+    }
+
+    /// 教师组选题额度查询 ///
+
+    /**
+     * 使用当前教师账号查询各选题组额度
+     *
+     * @return 当前教师组选题额度
      */
     @Override
     public List<Map<String, Object>> getTeacherGroups() {
@@ -366,10 +425,10 @@ public class OrganizationApplicationServiceImpl implements OrganizationApplicati
     }
 
     /**
-     * 校验请求账号列表并在系部主任登录时仅保留同系部教师账号后委托 TeacherGroupService 批量查询
+     * 将选题负责人可见教师限制到负责人所属选题组后批量查询额度
      *
-     * @param request 教师选题组额度批量查询请求
-     * @return 教师账号到选题组额度列表的映射
+     * @param request 教师组选题额度批量查询请求
+     * @return 教师账号到组选题额度的映射
      */
     @Override
     public Map<String, List<Map<String, Object>>> getTeacherGroupsBatch(TeacherGroupsBatchRequest request) {
@@ -377,26 +436,113 @@ public class OrganizationApplicationServiceImpl implements OrganizationApplicati
                 CodeBindMessageEnums.PARAMS_ERROR, "教师账号列表不能为空");
         List<String> accounts = request.getTeacherAccounts();
         User loginUser = userService.userGetCurrentLoginUser();
-        if (Boolean.TRUE.equals(userService.userIsDept(loginUser))) {
-            List<User> deptTeachers = userService.list(new QueryWrapper<User>()
-                    .eq("userRole", UserRoleEnum.TEACHER.getCode())
-                    .eq("dept", loginUser.getDept()));
-            Set<String> allowedAccounts = deptTeachers.stream()
-                    .map(User::getUserAccount)
-                    .collect(Collectors.toSet());
+        if (Boolean.TRUE.equals(userService.userIsTopicLeader(loginUser))) {
+            ThrowUtils.throwIf(loginUser.getTopicGroupId() == null,
+                    CodeBindMessageEnums.NO_AUTH_ERROR, "当前选题负责人未配置选题组");
+            Set<String> allowedAccounts = new HashSet<>(
+                    teacherGroupService.teacherAccountsForGroup(loginUser.getTopicGroupId()));
             accounts = accounts.stream().filter(allowedAccounts::contains).collect(Collectors.toList());
         }
-        return teacherGroupService.groupsBatch(accounts);
+        Map<String, List<Map<String, Object>>> result = teacherGroupService.groupsBatch(accounts);
+        if (Boolean.TRUE.equals(userService.userIsTopicLeader(loginUser))) {
+            Long topicGroupId = loginUser.getTopicGroupId();
+            result.values().forEach(rows -> rows.removeIf(row ->
+                    !topicGroupId.equals(((Number) row.get("topicGroupId")).longValue())));
+        }
+        return result;
     }
 
     /**
-     * 委托 TeacherGroupService 查询系统内现有的全部选题组名称列表
+     * 校验教师、选题组和学院归属后更新 teacher_group_quota 中的最大出题数量
      *
-     * @return 系统内现有选题组名称列表
+     * @param request 教师选题组额度更新请求
+     * @return 是否更新成功
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateTeacherGroupQuota(TeacherGroupQuotaUpdateRequest request) {
+        ThrowUtils.throwIf(request == null, CodeBindMessageEnums.PARAMS_ERROR, "请求体不能为空");
+        assert request != null;
+        String teacherAccount = StringUtils.trimToNull(request.getTeacherAccount());
+        Long topicGroupId = request.getTopicGroupId();
+        Integer maxTopics = request.getMaxTopics();
+        ThrowUtils.throwIf(teacherAccount == null || topicGroupId == null,
+                CodeBindMessageEnums.PARAMS_ERROR, "教师账号和选题组不能为空");
+        ThrowUtils.throwIf(maxTopics == null || maxTopics < 0 || maxTopics > 20,
+                CodeBindMessageEnums.PARAMS_ERROR, "最大出题数量必须在 0 到 20 之间");
+
+        User teacher = userService.getOne(new QueryWrapper<User>().eq("userAccount", teacherAccount));
+        ThrowUtils.throwIf(teacher == null || !Boolean.TRUE.equals(userService.userIsTeacher(teacher)),
+                CodeBindMessageEnums.NOT_FOUND_ERROR, "教师账号不存在");
+        assert teacher != null;
+        TopicGroup topicGroup = requireTopicGroup(topicGroupId);
+        ThrowUtils.throwIf(teacher.getCollegeId() == null
+                        || !teacher.getCollegeId().equals(topicGroup.getCollegeId()),
+                CodeBindMessageEnums.PARAMS_ERROR, "教师与选题组不属于同一学院");
+        teacherGroupService.updateQuota(teacherAccount, topicGroupId, maxTopics);
+        return true;
+    }
+
+    /**
+     * 查询所有有效选题组名称
+     *
+     * @return 选题组名称列表
      */
     @Override
     public List<String> getGroupList() {
         return teacherGroupService.allGroups();
+    }
+
+    /// 私有校验 ///
+
+    /**
+     * 根据 id 查询学院并校验存在性
+     *
+     * @param collegeId 学院 id
+     * @return 学院实体
+     */
+    private College requireCollege(Long collegeId) {
+        College college = collegeId == null ? null : collegeService.getById(collegeId);
+        ThrowUtils.throwIf(college == null, CodeBindMessageEnums.NOT_FOUND_ERROR, "学院不存在");
+        return college;
+    }
+
+    /**
+     * 根据 id 查询选题组并校验存在性
+     *
+     * @param topicGroupId 选题组 id
+     * @return 选题组实体
+     */
+    private TopicGroup requireTopicGroup(Long topicGroupId) {
+        TopicGroup topicGroup = topicGroupId == null ? null : topicGroupService.getById(topicGroupId);
+        ThrowUtils.throwIf(topicGroup == null, CodeBindMessageEnums.NOT_FOUND_ERROR, "选题组不存在");
+        return topicGroup;
+    }
+
+    /**
+     * 校验分页参数范围
+     *
+     * @param current 当前页
+     * @param pageSize 每页数量
+     */
+    private void validatePage(long current, long pageSize) {
+        ThrowUtils.throwIf(current < 1, CodeBindMessageEnums.PARAMS_ERROR, "页码号必须大于 0");
+        ThrowUtils.throwIf(pageSize < 1 || pageSize > 100,
+                CodeBindMessageEnums.PARAMS_ERROR, "页大小必须在 1 到 100 之间");
+    }
+
+    /**
+     * 根据学院和名称组装选题组查询条件
+     *
+     * @param request 选题组查询请求
+     * @return 选题组查询条件
+     */
+    private QueryWrapper<TopicGroup> buildTopicGroupQuery(TopicGroupQueryRequest request) {
+        QueryWrapper<TopicGroup> query = new QueryWrapper<>();
+        query.eq(request.getCollegeId() != null, "collegeId", request.getCollegeId());
+        query.like(StringUtils.isNotBlank(request.getGroupName()), "groupName", request.getGroupName());
+        query.orderByAsc("groupName");
+        return query;
     }
 
 }

@@ -2,15 +2,15 @@ package cn.edu.nfu.topicselection.service.impl;
 
 import cn.edu.nfu.topicselection.exception.BusinessException;
 import cn.edu.nfu.topicselection.exception.CodeBindMessageEnums;
-import cn.edu.nfu.topicselection.model.entity.Dept;
-import cn.edu.nfu.topicselection.model.entity.Project;
+import cn.edu.nfu.topicselection.model.entity.College;
+import cn.edu.nfu.topicselection.model.entity.Major;
 import cn.edu.nfu.topicselection.model.enums.UserRoleEnum;
 import cn.edu.nfu.topicselection.model.request.ai.AiSendRequest;
 import cn.edu.nfu.topicselection.model.request.file.UploadFileRequest;
 import cn.edu.nfu.topicselection.response.BaseResponse;
-import cn.edu.nfu.topicselection.service.DeptService;
+import cn.edu.nfu.topicselection.service.CollegeService;
 import cn.edu.nfu.topicselection.service.PasswordService;
-import cn.edu.nfu.topicselection.service.ProjectService;
+import cn.edu.nfu.topicselection.service.MajorService;
 import cn.edu.nfu.topicselection.service.SqlExportService;
 import cn.edu.nfu.topicselection.service.StudentTopicSelectionService;
 import cn.edu.nfu.topicselection.service.TopicService;
@@ -70,13 +70,13 @@ class FileAndAIApplicationServiceImplTest {
      * 模拟系部服务
      */
     @Mock
-    private DeptService deptService;
+    private CollegeService collegeService;
 
     /**
      * 模拟专业服务
      */
     @Mock
-    private ProjectService projectService;
+    private MajorService majorService;
 
     /**
      * 模拟学生选题关联服务
@@ -104,8 +104,8 @@ class FileAndAIApplicationServiceImplTest {
                 userService,
                 passwordService,
                 topicService,
-                deptService,
-                projectService,
+                collegeService,
+                majorService,
                 studentTopicSelectionService
         );
         aiApplicationService = new AIApplicationServiceImpl();
@@ -142,8 +142,8 @@ class FileAndAIApplicationServiceImplTest {
         Mockito.when(passwordService.isPasswordValid("TempPass#202601")).thenReturn(true);
         Mockito.when(passwordService.encodePassword("TempPass#202601")).thenReturn("encoded_pw");
         Mockito.when(userService.getOne(ArgumentMatchers.any(QueryWrapper.class))).thenReturn(null);
-        Mockito.when(deptService.getOne(ArgumentMatchers.any(QueryWrapper.class))).thenReturn(new Dept());
-        Mockito.when(projectService.getOne(ArgumentMatchers.any(QueryWrapper.class))).thenReturn(new Project());
+        Mockito.when(collegeService.getOne(ArgumentMatchers.any(QueryWrapper.class))).thenReturn(new College());
+        Mockito.when(majorService.getOne(ArgumentMatchers.any(QueryWrapper.class))).thenReturn(new Major());
 
         // 2. 调用 uploadFile 方法
         BaseResponse<String> response = fileApplicationService.uploadFile(csvFile, request);
@@ -157,7 +157,7 @@ class FileAndAIApplicationServiceImplTest {
     // 场景：测试 uploadFile 当系部不存在时抛出 ILLEGAL_OPERATION_ERROR 异常以触发事务回滚
     @Test
     @SuppressWarnings("unchecked")
-    void uploadFile_whenDeptNotExists_shouldThrowIllegalOperationError() {
+    void uploadFile_whenCollegeNotExists_shouldThrowIllegalOperationError() {
         // 1. 准备测试数据
         String csvContent = "学号,姓名,系部,专业,临时密码\n20260002,王五,不存在系部,软件工程,TempPass#202602\n";
         MockMultipartFile csvFile = new MockMultipartFile("file", "students.csv", "text/csv", csvContent.getBytes(StandardCharsets.UTF_8));
@@ -165,7 +165,7 @@ class FileAndAIApplicationServiceImplTest {
         request.setStatus(UserRoleEnum.STUDENT.getCode());
         Mockito.when(passwordService.isPasswordValid("TempPass#202602")).thenReturn(true);
         Mockito.when(userService.getOne(ArgumentMatchers.any(QueryWrapper.class))).thenReturn(null);
-        Mockito.when(deptService.getOne(ArgumentMatchers.any(QueryWrapper.class))).thenReturn(null);
+        Mockito.when(collegeService.getOne(ArgumentMatchers.any(QueryWrapper.class))).thenReturn(null);
 
         // 2. 调用 uploadFile 方法并捕获业务异常
         BusinessException ex = Assertions.assertThrows(
@@ -175,7 +175,7 @@ class FileAndAIApplicationServiceImplTest {
 
         // 3. 断言错误码与提示信息正确
         Assertions.assertEquals(CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR, ex.getCodeBindMessageEnums());
-        Assertions.assertTrue(ex.getMessage().contains("系部 [不存在系部] 在系统中不存在"));
+        Assertions.assertTrue(ex.getMessage().contains("学院 [不存在系部] 在系统中不存在"));
     }
 
     // 场景：测试 uploadFileTopic、exportUserListRows 与 aiSend 的行为及参数校验

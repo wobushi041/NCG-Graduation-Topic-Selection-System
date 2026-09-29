@@ -1,7 +1,7 @@
 package cn.edu.nfu.topicselection.service;
 
-import cn.edu.nfu.topicselection.model.request.policy.SetDeptConfigRequest;
-import cn.edu.nfu.topicselection.model.vo.DeptConfigVO;
+import cn.edu.nfu.topicselection.model.request.policy.SetCollegeConfigRequest;
+import cn.edu.nfu.topicselection.model.vo.CollegeConfigVO;
 import cn.edu.nfu.topicselection.model.vo.TheSystemInfoVO;
 import cn.edu.nfu.topicselection.model.vo.TopicLockVO;
 
@@ -13,16 +13,16 @@ import cn.edu.nfu.topicselection.model.vo.TopicLockVO;
 public interface SelectionPolicyService {
 
     /**
-     * 查询跨系选题开关状态
+     * 查询跨学院选题开关状态
      *
-     * @return 是否开启跨系选题
+     * @return 是否开启跨学院选题
      */
     Boolean getCrossTopicStatus();
 
     /**
-     * 设置跨系选题开关状态
+     * 设置跨学院选题开关状态
      *
-     * @param enabled 是否开启跨系选题
+     * @param enabled 是否开启跨学院选题
      * @return 操作结果提示信息
      */
     String setCrossTopicStatus(boolean enabled);
@@ -74,26 +74,26 @@ public interface SelectionPolicyService {
     String setTopicLock(boolean enabled, String timestamp);
 
     /**
-     * 查询系部跨系选题映射配置
+     * 查询学院跨学院选题映射配置
      *
-     * @return 系部跨选配置视图对象
+     * @return 学院跨选配置视图对象
      */
-    DeptConfigVO getDeptConfig();
+    CollegeConfigVO getCollegeConfig();
 
     /**
-     * 设置系部跨系选题映射配置
+     * 设置学院跨学院选题映射配置
      *
-     * @param request 设置系部跨选配置请求
+     * @param request 设置学院跨选配置请求
      * @return 是否设置成功
      */
-    Boolean setDeptConfig(SetDeptConfigRequest request);
+    Boolean setCollegeConfig(SetCollegeConfigRequest request);
 
     /**
-     * 清除全部系部跨系选题映射配置
+     * 清除全部学院跨学院选题映射配置
      *
      * @return 是否清除成功
      */
-    Boolean delDeptConfig();
+    Boolean delCollegeConfig();
 
     /**
      * 查询系统统计与主机资源监控面板信息

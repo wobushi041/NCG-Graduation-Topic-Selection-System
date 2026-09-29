@@ -41,7 +41,7 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
     private StudentTopicSelectionService studentTopicSelectionService;
 
     /**
-     * 基于 MyBatis-Plus QueryWrapper 结合当前登录用户角色组装题目状态、名称、类型、教师、系部、时间区间及排序条件
+     * 基于 MyBatis-Plus QueryWrapper 结合当前用户角色组装题目和选题组查询条件
      *
      * @param topicQueryRequest 题目查询请求参数
      * @return 题目查询条件包装器
@@ -55,11 +55,14 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         String sortOrder = topicQueryRequest.getSortOrder();
         QueryWrapper<Topic> queryWrapper = new QueryWrapper<>();
         User currentLoginUser = userService.userGetCurrentLoginUser();
-        queryWrapper.eq(userService.userIsAdmin(currentLoginUser) || userService.userIsDept(currentLoginUser), "status", topicQueryRequest.getStatus());
+        queryWrapper.eq(userService.userIsAdmin(currentLoginUser) || userService.userIsTopicLeader(currentLoginUser), "status", topicQueryRequest.getStatus());
         queryWrapper.like(StringUtils.isNotBlank(topicQueryRequest.getTopic()), "topic", topicQueryRequest.getTopic());
         queryWrapper.like(StringUtils.isNotBlank(topicQueryRequest.getType()), "type", topicQueryRequest.getType());
         queryWrapper.eq(StringUtils.isNotBlank(topicQueryRequest.getTeacherName()), "teacherName", topicQueryRequest.getTeacherName());
-        queryWrapper.eq(StringUtils.isNotBlank(topicQueryRequest.getDeptName()), "deptName", topicQueryRequest.getDeptName());
+        queryWrapper.eq(topicQueryRequest.getTopicGroupId() != null, "topicGroupId",
+                topicQueryRequest.getTopicGroupId());
+        queryWrapper.eq(userService.userIsTopicLeader(currentLoginUser), "topicGroupId",
+                currentLoginUser.getTopicGroupId());
         queryWrapper.eq(topicQueryRequest.getStartTime() != null, "startTime", topicQueryRequest.getStartTime());
         queryWrapper.eq(topicQueryRequest.getEndTime() != null, "endTime", topicQueryRequest.getEndTime());
         queryWrapper.orderBy(SqlUtils.validTopicSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC), sortField);
@@ -67,9 +70,9 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
     }
 
     /**
-     * 基于 MyBatis-Plus QueryWrapper 强制绑定当前管理员或系主任所属系部及剩余数量为 1 的过滤条件并组装排序条件
+     * 基于 MyBatis-Plus QueryWrapper 绑定选题负责人所属选题组并筛选有剩余名额的题目
      *
-     * @param topicQueryByAdminRequest 管理员或系主任题目查询请求参数
+     * @param topicQueryByAdminRequest 管理员或选题负责人题目查询请求参数
      * @return 题目查询条件包装器
      */
     @Override
@@ -91,10 +94,11 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         queryWrapper.like(StringUtils.isNotBlank(topicQueryByAdminRequest.getTopic()), "topic", topicQueryByAdminRequest.getTopic());
         queryWrapper.like(StringUtils.isNotBlank(topicQueryByAdminRequest.getType()), "type", topicQueryByAdminRequest.getType());
         queryWrapper.eq(StringUtils.isNotBlank(topicQueryByAdminRequest.getTeacherName()), "teacherName", topicQueryByAdminRequest.getTeacherName());
-        queryWrapper.eq(StringUtils.isNotBlank(topicQueryByAdminRequest.getDeptName()), "deptName", topicQueryByAdminRequest.getDeptName());
+        queryWrapper.eq(topicQueryByAdminRequest.getTopicGroupId() != null, "topicGroupId",
+                topicQueryByAdminRequest.getTopicGroupId());
         queryWrapper.eq(topicQueryByAdminRequest.getStartTime() != null, "startTime", topicQueryByAdminRequest.getStartTime());
         queryWrapper.eq(topicQueryByAdminRequest.getEndTime() != null, "endTime", topicQueryByAdminRequest.getEndTime());
-        queryWrapper.eq(StringUtils.isNotBlank(loginUser.getDept()), "deptName", loginUser.getDept());
+        queryWrapper.eq(userService.userIsTopicLeader(loginUser), "topicGroupId", loginUser.getTopicGroupId());
         // 设置查询条件，筛选出剩余问题数量为 1 的题目
         queryWrapper.eq("surplusQuantity", 1);
         queryWrapper.orderBy(SqlUtils.validTopicSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC),

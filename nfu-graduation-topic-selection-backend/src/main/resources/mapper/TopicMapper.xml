@@ -12,8 +12,7 @@
             <result property="requirement" column="requirement" />
             <result property="teacherName" column="teacherName" />
             <result property="teacherAccount" column="teacherAccount" />
-            <result property="deptName" column="deptName" />
-            <result property="deptTeacher" column="deptTeacher" />
+            <result property="topicGroupId" column="topicGroupId" />
             <result property="createTime" column="createTime" />
             <result property="updateTime" column="updateTime" />
             <result property="isDelete" column="isDelete" />
@@ -27,7 +26,7 @@
 
     <sql id="Base_Column_List">
         id,topic,type,description,requirement,teacherName,teacherAccount,
-        deptName,deptTeacher,createTime,updateTime,isDelete,
+        topicGroupId,createTime,updateTime,isDelete,
         surplusQuantity,startTime,endTime,status,selectAmount,
         reason
     </sql>

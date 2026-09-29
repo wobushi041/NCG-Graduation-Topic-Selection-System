@@ -23,19 +23,24 @@ public class UserUpdateRequest implements Serializable {
     private String userName;
 
     /**
-     * 用户头像
-     */
-    private String userAvatar;
-
-    /**
-     * 简介
-     */
-    private String userProfile;
-
-    /**
      * 用户角色
      */
     private Integer userRole;
+
+    /**
+     * 所属学院 id
+     */
+    private Long collegeId;
+
+    /**
+     * 所属专业 id
+     */
+    private Long majorId;
+
+    /**
+     * 负责的选题组 id
+     */
+    private Long topicGroupId;
 
     /// 序列化字段 ///
 

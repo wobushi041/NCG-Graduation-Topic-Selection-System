@@ -3,6 +3,7 @@ package cn.edu.nfu.topicselection.service;
 import cn.edu.nfu.topicselection.exception.BusinessException;
 import cn.edu.nfu.topicselection.model.entity.StudentTopicSelection;
 import cn.edu.nfu.topicselection.model.entity.Topic;
+import cn.edu.nfu.topicselection.model.entity.TopicGroup;
 import cn.edu.nfu.topicselection.model.entity.User;
 import cn.edu.nfu.topicselection.model.enums.StudentTopicSelectionStatusEnum;
 import cn.edu.nfu.topicselection.model.enums.UserRoleEnum;
@@ -51,6 +52,12 @@ class TopicSelectionQueryServiceTest {
     private TopicService topicService;
 
     /**
+     * 模拟选题组服务
+     */
+    @Mock
+    private TopicGroupService topicGroupService;
+
+    /**
      * 模拟学生选题关联服务
      */
     @Mock
@@ -58,7 +65,12 @@ class TopicSelectionQueryServiceTest {
 
     @BeforeEach
     void setUp() {
-        queryService = new TopicSelectionQueryServiceImpl(userService, topicService, selectionService);
+        queryService = new TopicSelectionQueryServiceImpl(
+                userService,
+                topicService,
+                topicGroupService,
+                selectionService
+        );
     }
 
     // 场景：测试教师查询本人课题下的已选学生列表
@@ -122,6 +134,10 @@ class TopicSelectionQueryServiceTest {
         Topic topic = new Topic();
         topic.setId(10L);
         topic.setTopic("分布式选题系统设计");
+        topic.setTopicGroupId(2L);
+        TopicGroup topicGroup = new TopicGroup();
+        topicGroup.setId(2L);
+        topicGroup.setGroupName("计算机科学与技术选题组");
 
         StudentTopicSelection selection = new StudentTopicSelection();
         selection.setTopicId(10L);
@@ -132,18 +148,22 @@ class TopicSelectionQueryServiceTest {
         when(userService.userGetCurrentLoginUser()).thenReturn(student);
         when(selectionService.list(any())).thenReturn(Collections.singletonList(selection));
         when(topicService.listByIds(Collections.singletonList(10L))).thenReturn(Collections.singletonList(topic));
+        when(topicService.getById(10L)).thenReturn(topic);
+        when(topicGroupService.getById(2L)).thenReturn(topicGroup);
         when(selectionService.getOne(any())).thenReturn(selection);
 
         GetSelectTopicRequest timeRequest = new GetSelectTopicRequest();
         timeRequest.setTopicId(10L);
 
-        // 2. 调用预选课题查询与最终选中时间查询方法
+        // 2. 调用预选课题、最终选中课题与选中时间查询方法
         List<Topic> preselectedTopics = queryService.getPreTopic();
+        List<Topic> selectedTopics = queryService.getSelectTopic();
         String choiceTime = queryService.getSelectTopicTime(timeRequest);
 
         // 3. 断言返回课题列表与秒级时间戳字符串正确
         assertEquals(1, preselectedTopics.size());
         assertEquals(10L, preselectedTopics.get(0).getId());
+        assertEquals("计算机科学与技术选题组", selectedTopics.get(0).getTopicGroupName());
         assertEquals("1700000000", choiceTime);
     }
 
@@ -153,16 +173,16 @@ class TopicSelectionQueryServiceTest {
      * @param id      用户 ID
      * @param account 用户账号
      * @param name    用户姓名
-     * @param dept    所属系部
+     * @param college    所属系部
      * @param role    用户角色枚举
      * @return 测试用户实体
      */
-    private static User user(Long id, String account, String name, String dept, UserRoleEnum role) {
+    private static User user(Long id, String account, String name, String college, UserRoleEnum role) {
         User user = new User();
         user.setId(id);
         user.setUserAccount(account);
         user.setUserName(name);
-        user.setDept(dept);
+        user.setCollegeId(1L);
         user.setUserRole(role.getCode());
         return user;
     }

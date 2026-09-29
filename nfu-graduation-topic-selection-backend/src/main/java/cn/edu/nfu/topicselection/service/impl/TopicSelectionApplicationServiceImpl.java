@@ -6,9 +6,10 @@ import cn.edu.nfu.topicselection.manager.redis.RedisManager;
 import cn.edu.nfu.topicselection.mapper.StudentTopicSelectionMapper;
 import cn.edu.nfu.topicselection.mapper.TopicMapper;
 import cn.edu.nfu.topicselection.mapper.UserMapper;
-import cn.edu.nfu.topicselection.model.entity.Project;
+import cn.edu.nfu.topicselection.model.entity.Major;
 import cn.edu.nfu.topicselection.model.entity.StudentTopicSelection;
 import cn.edu.nfu.topicselection.model.entity.Topic;
+import cn.edu.nfu.topicselection.model.entity.TopicGroup;
 import cn.edu.nfu.topicselection.model.entity.User;
 import cn.edu.nfu.topicselection.model.enums.StudentTopicSelectionStatusEnum;
 import cn.edu.nfu.topicselection.model.enums.TopicStatusEnum;
@@ -16,10 +17,11 @@ import cn.edu.nfu.topicselection.model.request.selection.SelectStudentRequest;
 import cn.edu.nfu.topicselection.model.request.selection.SelectTopicByIdRequest;
 import cn.edu.nfu.topicselection.model.request.selection.WithdrawRequest;
 import cn.edu.nfu.topicselection.service.MailService;
-import cn.edu.nfu.topicselection.service.ProjectService;
+import cn.edu.nfu.topicselection.service.MajorService;
 import cn.edu.nfu.topicselection.service.StudentTopicSelectionService;
 import cn.edu.nfu.topicselection.service.SwitchService;
 import cn.edu.nfu.topicselection.service.TopicSelectionApplicationService;
+import cn.edu.nfu.topicselection.service.TopicGroupService;
 import cn.edu.nfu.topicselection.service.TopicService;
 import cn.edu.nfu.topicselection.service.UserService;
 import cn.edu.nfu.topicselection.utils.ThrowUtils;
@@ -64,7 +66,12 @@ public class TopicSelectionApplicationServiceImpl implements TopicSelectionAppli
     /**
      * 注入专业服务依赖
      */
-    private final ProjectService projectService;
+    private final MajorService majorService;
+
+    /**
+     * 注入选题组服务依赖
+     */
+    private final TopicGroupService topicGroupService;
 
     /**
      * 注入课题服务依赖
@@ -98,7 +105,8 @@ public class TopicSelectionApplicationServiceImpl implements TopicSelectionAppli
      * @param topicMapper                  课题数据访问层
      * @param studentTopicSelectionMapper  学生选题关联数据访问层
      * @param userService                  用户服务
-     * @param projectService               专业服务
+     * @param majorService                 专业服务
+     * @param topicGroupService            选题组服务
      * @param topicService                 课题服务
      * @param studentTopicSelectionService 学生选题关联服务
      * @param switchService                系统开关服务
@@ -107,7 +115,8 @@ public class TopicSelectionApplicationServiceImpl implements TopicSelectionAppli
      */
     public TopicSelectionApplicationServiceImpl(UserMapper userMapper, TopicMapper topicMapper,
                                                 StudentTopicSelectionMapper studentTopicSelectionMapper,
-                                                UserService userService, ProjectService projectService,
+                                                 UserService userService, MajorService majorService,
+                                                 TopicGroupService topicGroupService,
                                                 TopicService topicService,
                                                 StudentTopicSelectionService studentTopicSelectionService,
                                                 SwitchService switchService, RedisManager redisManager,
@@ -116,7 +125,8 @@ public class TopicSelectionApplicationServiceImpl implements TopicSelectionAppli
         this.topicMapper = topicMapper;
         this.studentTopicSelectionMapper = studentTopicSelectionMapper;
         this.userService = userService;
-        this.projectService = projectService;
+        this.majorService = majorService;
+        this.topicGroupService = topicGroupService;
         this.topicService = topicService;
         this.studentTopicSelectionService = studentTopicSelectionService;
         this.switchService = switchService;
@@ -176,14 +186,15 @@ public class TopicSelectionApplicationServiceImpl implements TopicSelectionAppli
             validateStudentTopicGroup(lockedStudent, topic);
             boolean crossSelectionEnabled = switchService.isEnabled(TopicConstant.CROSS_TOPIC_SWITCH);
             ThrowUtils.throwIf(
-                    !crossSelectionEnabled && !Objects.equals(lockedStudent.getDept(), topic.getDeptName()),
+                    !crossSelectionEnabled && !Objects.equals(lockedStudent.getCollegeId(), getTopicCollegeId(topic)),
                     CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR,
-                    "不允许跨系部选题, 请等待开放"
+                    "不允许跨学院选题, 请等待开放"
             );
             ThrowUtils.throwIf(
-                    crossSelectionEnabled && !this.isStudentAllowedCrossSelect(lockedStudent.getDept(), topic.getDeptName()),
+                    crossSelectionEnabled && !this.isStudentAllowedCrossSelect(
+                            lockedStudent.getCollegeId(), getTopicCollegeId(topic)),
                     CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR,
-                    "当前系统配置不允许预选该系部题目"
+                    "当前系统配置不允许预选该学院题目"
             );
             ThrowUtils.throwIf(targetSelection != null, CodeBindMessageEnums.OPERATION_ERROR, "不能重复预选该题目");
             ThrowUtils.throwIf(
@@ -379,14 +390,15 @@ public class TopicSelectionApplicationServiceImpl implements TopicSelectionAppli
         );
         boolean crossSelectionEnabled = switchService.isEnabled(TopicConstant.CROSS_TOPIC_SWITCH);
         ThrowUtils.throwIf(
-                !crossSelectionEnabled && !Objects.equals(lockedStudent.getDept(), topic.getDeptName()),
+                    !crossSelectionEnabled && !Objects.equals(lockedStudent.getCollegeId(), getTopicCollegeId(topic)),
                 CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR,
-                "不允许跨系部选题, 请等待开放"
+                "不允许跨学院选题, 请等待开放"
         );
         ThrowUtils.throwIf(
-                crossSelectionEnabled && !this.isStudentAllowedCrossSelect(lockedStudent.getDept(), topic.getDeptName()),
+                    crossSelectionEnabled && !this.isStudentAllowedCrossSelect(
+                            lockedStudent.getCollegeId(), getTopicCollegeId(topic)),
                 CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR,
-                "当前系统配置不允许确认该系部题目"
+                "当前系统配置不允许确认该学院题目"
         );
 
         List<StudentTopicSelection> selections = studentTopicSelectionMapper.selectByUserForUpdate(lockedStudent.getUserAccount());
@@ -551,38 +563,39 @@ public class TopicSelectionApplicationServiceImpl implements TopicSelectionAppli
      * @param topic   选题实体
      */
     public void validateStudentTopicGroup(User student, Topic topic) {
-        if (StringUtils.isBlank(topic.getTopicGroup())) {
-            return;
-        }
-        ThrowUtils.throwIf(StringUtils.isBlank(student.getProject()), CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR, "当前学生未配置专业，无法选择分组题目");
-        Project project = projectService.getOne(new QueryWrapper<Project>().eq("projectName", student.getProject()));
-        ThrowUtils.throwIf(project == null || StringUtils.isBlank(project.getGroupName()), CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR, "当前专业未配置选题组，无法选择该题目");
+        ThrowUtils.throwIf(topic == null || topic.getTopicGroupId() == null,
+                CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR, "题目未配置选题组");
+        ThrowUtils.throwIf(student.getMajorId() == null, CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR,
+                "当前学生未配置专业，无法选择分组题目");
+        Major major = majorService.getById(student.getMajorId());
+        ThrowUtils.throwIf(major == null || major.getTopicGroupId() == null,
+                CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR, "当前专业未配置选题组，无法选择该题目");
         ThrowUtils.throwIf(
-                !Objects.equals(StringUtils.trimToNull(project.getGroupName()), StringUtils.trimToNull(topic.getTopicGroup())),
+                !Objects.equals(major.getTopicGroupId(), topic.getTopicGroupId()),
                 CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR,
                 "当前专业不属于该题目适用的选题组"
         );
     }
 
     /**
-     * 判断该系部的学生在跨选配置中是否允许跨选目标系部
+     * 判断该学院的学生在跨选配置中是否允许跨选目标学院
      *
-     * @param userDeptName 学生所属系部名称
-     * @param objDeptName  目标课题所属系部名称
+     * @param userCollegeId 学生所属学院 id
+     * @param objCollegeId  目标课题所属学院 id
      * @return 是否允许跨选
      */
-    private Boolean isStudentAllowedCrossSelect(String userDeptName, String objDeptName) {
+    private Boolean isStudentAllowedCrossSelect(Long userCollegeId, Long objCollegeId) {
         // 检查参数
-        ThrowUtils.throwIf(StringUtils.isBlank(userDeptName), CodeBindMessageEnums.PARAMS_ERROR, "用户系部不能为空");
-        ThrowUtils.throwIf(StringUtils.isBlank(objDeptName), CodeBindMessageEnums.PARAMS_ERROR, "目标系部不能为空");
+        ThrowUtils.throwIf(userCollegeId == null, CodeBindMessageEnums.PARAMS_ERROR, "用户学院不能为空");
+        ThrowUtils.throwIf(objCollegeId == null, CodeBindMessageEnums.PARAMS_ERROR, "目标学院不能为空");
 
-        // 如果有存在配置就默认按照规则跨选, 不存在就直接允许跨选所有系部
-        String value = redisManager.getValue(TopicConstant.DEPT_CROSS_TOPIC_CONFIG + ":" + userDeptName);
+        // 如果有存在配置就默认按照规则跨选, 不存在就直接允许跨选所有学院
+        String value = redisManager.getValue(TopicConstant.COLLEGE_CROSS_TOPIC_CONFIG + ":" + userCollegeId);
         if (value == null) {
             return true;
         }
-        List<String> enableSelectDepts = JSONUtil.toList(value, String.class);
-        return enableSelectDepts.contains(objDeptName);
+        List<Long> enableSelectColleges = JSONUtil.toList(value, Long.class);
+        return enableSelectColleges.contains(objCollegeId);
     }
 
     /**
@@ -600,7 +613,21 @@ public class TopicSelectionApplicationServiceImpl implements TopicSelectionAppli
             return Objects.equals(user.getUserAccount(), topic.getTeacherAccount());
         }
         return Objects.equals(user.getUserName(), topic.getTeacherName())
-                && Objects.equals(StringUtils.trimToNull(user.getDept()), StringUtils.trimToNull(topic.getDeptName()));
+                && Objects.equals(user.getCollegeId(), getTopicCollegeId(topic));
+    }
+
+    /**
+     * 根据题目选题组查询题目所属学院 id
+     *
+     * @param topic 题目实体
+     * @return 学院 id
+     */
+    private Long getTopicCollegeId(Topic topic) {
+        if (topic == null || topic.getTopicGroupId() == null) {
+            return null;
+        }
+        TopicGroup topicGroup = topicGroupService.getById(topic.getTopicGroupId());
+        return topicGroup == null ? null : topicGroup.getCollegeId();
     }
 
     /**

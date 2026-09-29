@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
     /**
-     * 基于 MyBatis-Plus QueryWrapper 组装用户角色精确匹配、账号与姓名及系部模糊匹配以及经过 SqlUtils 校验的排序条件
+     * 基于 MyBatis-Plus QueryWrapper 组装用户角色精确匹配、账号与姓名及学院模糊匹配以及经过 SqlUtils 校验的排序条件
      *
      * @param userQueryRequest 用户查询请求参数
      * @return 用户查询条件包装器
@@ -49,13 +49,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         String userAccount = userQueryRequest.getUserAccount();
         final Integer userRole = userQueryRequest.getUserRole();
         String userName = userQueryRequest.getUserName();
-        String dept = userQueryRequest.getDept();
+        Long collegeId = userQueryRequest.getCollegeId();
+        Long majorId = userQueryRequest.getMajorId();
+        Long topicGroupId = userQueryRequest.getTopicGroupId();
         String sortField = userQueryRequest.getSortField();
         String sortOrder = userQueryRequest.getSortOrder();
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("userRole", userRole);
         queryWrapper.like(StringUtils.isNotBlank(userAccount), "userAccount", userAccount);
-        queryWrapper.like(StringUtils.isNotBlank(dept), "dept", dept);
+        queryWrapper.eq(collegeId != null, "collegeId", collegeId);
+        queryWrapper.eq(majorId != null, "majorId", majorId);
+        queryWrapper.eq(topicGroupId != null, "topicGroupId", topicGroupId);
         queryWrapper.like(StringUtils.isNotBlank(userName), "userName", userName);
         queryWrapper.orderBy(SqlUtils.validUserSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC), sortField);
 
@@ -128,14 +132,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     /**
-     * 比对 User 实体的 userRole 字段是否等于 UserRoleEnum.DEPT 角色编码
+     * 比对 User 实体的 userRole 字段是否等于 UserRoleEnum.TOPIC_LEADER 角色编码
      *
      * @param user 待校验的用户实体
-     * @return 是否为系部主任角色
+     * @return 是否为选题负责人角色
      */
     @Override
-    public Boolean userIsDept(User user) {
-        return user != null && Objects.equals(user.getUserRole(), UserRoleEnum.DEPT.getCode());
+    public Boolean userIsTopicLeader(User user) {
+        return user != null && Objects.equals(user.getUserRole(), UserRoleEnum.TOPIC_LEADER.getCode());
     }
 
     /**

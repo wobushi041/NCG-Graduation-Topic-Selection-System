@@ -3,17 +3,17 @@ package cn.edu.nfu.topicselection.model.vo;
 import lombok.Data;
 
 /**
- * 专业脱敏类
+ * 专业下拉选项
  *
  * @author wobushi041
  */
 @Data
-public class ProjectVO {
+public class MajorVO {
 
     /**
-     * 专业值
+     * 专业 id
      */
-    private String value;
+    private Long value;
 
     /**
      * 专业标签

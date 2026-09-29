@@ -3,12 +3,12 @@ package cn.edu.nfu.topicselection.model.vo;
 import lombok.Data;
 
 /**
- * 系部教师脱敏类
+ * 教师选题统计视图
  *
  * @author wobushi041
  */
 @Data
-public class DeptTeacherVO {
+public class TopicLeaderVO {
 
     /**
      * 教师名字
@@ -16,9 +16,14 @@ public class DeptTeacherVO {
     private String teacherName;
 
     /**
-     * 系部名称
+     * 所属学院 id
      */
-    private String deptName;
+    private Long collegeId;
+
+    /**
+     * 所属学院名称
+     */
+    private String collegeName;
 
     /**
      * 选题数量

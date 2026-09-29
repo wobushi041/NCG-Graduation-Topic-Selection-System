@@ -27,9 +27,9 @@ public enum UserRoleEnum {
     TEACHER(1, "teacher"),
 
     /**
-     * 主任角色枚举实例
+     * 选题负责人角色枚举实例
      */
-    DEPT(2, "dept"),
+    TOPIC_LEADER(2, "topic_leader"),
 
     /**
      * 系统角色枚举实例

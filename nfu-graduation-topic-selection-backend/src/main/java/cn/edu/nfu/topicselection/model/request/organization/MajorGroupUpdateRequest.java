@@ -5,17 +5,22 @@ import lombok.Data;
 import java.io.Serializable;
 
 /**
- * 系部创建请求
+ * 更新专业选题组请求
  *
  * @author wobushi041
  */
 @Data
-public class DeptAddRequest implements Serializable {
+public class MajorGroupUpdateRequest implements Serializable {
 
     /**
-     * 系部名称
+     * 专业 id
      */
-    private String deptName;
+    private Long majorId;
+
+    /**
+     * 选题组 id
+     */
+    private Long topicGroupId;
 
     /// 序列化字段 ///
 

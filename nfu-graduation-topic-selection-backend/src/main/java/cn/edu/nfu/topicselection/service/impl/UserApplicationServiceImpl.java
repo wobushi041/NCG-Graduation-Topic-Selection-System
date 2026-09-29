@@ -5,9 +5,11 @@ import cn.edu.nfu.topicselection.exception.CodeBindMessageEnums;
 import cn.edu.nfu.topicselection.mapper.StudentTopicSelectionMapper;
 import cn.edu.nfu.topicselection.mapper.TopicMapper;
 import cn.edu.nfu.topicselection.mapper.UserMapper;
-import cn.edu.nfu.topicselection.model.entity.Project;
+import cn.edu.nfu.topicselection.model.entity.Major;
+import cn.edu.nfu.topicselection.model.entity.College;
 import cn.edu.nfu.topicselection.model.entity.StudentTopicSelection;
 import cn.edu.nfu.topicselection.model.entity.Topic;
+import cn.edu.nfu.topicselection.model.entity.TopicGroup;
 import cn.edu.nfu.topicselection.model.entity.User;
 import cn.edu.nfu.topicselection.model.enums.StudentTopicSelectionStatusEnum;
 import cn.edu.nfu.topicselection.model.enums.UserRoleEnum;
@@ -21,9 +23,11 @@ import cn.edu.nfu.topicselection.model.vo.TeacherVO;
 import cn.edu.nfu.topicselection.model.vo.UserVO;
 import cn.edu.nfu.topicselection.response.BaseResponse;
 import cn.edu.nfu.topicselection.service.PasswordService;
-import cn.edu.nfu.topicselection.service.ProjectService;
+import cn.edu.nfu.topicselection.service.CollegeService;
+import cn.edu.nfu.topicselection.service.MajorService;
 import cn.edu.nfu.topicselection.service.StudentTopicSelectionService;
 import cn.edu.nfu.topicselection.service.TopicService;
+import cn.edu.nfu.topicselection.service.TopicGroupService;
 import cn.edu.nfu.topicselection.service.UserApplicationService;
 import cn.edu.nfu.topicselection.service.UserService;
 import cn.edu.nfu.topicselection.utils.ThrowUtils;
@@ -70,7 +74,17 @@ public class UserApplicationServiceImpl implements UserApplicationService {
     /**
      * 注入专业服务依赖
      */
-    private final ProjectService projectService;
+    private final MajorService majorService;
+
+    /**
+     * 注入学院服务依赖
+     */
+    private final CollegeService collegeService;
+
+    /**
+     * 注入选题组服务依赖
+     */
+    private final TopicGroupService topicGroupService;
 
     /**
      * 注入课题服务依赖
@@ -98,21 +112,26 @@ public class UserApplicationServiceImpl implements UserApplicationService {
      * @param userService                  用户服务
      * @param passwordService              密码服务
      * @param userMapper                   用户持久层
-     * @param projectService               专业服务
+     * @param majorService                 专业服务
+     * @param collegeService               学院服务
+     * @param topicGroupService            选题组服务
      * @param topicService                 课题服务
      * @param topicMapper                  课题持久层
      * @param studentTopicSelectionService 学生选题关联服务
      * @param studentTopicSelectionMapper  学生选题关联持久层
      */
     public UserApplicationServiceImpl(UserService userService, PasswordService passwordService,
-                                      UserMapper userMapper, ProjectService projectService,
+                                      UserMapper userMapper, MajorService majorService,
+                                      CollegeService collegeService, TopicGroupService topicGroupService,
                                       TopicService topicService, TopicMapper topicMapper,
                                       StudentTopicSelectionService studentTopicSelectionService,
                                       StudentTopicSelectionMapper studentTopicSelectionMapper) {
         this.userService = userService;
         this.passwordService = passwordService;
         this.userMapper = userMapper;
-        this.projectService = projectService;
+        this.majorService = majorService;
+        this.collegeService = collegeService;
+        this.topicGroupService = topicGroupService;
         this.topicService = topicService;
         this.topicMapper = topicMapper;
         this.studentTopicSelectionService = studentTopicSelectionService;
@@ -122,7 +141,7 @@ public class UserApplicationServiceImpl implements UserApplicationService {
     /// 用户管理写用例 ///
 
     /**
-     * 校验账号、姓名、角色与系部专业归属关系，生成 BCrypt 加密临时密码并在事务中落库新用户
+     * 校验账号、姓名、角色与学院专业归属关系，生成 BCrypt 加密临时密码并在事务中落库新用户
      *
      * @param request 创建用户请求
      * @return 包含新用户 id 与一次性临时密码提示信息的统一响应
@@ -152,11 +171,10 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         UserRoleEnum userRoleEnum = UserRoleEnum.getEnums(userRole);
         ThrowUtils.throwIf(userRoleEnum == null, CodeBindMessageEnums.PARAMS_ERROR, "本系统不存在该用户角色");
 
-        // 除了管理员帐号都需要系部和专业信息来注册帐号
-        String userDeptName = request.getDeptName();
-        if (!Objects.equals(userRoleEnum, UserRoleEnum.ADMIN)) {
-            ThrowUtils.throwIf(StringUtils.isBlank(userDeptName), CodeBindMessageEnums.PARAMS_ERROR, "缺少系部名称");
-        }
+        Long collegeId = request.getCollegeId();
+        Long majorId = request.getMajorId();
+        Long topicGroupId = request.getTopicGroupId();
+        validateOrganization(userRoleEnum, collegeId, majorId, topicGroupId);
 
         // 不允许添加相同角色并且名字相同的用户
         User aUser = userService.getOne(new QueryWrapper<User>()
@@ -165,29 +183,8 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         );
         ThrowUtils.throwIf(aUser != null, CodeBindMessageEnums.PARAMS_ERROR, "不允许添加相同角色的同名用户, 请不要重复添加, 请加上数字后缀避免相同");
 
-        // 如果有选择专业则必须选择系部所属的专业
-        String userProject = request.getProject();
-        if (StringUtils.isNotBlank(userProject)) {
-            Project project = projectService.getOne(new QueryWrapper<Project>().eq("projectName", userProject));
-            ThrowUtils.throwIf(project == null, CodeBindMessageEnums.PARAMS_ERROR, "所选专业不存在");
-            assert project != null;
-            ThrowUtils.throwIf(!project.getDeptName().equals(userDeptName), CodeBindMessageEnums.PARAMS_ERROR, "[" + project.getProjectName() + "] 专业属于 [" + project.getDeptName() + "] 系部, 请正确选择系部和专业");
-        }
-
-        // 如果是添加学生则需要检查是否设置了系部和专业
-        if (userRoleEnum == UserRoleEnum.STUDENT) {
-            ThrowUtils.throwIf(StringUtils.isBlank(userDeptName), CodeBindMessageEnums.PARAMS_ERROR, "缺少系部名称");
-            ThrowUtils.throwIf(StringUtils.isBlank(userProject), CodeBindMessageEnums.PARAMS_ERROR, "缺少专业名称");
-        }
-        // 如果是添加主任或教师则需要检查是否设置了系部和专业
-        else if (userRoleEnum == UserRoleEnum.DEPT || userRoleEnum == UserRoleEnum.TEACHER) {
-            ThrowUtils.throwIf(StringUtils.isBlank(userDeptName), CodeBindMessageEnums.PARAMS_ERROR, "缺少系部名称");
-        } else if (userRoleEnum == UserRoleEnum.ADMIN) {
+        if (userRoleEnum == UserRoleEnum.ADMIN) {
             log.info("添加管理员");
-        }
-        // 兜底情况
-        else {
-            ThrowUtils.throwIf(true, CodeBindMessageEnums.SYSTEM_ERROR, "系统发生未知情况，请联系系统管理员");
         }
 
         // 创建新的用户实例。临时密码只在本次响应中展示，服务端仅保存 BCrypt 散列
@@ -195,8 +192,9 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         User user = new User();
         BeanUtils.copyProperties(request, user);
         user.setUserAccount(normalizedUserAccount);
-        user.setDept(userDeptName);
-        user.setProject(userProject);
+        user.setCollegeId(collegeId);
+        user.setMajorId(majorId);
+        user.setTopicGroupId(topicGroupId);
         user.setUserRole(userRole);
         user.setStatus(null);
         user.setUserPassword(passwordService.encodePassword(temporaryPassword));
@@ -319,20 +317,12 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         Integer newRole = request.getUserRole();
         if (newRole != null) {
             ThrowUtils.throwIf(UserRoleEnum.getEnums(newRole) == null, CodeBindMessageEnums.PARAMS_ERROR, "该用户角色不存在");
-            ThrowUtils.throwIf(
-                    (Objects.equals(newRole, UserRoleEnum.DEPT.getCode())
-                            || Objects.equals(newRole, UserRoleEnum.TEACHER.getCode()))
-                            && StringUtils.isBlank(oldUser.getDept()),
-                    CodeBindMessageEnums.PARAMS_ERROR,
-                    "专业负责人或教师账号必须先配置所属系部"
-            );
-            ThrowUtils.throwIf(
-                    Objects.equals(newRole, UserRoleEnum.STUDENT.getCode())
-                            && (StringUtils.isBlank(oldUser.getDept()) || StringUtils.isBlank(oldUser.getProject())),
-                    CodeBindMessageEnums.PARAMS_ERROR,
-                    "学生账号必须先配置所属系部和专业"
-            );
         }
+        UserRoleEnum targetRole = UserRoleEnum.getEnums(newRole == null ? oldUser.getUserRole() : newRole);
+        Long targetCollegeId = request.getCollegeId() == null ? oldUser.getCollegeId() : request.getCollegeId();
+        Long targetMajorId = request.getMajorId() == null ? oldUser.getMajorId() : request.getMajorId();
+        Long targetTopicGroupId = request.getTopicGroupId() == null ? oldUser.getTopicGroupId() : request.getTopicGroupId();
+        validateOrganization(targetRole, targetCollegeId, targetMajorId, targetTopicGroupId);
         boolean roleChanged = newRole != null && !Objects.equals(oldUser.getUserRole(), newRole);
 
         // 创建更新后的新用户实例
@@ -380,19 +370,19 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         User loginUser = userService.userGetCurrentLoginUser();
         Integer requestedRole = request.getUserRole();
         if (!userService.userIsAdmin(loginUser)) {
-            requireDepartment(loginUser);
+            requireCollegeId(loginUser);
             ThrowUtils.throwIf(
                     !userService.userIsTeacher(loginUser)
                             || !Objects.equals(requestedRole, UserRoleEnum.STUDENT.getCode()),
                     CodeBindMessageEnums.NO_AUTH_ERROR,
-                    "教师只能查看本系学生列表"
+                    "教师只能查看本学院学生列表"
             );
         }
 
         // 获取搜索条件
         QueryWrapper<User> queryWrapper = userService.getQueryWrapper(request);
         if (!userService.userIsAdmin(loginUser)) {
-            queryWrapper.eq("dept", loginUser.getDept());
+            queryWrapper.eq("collegeId", loginUser.getCollegeId());
         }
 
         // 获取用户数据
@@ -400,7 +390,7 @@ public class UserApplicationServiceImpl implements UserApplicationService {
     }
 
     /**
-     * 校验目标角色并按当前教师所属系部过滤后组装 TeacherVO 下拉列表
+     * 校验目标角色并按当前教师所属学院过滤后组装 TeacherVO 下拉列表
      *
      * @param request 教师查询请求
      * @return 教师脱敏下拉列表数据
@@ -419,13 +409,13 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         assert userRoleEnum != null;
 
         User loginUser = userService.userGetCurrentLoginUser();
-        requireDepartment(loginUser);
+        requireCollegeId(loginUser);
 
-        // 获取所有的教师数据（如果当前登陆用户是教师且查询的是主任就只能查询和自己同系部的主任）
+        // 获取所有的教师数据（如果当前登陆用户是教师且查询的是主任就只能查询和自己同学院的主任）
         List<User> userList = userService.list(
                 new QueryWrapper<User>()
                         .eq("userRole", userRoleEnum.getCode())
-                        .eq(loginUser.getUserRole().equals(UserRoleEnum.TEACHER.getCode()), "dept", loginUser.getDept())
+                        .eq(loginUser.getUserRole().equals(UserRoleEnum.TEACHER.getCode()), "collegeId", loginUser.getCollegeId())
         );
         List<TeacherVO> teacherVOList = new ArrayList<>();
         for (User user : userList) {
@@ -506,15 +496,50 @@ public class UserApplicationServiceImpl implements UserApplicationService {
     }
 
     /**
-     * 校验并获取用户配置的所属系部名称
+     * 校验用户角色对应的组织归属配置
+     *
+     * @param role         用户角色
+     * @param collegeId    学院 id
+     * @param majorId      专业 id
+     * @param topicGroupId 选题组 id
+     */
+    private void validateOrganization(UserRoleEnum role, Long collegeId, Long majorId, Long topicGroupId) {
+        ThrowUtils.throwIf(role == null, CodeBindMessageEnums.PARAMS_ERROR, "用户角色不存在");
+        if (UserRoleEnum.ADMIN.equals(role)) {
+            return;
+        }
+        ThrowUtils.throwIf(collegeId == null, CodeBindMessageEnums.PARAMS_ERROR, "缺少所属学院");
+        College college = collegeService.getById(collegeId);
+        ThrowUtils.throwIf(college == null, CodeBindMessageEnums.PARAMS_ERROR, "所选学院不存在");
+
+        if (majorId != null) {
+            Major major = majorService.getById(majorId);
+            ThrowUtils.throwIf(major == null, CodeBindMessageEnums.PARAMS_ERROR, "所选专业不存在");
+            ThrowUtils.throwIf(!Objects.equals(major.getCollegeId(), collegeId),
+                    CodeBindMessageEnums.PARAMS_ERROR, "所选专业不属于当前学院");
+        }
+        if (UserRoleEnum.STUDENT.equals(role)) {
+            ThrowUtils.throwIf(majorId == null, CodeBindMessageEnums.PARAMS_ERROR, "学生账号必须配置所属专业");
+        }
+        if (UserRoleEnum.TOPIC_LEADER.equals(role)) {
+            ThrowUtils.throwIf(topicGroupId == null, CodeBindMessageEnums.PARAMS_ERROR, "选题负责人必须配置负责的选题组");
+            TopicGroup topicGroup = topicGroupService.getById(topicGroupId);
+            ThrowUtils.throwIf(topicGroup == null, CodeBindMessageEnums.PARAMS_ERROR, "所选选题组不存在");
+            ThrowUtils.throwIf(!Objects.equals(topicGroup.getCollegeId(), collegeId),
+                    CodeBindMessageEnums.PARAMS_ERROR, "所选选题组不属于当前学院");
+        }
+    }
+
+    /**
+     * 校验并获取用户配置的所属学院 id
      *
      * @param user 用户实体
-     * @return 系部名称
+     * @return 学院 id
      */
-    private String requireDepartment(User user) {
-        String dept = user == null ? null : StringUtils.trim(user.getDept());
-        ThrowUtils.throwIf(StringUtils.isBlank(dept), CodeBindMessageEnums.NO_AUTH_ERROR, "当前账号未配置所属系部");
-        return dept;
+    private static Long requireCollegeId(User user) {
+        Long collegeId = user == null ? null : user.getCollegeId();
+        ThrowUtils.throwIf(collegeId == null, CodeBindMessageEnums.NO_AUTH_ERROR, "当前账号未配置所属学院");
+        return collegeId;
     }
 
 }

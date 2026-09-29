@@ -33,19 +33,9 @@ public class AddTopicRequest implements Serializable {
     private String requirement;
 
     /**
-     * 系部名
+     * 所属选题组 id
      */
-    private String deptName;
-
-    /**
-     * 系部主任
-     */
-    private String deptTeacher;
-
-    /**
-     * 题目适用的选题组（为空时兼容历史题目）
-     */
-    private String topicGroup;
+    private Long topicGroupId;
 
     /**
      * 指导老师

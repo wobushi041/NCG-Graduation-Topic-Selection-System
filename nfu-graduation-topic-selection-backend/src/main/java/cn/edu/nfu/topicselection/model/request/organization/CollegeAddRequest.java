@@ -5,22 +5,17 @@ import lombok.Data;
 import java.io.Serializable;
 
 /**
- * 更新专业选题组请求
+ * 学院创建请求
  *
  * @author wobushi041
  */
 @Data
-public class ProjectGroupUpdateRequest implements Serializable {
+public class CollegeAddRequest implements Serializable {
 
     /**
-     * 专业名称
+     * 学院名称
      */
-    private String projectName;
-
-    /**
-     * 选题组名称（为空表示取消该专业的分组配置）
-     */
-    private String groupName;
+    private String collegeName;
 
     /// 序列化字段 ///
 

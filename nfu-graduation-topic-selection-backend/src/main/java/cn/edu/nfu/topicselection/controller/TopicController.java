@@ -114,7 +114,7 @@ public class TopicController {
      */
     @SentinelRateLimit(resource = "topic.review.check")
     @SaCheckLogin
-    @SaCheckRole(value = {"dept", "teacher"}, mode = SaMode.OR)
+    @SaCheckRole(value = {"topic_leader", "teacher"}, mode = SaMode.OR)
     @PostMapping("/check/topic")
     public BaseResponse<Boolean> checkTopic(@RequestBody CheckTopicRequest request) {
         return TheResult.success(CodeBindMessageEnums.SUCCESS, topicApplicationService.checkTopic(request));

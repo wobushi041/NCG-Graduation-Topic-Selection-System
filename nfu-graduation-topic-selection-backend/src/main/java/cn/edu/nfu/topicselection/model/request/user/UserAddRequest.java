@@ -23,14 +23,19 @@ public class UserAddRequest implements Serializable {
     private String userAccount;
 
     /**
-     * 系部
+     * 所属学院 id
      */
-    private String deptName;
+    private Long collegeId;
 
     /**
-     * 专业
+     * 所属专业 id
      */
-    private String project;
+    private Long majorId;
+
+    /**
+     * 负责的选题组 id
+     */
+    private Long topicGroupId;
 
     /**
      * 角色

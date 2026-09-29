@@ -7,17 +7,17 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 系部配置视图
+ * 学院跨选配置视图
  *
  * @author wobushi041
  */
 @Data
-public class DeptConfigVO implements Serializable {
+public class CollegeConfigVO implements Serializable {
 
     /**
-     * 可选系部 ID 配置列表
+     * 可选学院 ID 配置列表，键为源学院 id，值为允许选择的目标学院 id
      */
-    private Map<String, List<String>> enableSelectDeptsList;
+    private Map<String, List<Long>> enableSelectCollegesList;
 
     /// 序列化字段 ///
 

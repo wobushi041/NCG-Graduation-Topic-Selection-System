@@ -29,14 +29,19 @@ public class LoginUserVO implements Serializable {
     private Integer userRole;
 
     /**
-     * 用户系部
+     * 所属学院 id
      */
-    private String dept;
+    private Long collegeId;
 
     /**
-     * 用户专业
+     * 所属专业 id
      */
-    private String project;
+    private Long majorId;
+
+    /**
+     * 负责的选题组 id
+     */
+    private Long topicGroupId;
 
     /**
      * 创建时间

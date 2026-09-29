@@ -4,10 +4,10 @@ import cn.edu.nfu.topicselection.model.entity.Topic;
 import cn.edu.nfu.topicselection.model.entity.User;
 import cn.edu.nfu.topicselection.model.request.topic.TopicQueryByAdminRequest;
 import cn.edu.nfu.topicselection.model.request.topic.TopicQueryRequest;
-import cn.edu.nfu.topicselection.model.request.user.DeptTeacherQueryRequest;
+import cn.edu.nfu.topicselection.model.request.user.TopicLeaderQueryRequest;
 import cn.edu.nfu.topicselection.model.request.user.GetUserListRequest;
 import cn.edu.nfu.topicselection.model.request.user.UserQueryRequest;
-import cn.edu.nfu.topicselection.model.vo.DeptTeacherVO;
+import cn.edu.nfu.topicselection.model.vo.TopicLeaderVO;
 import cn.edu.nfu.topicselection.model.vo.SituationVO;
 import cn.edu.nfu.topicselection.model.vo.UserNameVO;
 import cn.edu.nfu.topicselection.model.vo.UserVO;
@@ -40,17 +40,17 @@ public interface SelectionReportService {
     SituationVO getSelectTopicSituation();
 
     /**
-     * 分页查询系部教师选题余量与已选数量统计列表
+     * 分页查询学院教师选题余量与已选数量统计列表
      *
-     * @param request 系部教师分页查询请求
-     * @return 系部教师统计分页数据
+     * @param request 学院教师分页查询请求
+     * @return 学院教师统计分页数据
      */
-    Page<DeptTeacherVO> getTeacher(DeptTeacherQueryRequest request);
+    Page<TopicLeaderVO> getTeacher(TopicLeaderQueryRequest request);
 
     /**
-     * 查询当前登录系主任所属系部中尚未选题的学生列表
+     * 查询当前登录选题负责人所属学院中尚未选题的学生列表
      *
-     * @return 同系部未选题学生列表
+     * @return 同学院未选题学生列表
      */
     List<User> getUnSelectTopicStudentList();
 
@@ -79,11 +79,11 @@ public interface SelectionReportService {
     List<UserNameVO> getUserList(GetUserListRequest request);
 
     /**
-     * 系主任分页查询本系部存在待审核题目的教师统计列表
+     * 选题负责人分页查询本学院存在待审核题目的教师统计列表
      *
-     * @param request 系部教师查询请求
-     * @return 待审核题目的系部教师分页数据
+     * @param request 学院教师查询请求
+     * @return 待审核题目的学院教师分页数据
      */
-    Page<DeptTeacherVO> getTeacherByAdmin(DeptTeacherQueryRequest request);
+    Page<TopicLeaderVO> getTeacherByAdmin(TopicLeaderQueryRequest request);
 
 }

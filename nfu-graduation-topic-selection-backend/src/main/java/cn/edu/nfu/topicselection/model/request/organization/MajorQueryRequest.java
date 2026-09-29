@@ -1,4 +1,4 @@
-package cn.edu.nfu.topicselection.model.request.user;
+package cn.edu.nfu.topicselection.model.request.organization;
 
 import cn.edu.nfu.topicselection.model.dto.PageRequest;
 import lombok.Data;
@@ -7,23 +7,28 @@ import lombok.EqualsAndHashCode;
 import java.io.Serializable;
 
 /**
- * 系部教师查询请求
+ * 专业查询请求
  *
  * @author wobushi041
  */
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class DeptTeacherQueryRequest extends PageRequest implements Serializable {
+public class MajorQueryRequest extends PageRequest implements Serializable {
 
     /**
-     * 教师姓名
+     * 专业名称
      */
-    private String teacherName;
+    private String majorName;
 
     /**
-     * 教师系部
+     * 所属学院 id
      */
-    private String deptName;
+    private Long collegeId;
+
+    /**
+     * 所属选题组 id
+     */
+    private Long topicGroupId;
 
     /// 序列化字段 ///
 

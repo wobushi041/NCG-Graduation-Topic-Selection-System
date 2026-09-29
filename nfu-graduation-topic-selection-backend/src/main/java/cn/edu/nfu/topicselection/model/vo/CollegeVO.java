@@ -3,20 +3,20 @@ package cn.edu.nfu.topicselection.model.vo;
 import lombok.Data;
 
 /**
- * 系部脱敏类
+ * 学院下拉选项
  *
  * @author wobushi041
  */
 @Data
-public class DeptVO {
+public class CollegeVO {
 
     /**
-     * 系部值
+     * 学院 id
      */
-    private String value;
+    private Long value;
 
     /**
-     * 系部标签
+     * 学院名称
      */
     private String label;
 

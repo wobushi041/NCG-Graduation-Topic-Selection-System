@@ -13,16 +13,17 @@
             <result property="updateTime" column="updateTime" />
             <result property="isDelete" column="isDelete" />
             <result property="userRole" column="userRole" />
-            <result property="dept" column="dept" />
+            <result property="collegeId" column="collegeId" />
             <result property="status" column="status" />
-            <result property="project" column="project" />
+            <result property="majorId" column="majorId" />
+            <result property="topicGroupId" column="topicGroupId" />
             <result property="topicAmount" column="topicAmount" />
             <result property="email" column="email" />
     </resultMap>
 
     <sql id="Base_Column_List">
         id,userAccount,userName,userPassword,createTime,updateTime,
-        isDelete,userRole,dept,status,project,
+        isDelete,userRole,collegeId,status,majorId,topicGroupId,
         topicAmount,email
     </sql>
 </mapper>

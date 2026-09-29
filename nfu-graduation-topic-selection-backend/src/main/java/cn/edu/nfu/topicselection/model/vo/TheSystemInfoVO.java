@@ -15,7 +15,7 @@ public class TheSystemInfoVO {
     /**
      * 当前主任数量
      */
-    private Long totalDeptCount;
+    private Long totalCollegeCount;
 
     /**
      * 当前教师数量

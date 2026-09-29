@@ -1,24 +1,31 @@
 package cn.edu.nfu.topicselection.model.request.organization;
 
-import cn.edu.nfu.topicselection.model.dto.PageRequest;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
 
 /**
- * 系部查询请求
+ * 选题组更新请求
  *
  * @author wobushi041
  */
-@EqualsAndHashCode(callSuper = true)
 @Data
-public class DeptQueryRequest extends PageRequest implements Serializable {
+public class TopicGroupUpdateRequest implements Serializable {
 
     /**
-     * 系部名称
+     * 选题组 id
      */
-    private String deptName;
+    private Long id;
+
+    /**
+     * 所属学院 id
+     */
+    private Long collegeId;
+
+    /**
+     * 选题组名称
+     */
+    private String groupName;
 
     /// 序列化字段 ///
 

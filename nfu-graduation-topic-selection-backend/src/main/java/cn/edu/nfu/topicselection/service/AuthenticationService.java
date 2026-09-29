@@ -30,7 +30,7 @@ public interface AuthenticationService {
     boolean logout();
 
     /**
-     * 在教师与专业负责人身份之间切换登录会话
+     * 在教师与选题负责人身份之间切换登录会话
      *
      * @param request 角色切换请求
      * @param device  登录设备类型

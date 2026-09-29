@@ -98,8 +98,8 @@ class FileAndAIControllerContractTest {
         // 3. 断言 10 个接口的 HTTP 路径、Sentinel 资源名与 Sa-Token 角色鉴权完全符合契约
         assertPostEndpoint(uploadFileMethod, "/upload", "file.user.import", new String[]{"admin"});
         assertPostEndpoint(uploadTopicMethod, "/upload/topic", "file.topic.import", new String[]{"teacher"});
-        assertPostEndpoint(selectedCsvMethod, "/get/select/topic/student/list", "file.selection.selected-export", new String[]{"admin", "dept"});
-        assertPostEndpoint(unselectedCsvMethod, "/get/unselect/topic/student/list", "file.selection.unselected-export", new String[]{"admin", "dept"});
+        assertPostEndpoint(selectedCsvMethod, "/get/select/topic/student/list", "file.selection.selected-export", new String[]{"admin", "topic_leader"});
+        assertPostEndpoint(unselectedCsvMethod, "/get/unselect/topic/student/list", "file.selection.unselected-export", new String[]{"admin", "topic_leader"});
         assertPostEndpoint(exportUserMethod, "/export/user_list", "file.export.user-list", new String[]{"admin"});
         assertPostEndpoint(exportTopicMethod, "/export/topic_list", "file.export.topic-list", new String[]{"admin"});
         assertPostEndpoint(exportSurplusMethod, "/export/surplus_topic_list", "file.export.surplus-topic-list", new String[]{"admin"});
@@ -142,8 +142,8 @@ class FileAndAIControllerContractTest {
         User unselectedUser = new User();
         unselectedUser.setUserAccount("=stu01");
         unselectedUser.setUserName("张三");
-        unselectedUser.setProject("软件工程");
-        unselectedUser.setDept("计算机系");
+        unselectedUser.setMajorId(1L);
+        unselectedUser.setCollegeId(1L);
         Map<String, Object> rowMap = new LinkedHashMap<>();
         rowMap.put("帐号", "=admin");
         Mockito.when(fileApplicationService.uploadFile(csvFile, uploadRequest)).thenReturn(importSuccess);

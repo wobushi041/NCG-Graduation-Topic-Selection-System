@@ -1,6 +1,6 @@
 package cn.edu.nfu.topicselection.mapper;
 
-import cn.edu.nfu.topicselection.model.entity.Project;
+import cn.edu.nfu.topicselection.model.entity.Major;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 /**
@@ -8,6 +8,6 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
  *
  * @author wobushi041
  */
-public interface ProjectMapper extends BaseMapper<Project> {
+public interface MajorMapper extends BaseMapper<Major> {
 
 }

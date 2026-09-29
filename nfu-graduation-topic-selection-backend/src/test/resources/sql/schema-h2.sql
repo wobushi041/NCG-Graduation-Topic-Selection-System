@@ -1,42 +1,57 @@
+CREATE TABLE IF NOT EXISTS `college`
+(
+    `id`          BIGINT AUTO_INCREMENT PRIMARY KEY,
+    `collegeName` VARCHAR(256) NOT NULL UNIQUE,
+    `createTime`  DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    `updateTime`  DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    `isDelete`    TINYINT  DEFAULT 0 NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS `topic_group`
+(
+    `id`         BIGINT AUTO_INCREMENT PRIMARY KEY,
+    `collegeId`  BIGINT       NOT NULL,
+    `groupName`  VARCHAR(256) NOT NULL,
+    `createTime` DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    `updateTime` DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    `isDelete`   TINYINT  DEFAULT 0 NOT NULL,
+    CONSTRAINT `uk_topic_group_college_name` UNIQUE (`collegeId`, `groupName`),
+    CONSTRAINT `fk_topic_group_college` FOREIGN KEY (`collegeId`) REFERENCES `college` (`id`)
+);
+
+CREATE TABLE IF NOT EXISTS `major`
+(
+    `id`           BIGINT AUTO_INCREMENT PRIMARY KEY,
+    `majorName`    VARCHAR(256) NOT NULL,
+    `collegeId`    BIGINT       NOT NULL,
+    `topicGroupId` BIGINT       NOT NULL,
+    `createTime`   DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    `updateTime`   DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    `isDelete`     TINYINT  DEFAULT 0 NOT NULL,
+    CONSTRAINT `uk_major_college_name` UNIQUE (`collegeId`, `majorName`),
+    CONSTRAINT `fk_major_college` FOREIGN KEY (`collegeId`) REFERENCES `college` (`id`),
+    CONSTRAINT `fk_major_topic_group` FOREIGN KEY (`topicGroupId`) REFERENCES `topic_group` (`id`)
+);
+
 CREATE TABLE IF NOT EXISTS `user`
 (
     `id`           BIGINT AUTO_INCREMENT PRIMARY KEY,
     `userAccount`  VARCHAR(128) NOT NULL UNIQUE,
     `userName`     VARCHAR(256),
     `userPassword` VARCHAR(512) NOT NULL,
-    `createTime`   DATETIME DEFAULT CURRENT_TIMESTAMP,
-    `updateTime`   DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `createTime`   DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    `updateTime`   DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     `isDelete`     TINYINT  DEFAULT 0 NOT NULL,
     `userRole`     INT      DEFAULT 0 NOT NULL,
-    `dept`         VARCHAR(256),
+    `collegeId`    BIGINT,
+    `majorId`      BIGINT,
+    `topicGroupId` BIGINT,
     `status`       VARCHAR(256),
-    `project`      VARCHAR(256),
     `topicAmount`  INT,
-    `email`        VARCHAR(256)
-);
-
-CREATE INDEX IF NOT EXISTS `idx_user_name` ON `user` (`userName`);
-
-CREATE TABLE IF NOT EXISTS `dept`
-(
-    `id`         BIGINT AUTO_INCREMENT PRIMARY KEY,
-    `deptName`   VARCHAR(256) NOT NULL,
-    `createTime` DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    `updateTime` DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    `isDelete`   TINYINT  DEFAULT 0 NOT NULL
-);
-
-CREATE INDEX IF NOT EXISTS `idx_dept_name` ON `dept` (`deptName`);
-
-CREATE TABLE IF NOT EXISTS `project`
-(
-    `id`          BIGINT AUTO_INCREMENT PRIMARY KEY,
-    `projectName` VARCHAR(256) NOT NULL,
-    `createTime`  DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    `updateTime`  DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    `isDelete`    TINYINT  DEFAULT 0 NOT NULL,
-    `deptName`    VARCHAR(256),
-    `groupName`   VARCHAR(256)
+    `email`        VARCHAR(256),
+    CONSTRAINT `fk_user_college` FOREIGN KEY (`collegeId`) REFERENCES `college` (`id`),
+    CONSTRAINT `fk_user_major` FOREIGN KEY (`majorId`) REFERENCES `major` (`id`),
+    CONSTRAINT `fk_user_topic_group` FOREIGN KEY (`topicGroupId`) REFERENCES `topic_group` (`id`)
 );
 
 CREATE TABLE IF NOT EXISTS `topic`
@@ -47,10 +62,8 @@ CREATE TABLE IF NOT EXISTS `topic`
     `description`     LONGTEXT,
     `requirement`     LONGTEXT,
     `teacherName`     VARCHAR(256),
-    `teacherAccount`  VARCHAR(256),
-    `deptName`        VARCHAR(256),
-    `deptTeacher`     VARCHAR(256),
-    `topicGroup`     VARCHAR(256),
+    `teacherAccount`  VARCHAR(128) NOT NULL,
+    `topicGroupId`    BIGINT       NOT NULL,
     `createTime`      DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     `updateTime`      DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     `isDelete`        TINYINT  DEFAULT 0 NOT NULL,
@@ -59,22 +72,37 @@ CREATE TABLE IF NOT EXISTS `topic`
     `endTime`         DATETIME,
     `status`          INT      DEFAULT -1 NOT NULL,
     `selectAmount`    INT      DEFAULT 0,
-    `reason`          VARCHAR(256)
+    `reason`          VARCHAR(256),
+    CONSTRAINT `fk_topic_teacher` FOREIGN KEY (`teacherAccount`) REFERENCES `user` (`userAccount`),
+    CONSTRAINT `fk_topic_group` FOREIGN KEY (`topicGroupId`) REFERENCES `topic_group` (`id`)
 );
-
-CREATE INDEX IF NOT EXISTS `idx_topic_teacher_account` ON `topic` (`teacherAccount`);
 
 CREATE TABLE IF NOT EXISTS `student_topic_selection`
 (
     `id`          BIGINT AUTO_INCREMENT PRIMARY KEY,
-    `userAccount` VARCHAR(256) NOT NULL,
+    `userAccount` VARCHAR(128) NOT NULL,
     `topicId`     BIGINT       NOT NULL,
     `createTime`  DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     `updateTime`  DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     `isDelete`    TINYINT  DEFAULT 0 NOT NULL,
-    `status`      INT      DEFAULT 0 NOT NULL
+    `status`      INT      DEFAULT 0 NOT NULL,
+    CONSTRAINT `uk_selection_user_topic` UNIQUE (`userAccount`, `topicId`),
+    CONSTRAINT `fk_selection_user` FOREIGN KEY (`userAccount`) REFERENCES `user` (`userAccount`),
+    CONSTRAINT `fk_selection_topic` FOREIGN KEY (`topicId`) REFERENCES `topic` (`id`)
 );
 
-CREATE INDEX IF NOT EXISTS `idx_selection_user_account` ON `student_topic_selection` (`userAccount`);
-CREATE INDEX IF NOT EXISTS `idx_selection_topic_id` ON `student_topic_selection` (`topicId`);
-CREATE UNIQUE INDEX IF NOT EXISTS `uk_selection_user_topic` ON `student_topic_selection` (`userAccount`, `topicId`);
+CREATE TABLE IF NOT EXISTS `teacher_group_quota`
+(
+    `teacherAccount` VARCHAR(128) NOT NULL,
+    `topicGroupId`   BIGINT       NOT NULL,
+    `maxTopics`      INT          NOT NULL,
+    PRIMARY KEY (`teacherAccount`, `topicGroupId`),
+    CONSTRAINT `fk_teacher_quota_user` FOREIGN KEY (`teacherAccount`) REFERENCES `user` (`userAccount`),
+    CONSTRAINT `fk_teacher_quota_group` FOREIGN KEY (`topicGroupId`) REFERENCES `topic_group` (`id`)
+);
+
+CREATE TABLE IF NOT EXISTS `switch`
+(
+    `name`   VARCHAR(128) PRIMARY KEY,
+    `status` INT NOT NULL
+);

@@ -7,14 +7,14 @@ import cn.edu.nfu.topicselection.mapper.StudentTopicSelectionMapper;
 import cn.edu.nfu.topicselection.mapper.TopicMapper;
 import cn.edu.nfu.topicselection.mapper.UserMapper;
 import cn.edu.nfu.topicselection.model.entity.User;
-import cn.edu.nfu.topicselection.model.request.policy.SetDeptConfigRequest;
+import cn.edu.nfu.topicselection.model.request.policy.SetCollegeConfigRequest;
 import cn.edu.nfu.topicselection.model.request.user.DeleteRequest;
 import cn.edu.nfu.topicselection.model.request.user.UserAddRequest;
 import cn.edu.nfu.topicselection.model.request.user.UserQueryRequest;
 import cn.edu.nfu.topicselection.model.request.user.UserUpdateRequest;
-import cn.edu.nfu.topicselection.service.DeptService;
+import cn.edu.nfu.topicselection.service.CollegeService;
 import cn.edu.nfu.topicselection.service.PasswordService;
-import cn.edu.nfu.topicselection.service.ProjectService;
+import cn.edu.nfu.topicselection.service.MajorService;
 import cn.edu.nfu.topicselection.service.StudentTopicSelectionService;
 import cn.edu.nfu.topicselection.service.SwitchService;
 import cn.edu.nfu.topicselection.service.TopicService;
@@ -64,7 +64,7 @@ class UserAndPolicyServiceTest {
      * 模拟专业服务依赖
      */
     @Mock
-    private ProjectService projectService;
+    private MajorService majorService;
 
     /**
      * 模拟课题服务依赖
@@ -106,7 +106,7 @@ class UserAndPolicyServiceTest {
      * 模拟系部服务依赖
      */
     @Mock
-    private DeptService deptService;
+    private CollegeService collegeService;
 
     /**
      * 待测用户应用服务实现实例
@@ -169,17 +169,17 @@ class UserAndPolicyServiceTest {
 
     // 场景：测试未开启跨系开关时配置系部跨选规则抛出非法操作异常
     @Test
-    void setDeptConfig_shouldThrowWhenCrossTopicSwitchDisabled() {
+    void setCollegeConfig_shouldThrowWhenCrossTopicSwitchDisabled() {
         // 1. 准备测试数据
-        SetDeptConfigRequest request = new SetDeptConfigRequest();
+        SetCollegeConfigRequest request = new SetCollegeConfigRequest();
         when(switchService.isEnabled(TopicConstant.CROSS_TOPIC_SWITCH)).thenReturn(false);
 
-        // 2. 调用 setDeptConfig 方法并捕获异常
+        // 2. 调用 setCollegeConfig 方法并捕获异常
         BusinessException exception = assertThrows(BusinessException.class,
-                () -> selectionPolicyService.setDeptConfig(request));
+                () -> selectionPolicyService.setCollegeConfig(request));
 
         // 3. 断言错误文案与存量逻辑一致
-        assertEquals("请先开启跨系开关后再配置选题规则", exception.getMessage());
+        assertEquals("请先开启跨学院开关后再配置选题规则", exception.getMessage());
     }
 
     // 场景：测试设置退选加锁时间戳早于或等于当前时间时抛出参数异常

@@ -26,12 +26,22 @@ public class UserQueryRequest extends PageRequest implements Serializable {
     private String userName;
 
     /**
-     * 系部
+     * 所属学院 id
      */
-    private String dept;
+    private Long collegeId;
 
     /**
-     * 用户角色 0 - 普通用户 1 - 教师 2 - 系部 3 - 管理员
+     * 所属专业 id
+     */
+    private Long majorId;
+
+    /**
+     * 负责的选题组 id
+     */
+    private Long topicGroupId;
+
+    /**
+     * 用户角色（0 - 学生，1 - 教师，2 - 选题负责人，3 - 管理员）
      */
     private Integer userRole;
 

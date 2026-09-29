@@ -1,8 +1,8 @@
 package cn.edu.nfu.topicselection.utils;
 
 import cn.edu.nfu.topicselection.exception.BusinessException;
-import cn.edu.nfu.topicselection.model.request.organization.ProjectQueryRequest;
-import cn.edu.nfu.topicselection.service.impl.ProjectServiceImpl;
+import cn.edu.nfu.topicselection.model.request.organization.MajorQueryRequest;
+import cn.edu.nfu.topicselection.service.impl.MajorServiceImpl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -22,7 +22,7 @@ class SqlUtilsTest {
     /**
      * 专业服务实现实例
      */
-    private final ProjectServiceImpl projectService = new ProjectServiceImpl();
+    private final MajorServiceImpl majorService = new MajorServiceImpl();
 
     /// 排序字段与方向校验 ///
 
@@ -122,11 +122,11 @@ class SqlUtilsTest {
     @Test
     void getQueryWrapper_givenMaliciousSortField_doesNotAddOrderBy() {
         // 1. 构造包含恶意排序字段的查询请求
-        ProjectQueryRequest request = new ProjectQueryRequest();
-        request.setSortField("id desc; drop table project");
+        MajorQueryRequest request = new MajorQueryRequest();
+        request.setSortField("id desc; drop table major");
 
         // 2. 构建查询条件包装器
-        QueryWrapper<?> wrapper = projectService.getQueryWrapper(request);
+        QueryWrapper<?> wrapper = majorService.getQueryWrapper(request);
 
         // 3. 断言生成的 SQL 片段不包含 ORDER BY
         assertFalse(wrapper.getSqlSegment().toUpperCase().contains("ORDER BY"));
@@ -136,12 +136,12 @@ class SqlUtilsTest {
     @Test
     void getQueryWrapper_givenMaliciousSortOrder_rejectsRequest() {
         // 1. 构造包含恶意排序方向的查询请求
-        ProjectQueryRequest request = new ProjectQueryRequest();
+        MajorQueryRequest request = new MajorQueryRequest();
         request.setSortField("id");
-        request.setSortOrder("desc; drop table project");
+        request.setSortOrder("desc; drop table major");
 
         // 2. 断言构建查询条件时抛出 BusinessException
-        assertThrows(BusinessException.class, () -> projectService.getQueryWrapper(request));
+        assertThrows(BusinessException.class, () -> majorService.getQueryWrapper(request));
     }
 
 }

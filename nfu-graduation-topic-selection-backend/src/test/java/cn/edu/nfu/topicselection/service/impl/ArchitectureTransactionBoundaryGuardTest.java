@@ -25,8 +25,8 @@ class ArchitectureTransactionBoundaryGuardTest {
                 UserServiceImpl.class,
                 TopicServiceImpl.class,
                 StudentTopicSelectionServiceImpl.class,
-                DeptServiceImpl.class,
-                ProjectServiceImpl.class,
+                CollegeServiceImpl.class,
+                MajorServiceImpl.class,
                 TopicSelectionQueryServiceImpl.class,
                 SelectionReportServiceImpl.class,
                 AIApplicationServiceImpl.class,
@@ -48,9 +48,9 @@ class ArchitectureTransactionBoundaryGuardTest {
         Assertions.assertEquals(14, nonClassTransactionalServices.size());
     }
 
-    // 场景：测试全仓 23 个多步写用例方法均显式标注方法级 @Transactional（守护 AOP-005）
+    // 场景：测试全仓 27 个多步写用例方法均显式标注方法级 @Transactional（守护 AOP-005）
     @Test
-    void applicationWriteServices_shouldHave23MethodLevelTransactionalMethods() {
+    void applicationWriteServices_shouldHave27MethodLevelTransactionalMethods() {
         // 1. 准备测试数据并列出承载写用例的 6 个应用服务实现类
         List<Class<?>> writeServiceClasses = Arrays.asList(
                 PasswordServiceImpl.class,
@@ -71,8 +71,8 @@ class ArchitectureTransactionBoundaryGuardTest {
             }
         }
 
-        // 3. 断言方法级事务总数精确等于 23 个写用例
-        Assertions.assertEquals(23, transactionalMethodCount);
+        // 3. 断言新增教师组选题额度更新用例后一共有 27 个事务方法
+        Assertions.assertEquals(27, transactionalMethodCount);
     }
 
     // 场景：测试 TopicSelectionApplication 收敛 EnableAspectJAutoProxy 的 exposeProxy 配置为 false（守护 AOP-006）

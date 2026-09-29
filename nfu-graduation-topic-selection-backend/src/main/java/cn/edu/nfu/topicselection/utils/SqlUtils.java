@@ -19,14 +19,14 @@ public class SqlUtils {
      */
     private static final Set<String> USER_SORT_FIELDS = fields(
             "id", "userAccount", "userName", "createTime", "updateTime",
-            "userRole", "dept", "status", "project", "topicAmount"
+            "userRole", "collegeId", "status", "majorId", "topicGroupId", "topicAmount"
     );
 
     /**
      * 选题表允许排序的字段集合
      */
     private static final Set<String> TOPIC_SORT_FIELDS = fields(
-            "id", "topic", "type", "teacherName", "deptName", "deptTeacher",
+            "id", "topic", "type", "teacherName", "teacherAccount", "topicGroupId",
             "createTime", "updateTime", "surplusQuantity", "startTime", "endTime",
             "status", "selectAmount"
     );
@@ -34,15 +34,15 @@ public class SqlUtils {
     /**
      * 专业表允许排序的字段集合
      */
-    private static final Set<String> PROJECT_SORT_FIELDS = fields(
-            "id", "projectName", "deptName", "createTime", "updateTime"
+    private static final Set<String> MAJOR_SORT_FIELDS = fields(
+            "id", "majorName", "collegeId", "topicGroupId", "createTime", "updateTime"
     );
 
     /**
-     * 系部表允许排序的字段集合
+     * 学院表允许排序的字段集合
      */
-    private static final Set<String> DEPT_SORT_FIELDS = fields(
-            "id", "deptName", "createTime", "updateTime"
+    private static final Set<String> COLLEGE_SORT_FIELDS = fields(
+            "id", "collegeName", "createTime", "updateTime"
     );
 
     /**
@@ -81,18 +81,18 @@ public class SqlUtils {
      * @param sortField 排序字段名称
      * @return 是否为合法专业排序字段
      */
-    public static boolean validProjectSortField(String sortField) {
-        return PROJECT_SORT_FIELDS.contains(sortField);
+    public static boolean validMajorSortField(String sortField) {
+        return MAJOR_SORT_FIELDS.contains(sortField);
     }
 
     /**
-     * 校验系部表排序字段是否合法
+     * 校验学院表排序字段是否合法
      *
      * @param sortField 排序字段名称
-     * @return 是否为合法系部排序字段
+     * @return 是否为合法学院排序字段
      */
-    public static boolean validDeptSortField(String sortField) {
-        return DEPT_SORT_FIELDS.contains(sortField);
+    public static boolean validCollegeSortField(String sortField) {
+        return COLLEGE_SORT_FIELDS.contains(sortField);
     }
 
     /**

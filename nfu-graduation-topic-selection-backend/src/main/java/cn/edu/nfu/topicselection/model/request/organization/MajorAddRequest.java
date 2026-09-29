@@ -10,22 +10,22 @@ import java.io.Serializable;
  * @author wobushi041
  */
 @Data
-public class ProjectAddRequest implements Serializable {
+public class MajorAddRequest implements Serializable {
 
     /**
      * 专业名称
      */
-    private String projectName;
+    private String majorName;
 
     /**
-     * 系部名称
+     * 所属学院 id
      */
-    private String deptName;
+    private Long collegeId;
 
     /**
-     * 专业所属选题组（可在后台统一配置）
+     * 所属选题组 id
      */
-    private String groupName;
+    private Long topicGroupId;
 
     /// 序列化字段 ///
 

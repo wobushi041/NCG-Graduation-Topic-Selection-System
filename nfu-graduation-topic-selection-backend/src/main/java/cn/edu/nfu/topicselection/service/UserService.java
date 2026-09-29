@@ -56,12 +56,12 @@ public interface UserService extends IService<User> {
     Boolean userIsAdmin(User user);
 
     /**
-     * 判断指定用户是否具有系部主任角色
+     * 判断指定用户是否具有选题负责人角色
      *
      * @param user 待校验的用户实体
-     * @return 是否为系部主任
+     * @return 是否为选题负责人
      */
-    Boolean userIsDept(User user);
+    Boolean userIsTopicLeader(User user);
 
     /**
      * 判断指定用户是否具有教师角色

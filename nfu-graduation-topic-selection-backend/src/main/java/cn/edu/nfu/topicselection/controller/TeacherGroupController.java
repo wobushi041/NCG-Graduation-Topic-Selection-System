@@ -2,6 +2,7 @@ package cn.edu.nfu.topicselection.controller;
 
 import cn.edu.nfu.topicselection.annotation.SentinelRateLimit;
 import cn.edu.nfu.topicselection.exception.CodeBindMessageEnums;
+import cn.edu.nfu.topicselection.model.request.organization.TeacherGroupQuotaUpdateRequest;
 import cn.edu.nfu.topicselection.model.request.organization.TeacherGroupsBatchRequest;
 import cn.edu.nfu.topicselection.response.BaseResponse;
 import cn.edu.nfu.topicselection.response.TheResult;
@@ -55,17 +56,32 @@ public class TeacherGroupController {
     }
 
     /**
-     * 批量查询指定教师的选题组额度，供教师列表展示使用（管理员可查全部，系部主任仅限本系部）
+     * 批量查询指定教师的选题组额度，供教师列表展示使用（管理员可查全部，选题负责人仅限本学院）
      *
      * @param request 批量查询教师选题组请求
      * @return 教师账号到选题组额度列表的映射
      */
     @SentinelRateLimit(resource = "teacher-group.query-batch")
     @SaCheckLogin
-    @SaCheckRole(value = {"admin", "dept"}, mode = SaMode.OR)
+    @SaCheckRole(value = {"admin", "topic_leader"}, mode = SaMode.OR)
     @PostMapping("/teacher/groups/batch")
     public BaseResponse<Map<String, List<Map<String, Object>>>> getTeacherGroupsBatch(@RequestBody TeacherGroupsBatchRequest request) {
         return TheResult.success(CodeBindMessageEnums.SUCCESS, organizationApplicationService.getTeacherGroupsBatch(request));
+    }
+
+    /**
+     * 修改教师在指定选题组中的最大出题数量
+     *
+     * @param request 教师选题组额度更新请求
+     * @return 是否更新成功
+     */
+    @SentinelRateLimit(resource = "teacher-group.quota.update")
+    @SaCheckLogin
+    @SaCheckRole(value = {"admin"}, mode = SaMode.OR)
+    @PostMapping("/teacher/group/quota")
+    public BaseResponse<Boolean> updateTeacherGroupQuota(@RequestBody TeacherGroupQuotaUpdateRequest request) {
+        return TheResult.success(CodeBindMessageEnums.SUCCESS,
+                organizationApplicationService.updateTeacherGroupQuota(request));
     }
 
     /**
@@ -75,7 +91,7 @@ public class TeacherGroupController {
      */
     @SentinelRateLimit(resource = "teacher-group.query-all")
     @SaCheckLogin
-    @SaCheckRole(value = {"admin", "dept"}, mode = SaMode.OR)
+    @SaCheckRole(value = {"admin", "topic_leader"}, mode = SaMode.OR)
     @GetMapping("/group/list")
     public BaseResponse<List<String>> getGroupList() {
         return TheResult.success(CodeBindMessageEnums.SUCCESS, organizationApplicationService.getGroupList());

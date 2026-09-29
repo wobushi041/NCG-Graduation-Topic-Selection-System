@@ -6,8 +6,8 @@ import cn.edu.nfu.topicselection.manager.ai.AIResult;
 import cn.edu.nfu.topicselection.manager.redis.RedisManager;
 import cn.edu.nfu.topicselection.mapper.TopicMapper;
 import cn.edu.nfu.topicselection.mapper.UserMapper;
-import cn.edu.nfu.topicselection.model.entity.Project;
 import cn.edu.nfu.topicselection.model.entity.Topic;
+import cn.edu.nfu.topicselection.model.entity.TopicGroup;
 import cn.edu.nfu.topicselection.model.entity.User;
 import cn.edu.nfu.topicselection.model.enums.TopicStatusEnum;
 import cn.edu.nfu.topicselection.model.enums.UserRoleEnum;
@@ -17,10 +17,10 @@ import cn.edu.nfu.topicselection.model.request.topic.DeleteTopicRequest;
 import cn.edu.nfu.topicselection.model.request.topic.GetTopicReviewLevelRequest;
 import cn.edu.nfu.topicselection.model.request.topic.SetTeacherTopicAmountRequest;
 import cn.edu.nfu.topicselection.service.MailService;
-import cn.edu.nfu.topicselection.service.ProjectService;
 import cn.edu.nfu.topicselection.service.StudentTopicSelectionService;
 import cn.edu.nfu.topicselection.service.TeacherGroupService;
 import cn.edu.nfu.topicselection.service.TopicService;
+import cn.edu.nfu.topicselection.service.TopicGroupService;
 import cn.edu.nfu.topicselection.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -93,10 +93,10 @@ class TopicApplicationServiceImplTest {
     private TeacherGroupService teacherGroupService;
 
     /**
-     * 模拟专业服务
+     * 模拟选题组服务
      */
     @Mock
-    private ProjectService projectService;
+    private TopicGroupService topicGroupService;
 
     /**
      * 模拟邮箱通知服务
@@ -125,16 +125,16 @@ class TopicApplicationServiceImplTest {
                 topicService,
                 studentTopicSelectionService,
                 teacherGroupService,
-                projectService,
+                topicGroupService,
                 mailService,
                 redisManager,
                 aiManager
         );
     }
 
-    // 场景：测试教师添加课题时加悲观锁锁定教师记录、保存题目并扣减剩余出题额度
+    // 场景：测试教师添加课题时使用组选题额度校验且不再扣减旧的全局额度
     @Test
-    void addTopicLocksTeacherAndDecrementsTopicAmount() {
+    void addTopicUsesGroupQuotaWithoutDecrementingLegacyTopicAmount() {
         // 1. 准备教师账号与添加课题请求数据
         User teacher = teacherUser(10L, "teacher-01", "王老师", "计算机系", 3);
         AddTopicRequest request = new AddTopicRequest();
@@ -143,32 +143,35 @@ class TopicApplicationServiceImplTest {
         request.setDescription("研究卷积神经网络在工业缺陷检测中的应用");
         request.setRequirement("熟悉 Python 与 PyTorch 框架");
         request.setAmount(2);
-        request.setTopicGroup("第一组");
+        request.setTopicGroupId(1L);
+
+        TopicGroup topicGroup = new TopicGroup();
+        topicGroup.setId(1L);
+        topicGroup.setCollegeId(1L);
 
         when(topicService.getOne(any())).thenReturn(null);
         when(userService.userGetCurrentLoginUser()).thenReturn(teacher);
         when(userMapper.selectByIdForUpdate(teacher.getId())).thenReturn(teacher);
         when(userService.userIsTeacher(teacher)).thenReturn(true);
+        when(topicGroupService.getById(1L)).thenReturn(topicGroup);
         when(topicService.save(any(Topic.class))).thenAnswer(invocation -> {
             Topic saved = invocation.getArgument(0);
             saved.setId(99L);
             return true;
         });
-        when(userService.updateById(teacher)).thenReturn(true);
-
         // 2. 调用添加课题方法
         Long topicId = topicApplicationService.addTopic(request);
 
-        // 3. 断言返回新课题 ID 且教师剩余出题额度扣减为 2
+        // 3. 断言返回新课题 ID、调用组选题额度校验且不更新旧额度字段
         assertEquals(99L, topicId);
-        assertEquals(2, teacher.getTopicAmount());
-        verify(teacherGroupService).validate("teacher-01", "第一组", null);
-        verify(userService).updateById(teacher);
+        assertEquals(3, teacher.getTopicAmount());
+        verify(teacherGroupService).validate("teacher-01", 1L, null);
+        verify(userService, never()).updateById(teacher);
     }
 
-    // 场景：测试教师删除课题时按先锁教师再锁题目的顺序执行并恢复出题额度
+    // 场景：测试教师删除课题时按先锁教师再锁题目的顺序执行且不再回补旧的全局额度
     @Test
-    void deleteTopicLocksTeacherBeforeTopicAndRestoresQuota() {
+    void deleteTopicLocksTeacherBeforeTopicWithoutRestoringLegacyTopicAmount() {
         // 1. 准备教师与归属该教师的课题数据
         User teacher = teacherUser(10L, "teacher-01", "王老师", "计算机系", 2);
         Topic topic = new Topic();
@@ -183,18 +186,17 @@ class TopicApplicationServiceImplTest {
         when(userMapper.selectByIdForUpdate(teacher.getId())).thenReturn(teacher);
         when(topicMapper.selectByIdForUpdate(55L)).thenReturn(topic);
         when(topicService.removeById(55L)).thenReturn(true);
-        when(userService.updateById(teacher)).thenReturn(true);
-
         // 2. 调用删除课题方法
         Boolean result = topicApplicationService.deleteTopic(request);
 
-        // 3. 断言删除成功、加锁顺序为先教师后课题，且出题额度恢复为 3
+        // 3. 断言删除成功、加锁顺序为先教师后课题且旧额度字段保持不变
         assertTrue(result);
-        assertEquals(3, teacher.getTopicAmount());
+        assertEquals(2, teacher.getTopicAmount());
         InOrder lockOrder = inOrder(userMapper, topicMapper);
         lockOrder.verify(userMapper).selectByIdForUpdate(teacher.getId());
         lockOrder.verify(topicMapper).selectByIdForUpdate(55L);
         verify(studentTopicSelectionService).remove(any());
+        verify(userService, never()).updateById(teacher);
     }
 
     // 场景：测试管理员设置教师出题上限小于已发布题目数量时被拦截
@@ -217,24 +219,20 @@ class TopicApplicationServiceImplTest {
 
     // 场景：测试系主任审核退回课题时记录退回理由并向出题教师发送通知邮件
     @Test
-    void checkTopicSendsRejectionMailWhenDeptRejectsTopic() {
+    void checkTopicSendsRejectionMailWhenCollegeRejectsTopic() {
         // 1. 准备同系部同选题组的系主任、待审核课题与出题教师邮箱数据
-        User deptUser = new User();
-        deptUser.setId(20L);
-        deptUser.setUserAccount("dept-01");
-        deptUser.setUserName("李主任");
-        deptUser.setDept("计算机系");
-        deptUser.setProject("软件工程");
-        deptUser.setUserRole(UserRoleEnum.DEPT.getCode());
-
-        Project project = new Project();
-        project.setProjectName("软件工程");
-        project.setGroupName("第一组");
+        User collegeUser = new User();
+        collegeUser.setId(20L);
+        collegeUser.setUserAccount("college-01");
+        collegeUser.setUserName("李主任");
+        collegeUser.setCollegeId(1L);
+        collegeUser.setMajorId(1L);
+        collegeUser.setTopicGroupId(1L);
+        collegeUser.setUserRole(UserRoleEnum.TOPIC_LEADER.getCode());
 
         Topic topic = new Topic();
         topic.setId(88L);
-        topic.setDeptName("计算机系");
-        topic.setTopicGroup("第一组");
+        topic.setTopicGroupId(1L);
         topic.setTeacherAccount("teacher-01");
         topic.setStatus(TopicStatusEnum.PENDING_REVIEW.getCode());
 
@@ -246,10 +244,8 @@ class TopicApplicationServiceImplTest {
         request.setStatus(TopicStatusEnum.REJECTED.getCode());
         request.setReason("题目范围过大，请细化技术指标");
 
-        when(userService.userGetCurrentLoginUser()).thenReturn(deptUser);
+        when(userService.userGetCurrentLoginUser()).thenReturn(collegeUser);
         when(topicMapper.selectByIdForUpdate(88L)).thenReturn(topic);
-        when(projectService.getOne(any())).thenReturn(project);
-        when(userService.userIsDept(deptUser)).thenReturn(true);
         when(topicService.updateById(topic)).thenReturn(true);
         when(userService.getOne(any())).thenReturn(teacher);
 
@@ -259,7 +255,6 @@ class TopicApplicationServiceImplTest {
         // 3. 断言课题状态更新为退回、填写系主任姓名并触发退回理由邮件
         assertTrue(result);
         assertEquals(TopicStatusEnum.REJECTED.getCode(), topic.getStatus());
-        assertEquals("李主任", topic.getDeptTeacher());
         assertEquals("题目范围过大，请细化技术指标", topic.getReason());
         verify(mailService).sendReasonMail("teacher01@example.com", "广州南方学院毕设选题管理系统", "题目范围过大，请细化技术指标");
     }
@@ -295,16 +290,16 @@ class TopicApplicationServiceImplTest {
      * @param id          用户 ID
      * @param account     教师工号
      * @param name        教师姓名
-     * @param dept        所属系部
+     * @param college        所属系部
      * @param topicAmount 剩余出题配额
      * @return 教师用户实体
      */
-    private static User teacherUser(Long id, String account, String name, String dept, int topicAmount) {
+    private static User teacherUser(Long id, String account, String name, String college, int topicAmount) {
         User user = new User();
         user.setId(id);
         user.setUserAccount(account);
         user.setUserName(name);
-        user.setDept(dept);
+        user.setCollegeId(1L);
         user.setUserRole(UserRoleEnum.TEACHER.getCode());
         user.setTopicAmount(topicAmount);
         return user;

@@ -5,17 +5,17 @@ import lombok.Data;
 import java.io.Serializable;
 
 /**
- * 删除专业请求
+ * 选题组删除请求
  *
  * @author wobushi041
  */
 @Data
-public class DeleteProjectRequest implements Serializable {
+public class TopicGroupDeleteRequest implements Serializable {
 
     /**
-     * 专业名称
+     * 选题组 id
      */
-    private String projectName;
+    private Long id;
 
     /// 序列化字段 ///
 

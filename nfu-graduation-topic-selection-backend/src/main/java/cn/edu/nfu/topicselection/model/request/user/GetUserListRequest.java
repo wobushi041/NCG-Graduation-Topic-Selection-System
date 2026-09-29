@@ -13,7 +13,7 @@ import java.io.Serializable;
 public class GetUserListRequest implements Serializable {
 
     /**
-     * 用户角色 0 - 普通用户 1 - 教师 2 - 系部 3 - 管理员
+     * 用户角色 0 - 普通用户 1 - 教师 2 - 学院 3 - 管理员
      */
     private Integer userRole;
 

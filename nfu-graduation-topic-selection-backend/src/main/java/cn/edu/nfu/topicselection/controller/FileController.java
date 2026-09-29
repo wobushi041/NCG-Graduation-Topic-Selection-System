@@ -92,7 +92,7 @@ public class FileController {
      */
     @SentinelRateLimit(resource = "file.selection.selected-export")
     @SaCheckLogin
-    @SaCheckRole(value = {"admin", "dept"}, mode = SaMode.OR)
+    @SaCheckRole(value = {"admin", "topic_leader"}, mode = SaMode.OR)
     @PostMapping("/get/select/topic/student/list")
     public void getSelectTopicStudentListCsv(HttpServletResponse httpServletResponse) {
         List<List<String>> rows = fileApplicationService.listSelectedStudentTopicCsvRows();
@@ -103,7 +103,7 @@ public class FileController {
 
         try (ServletOutputStream outputStream = httpServletResponse.getOutputStream();
              OutputStreamWriter writer = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8);
-             CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader("学号", "姓名", "专业", "系部", "题目", "指导老师"))) {
+             CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader("学号", "姓名", "专业", "学院", "题目", "指导老师"))) {
 
             // 将已选题学生信息写入 CSV 文件
             for (List<String> row : rows) {
@@ -123,7 +123,7 @@ public class FileController {
      */
     @SentinelRateLimit(resource = "file.selection.unselected-export")
     @SaCheckLogin
-    @SaCheckRole(value = {"admin", "dept"}, mode = SaMode.OR)
+    @SaCheckRole(value = {"admin", "topic_leader"}, mode = SaMode.OR)
     @PostMapping("/get/unselect/topic/student/list")
     public void getUnSelectTopicStudentListCsv(HttpServletResponse httpServletResponse) {
         List<User> unselectedUsers = fileApplicationService.listUnselectedStudentCsvUsers();
@@ -133,14 +133,14 @@ public class FileController {
 
         try (ServletOutputStream outputStream = httpServletResponse.getOutputStream();
              Writer writer = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8);
-             CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader("用户账号", "用户名", "专业", "系部"))) {
+             CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader("用户账号", "用户名", "专业", "学院"))) {
 
             for (User user : unselectedUsers) {
                 csvPrinter.printRecord(
                         sanitizeCsvCell(user.getUserAccount()),
                         sanitizeCsvCell(user.getUserName()),
-                        sanitizeCsvCell(user.getProject()),
-                        sanitizeCsvCell(user.getDept())
+                        sanitizeCsvCell(user.getMajorId()),
+                        sanitizeCsvCell(user.getCollegeId())
                 );
             }
 

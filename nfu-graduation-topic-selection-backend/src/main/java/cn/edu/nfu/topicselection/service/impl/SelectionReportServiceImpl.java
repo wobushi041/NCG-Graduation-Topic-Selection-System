@@ -3,8 +3,9 @@ package cn.edu.nfu.topicselection.service.impl;
 import cn.edu.nfu.topicselection.constant.CommonConstant;
 import cn.edu.nfu.topicselection.constant.TopicConstant;
 import cn.edu.nfu.topicselection.exception.CodeBindMessageEnums;
-import cn.edu.nfu.topicselection.model.entity.Project;
+import cn.edu.nfu.topicselection.model.entity.College;
 import cn.edu.nfu.topicselection.model.entity.StudentTopicSelection;
+import cn.edu.nfu.topicselection.model.entity.Major;
 import cn.edu.nfu.topicselection.model.entity.Topic;
 import cn.edu.nfu.topicselection.model.entity.User;
 import cn.edu.nfu.topicselection.model.enums.StudentTopicSelectionStatusEnum;
@@ -12,17 +13,19 @@ import cn.edu.nfu.topicselection.model.enums.TopicStatusEnum;
 import cn.edu.nfu.topicselection.model.enums.UserRoleEnum;
 import cn.edu.nfu.topicselection.model.request.topic.TopicQueryByAdminRequest;
 import cn.edu.nfu.topicselection.model.request.topic.TopicQueryRequest;
-import cn.edu.nfu.topicselection.model.request.user.DeptTeacherQueryRequest;
+import cn.edu.nfu.topicselection.model.request.user.TopicLeaderQueryRequest;
 import cn.edu.nfu.topicselection.model.request.user.GetUserListRequest;
 import cn.edu.nfu.topicselection.model.request.user.UserQueryRequest;
-import cn.edu.nfu.topicselection.model.vo.DeptTeacherVO;
+import cn.edu.nfu.topicselection.model.vo.TopicLeaderVO;
 import cn.edu.nfu.topicselection.model.vo.SituationVO;
 import cn.edu.nfu.topicselection.model.vo.UserNameVO;
 import cn.edu.nfu.topicselection.model.vo.UserVO;
-import cn.edu.nfu.topicselection.service.ProjectService;
 import cn.edu.nfu.topicselection.service.SelectionReportService;
+import cn.edu.nfu.topicselection.service.CollegeService;
+import cn.edu.nfu.topicselection.service.MajorService;
 import cn.edu.nfu.topicselection.service.StudentTopicSelectionService;
 import cn.edu.nfu.topicselection.service.SwitchService;
+import cn.edu.nfu.topicselection.service.TeacherGroupService;
 import cn.edu.nfu.topicselection.service.TopicService;
 import cn.edu.nfu.topicselection.service.UserService;
 import cn.edu.nfu.topicselection.utils.SqlUtils;
@@ -33,7 +36,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -51,14 +57,24 @@ public class SelectionReportServiceImpl implements SelectionReportService {
     private final UserService userService;
 
     /**
-     * 注入专业服务依赖
-     */
-    private final ProjectService projectService;
-
-    /**
      * 注入选题服务依赖
      */
     private final TopicService topicService;
+
+    /**
+     * 注入专业服务依赖
+     */
+    private final MajorService majorService;
+
+    /**
+     * 注入学院服务依赖
+     */
+    private final CollegeService collegeService;
+
+    /**
+     * 注入教师选题组额度服务依赖
+     */
+    private final TeacherGroupService teacherGroupService;
 
     /**
      * 注入学生选题关联服务依赖
@@ -74,21 +90,27 @@ public class SelectionReportServiceImpl implements SelectionReportService {
      * 构造选题题目与统计报表只读查询服务实现类实例
      *
      * @param userService                  用户服务
-     * @param projectService               专业服务
      * @param topicService                 选题服务
+     * @param majorService                 专业服务
+     * @param collegeService               学院服务
+     * @param teacherGroupService          教师选题组额度服务
      * @param studentTopicSelectionService 学生选题关联服务
      * @param switchService                开关服务
      */
     public SelectionReportServiceImpl(
             UserService userService,
-            ProjectService projectService,
             TopicService topicService,
+            MajorService majorService,
+            CollegeService collegeService,
+            TeacherGroupService teacherGroupService,
             StudentTopicSelectionService studentTopicSelectionService,
             SwitchService switchService
     ) {
         this.userService = userService;
-        this.projectService = projectService;
         this.topicService = topicService;
+        this.majorService = majorService;
+        this.collegeService = collegeService;
+        this.teacherGroupService = teacherGroupService;
         this.studentTopicSelectionService = studentTopicSelectionService;
         this.switchService = switchService;
     }
@@ -96,7 +118,7 @@ public class SelectionReportServiceImpl implements SelectionReportService {
     /// 选题与用户统计只读查询服务实现 ///
 
     /**
-     * 校验分页参数并结合当前登录角色（管理员/系主任/教师/学生）与系统开关组装 MyBatis-Plus 条件分页查询题目表
+     * 校验分页参数并结合当前登录角色（管理员/选题负责人/教师/学生）与系统开关组装 MyBatis-Plus 条件分页查询题目表
      *
      * @param request 选题分页查询请求
      * @return 选题分页数据
@@ -130,20 +152,14 @@ public class SelectionReportServiceImpl implements SelectionReportService {
         if (UserRoleEnum.ADMIN.equals(loginRole)) {
             Boolean isNoOneSelectedTopic = request.getIsNoOneSelectedTopic();
             queryWrapper.eq(isNoOneSelectedTopic != null, "surplusQuantity", Boolean.TRUE.equals(isNoOneSelectedTopic) ? 1 : 0);
-        } else if (UserRoleEnum.DEPT.equals(loginRole)) {
-            // 如果是主任只看到本系部的选题
-            queryWrapper.eq("deptName", requireDepartment(loginUser));
-            queryWrapper.eq("topicGroup", requireUserGroup(loginUser));
+        } else if (UserRoleEnum.TOPIC_LEADER.equals(loginRole)) {
+            // 选题负责人只查看本人负责选题组的题目
+            queryWrapper.eq("topicGroupId", requireUserGroup(loginUser));
         } else if (UserRoleEnum.TEACHER.equals(loginRole)) {
             // 如果是老师, 只看到自己负责的选题
             queryWrapper.eq("teacherAccount", loginUser.getUserAccount());
         } else if (UserRoleEnum.STUDENT.equals(loginRole)) {
             ThrowUtils.throwIf(!switchService.isEnabled(TopicConstant.VIEW_TOPIC_SWITCH), CodeBindMessageEnums.NOT_FOUND_ERROR, "当前时间学生无法查看选题, 请等待系统开放");
-            // 如果是学生, 看是否开启跨选, 如果此时不允许跨选则不允许看到和当前登陆用户不同系部的教师
-            if (!switchService.isEnabled(TopicConstant.CROSS_TOPIC_SWITCH)) {
-                queryWrapper.eq("deptName", loginUser.getDept());
-            }
-
             // 而且只能看到审核通过和已经发布的题目
             queryWrapper.in("status", TopicStatusEnum.NOT_PUBLISHED.getCode(), TopicStatusEnum.PUBLISHED.getCode());
         }
@@ -153,7 +169,7 @@ public class SelectionReportServiceImpl implements SelectionReportService {
     }
 
     /**
-     * 根据当前登录用户角色与系部范围查询学生表与选题关联表并汇总计算已选及未选人数
+     * 根据当前登录用户角色与选题组范围查询学生表与选题关联表并汇总计算已选及未选人数
      *
      * @return 选题统计情况视图对象
      */
@@ -161,15 +177,14 @@ public class SelectionReportServiceImpl implements SelectionReportService {
     public SituationVO getSelectTopicSituation() {
         // 获取当前登陆用户
         User loginUser = userService.userGetCurrentLoginUser();
-        if (userService.userIsDept(loginUser)) {
-            requireDepartment(loginUser);
-        }
-
-        // 获取总人数
+        // 获取总人数；选题负责人只统计归属本组选题的专业学生
         QueryWrapper<User> queryWrapper = new QueryWrapper<User>()
-                .eq("userRole", UserRoleEnum.STUDENT.getCode())
-                .eq(!userService.userIsAdmin(loginUser), "dept", loginUser.getDept())
-                ;
+                .eq("userRole", UserRoleEnum.STUDENT.getCode());
+        if (userService.userIsTopicLeader(loginUser)) {
+            applyTopicGroupStudentScope(queryWrapper, requireUserGroup(loginUser));
+        } else if (!userService.userIsAdmin(loginUser)) {
+            queryWrapper.eq("collegeId", requireCollegeId(loginUser));
+        }
         int totalStudents = (int) userService.count(queryWrapper);
         List<User> userList = userService.list(queryWrapper);
 
@@ -198,11 +213,11 @@ public class SelectionReportServiceImpl implements SelectionReportService {
     /**
      * 校验分页与跨选开关后查询教师列表并逐个汇总已审核通过或已发布题目的余量与已选数量进行内存分页
      *
-     * @param request 系部教师分页查询请求
-     * @return 系部教师统计分页数据
+     * @param request 学院教师分页查询请求
+     * @return 学院教师统计分页数据
      */
     @Override
-    public Page<DeptTeacherVO> getTeacher(DeptTeacherQueryRequest request) {
+    public Page<TopicLeaderVO> getTeacher(TopicLeaderQueryRequest request) {
         // 参数检查
         ThrowUtils.throwIf(request == null, CodeBindMessageEnums.PARAMS_ERROR, "请求体不能为空");
         assert request != null;
@@ -216,7 +231,7 @@ public class SelectionReportServiceImpl implements SelectionReportService {
         String sortField = request.getSortField();
         String sortOrder = request.getSortOrder();
         String teacherName = request.getTeacherName();
-        String deptName = request.getDeptName();
+        Long collegeId = request.getCollegeId();
 
         // 获取当前登陆用
         User loginUser = userService.userGetCurrentLoginUser();
@@ -235,14 +250,14 @@ public class SelectionReportServiceImpl implements SelectionReportService {
             userQueryWrapper.like("userName", teacherName);
         }
 
-        // 如果有教师系部搜索条件, 则添加搜索条件
-        if (StringUtils.isNotBlank(deptName)) {
-            userQueryWrapper.like("dept", deptName);
+        // 如果有教师学院搜索条件, 则添加搜索条件
+        if (collegeId != null) {
+            userQueryWrapper.eq("collegeId", collegeId);
         }
 
-        // 如果此时不允许跨选则不允许看到和当前登陆用户不同系部的教师
+        // 如果此时不允许跨选则不允许看到和当前登陆用户不同学院的教师
         if (!switchService.isEnabled(TopicConstant.CROSS_TOPIC_SWITCH)) {
-            userQueryWrapper.eq("dept", loginUser.getDept());
+            userQueryWrapper.eq("collegeId", requireCollegeId(loginUser));
         }
 
         // 添加排序条件
@@ -251,15 +266,23 @@ public class SelectionReportServiceImpl implements SelectionReportService {
         }
 
         List<User> users = userService.list(userQueryWrapper);
+        Set<Long> collegeIds = users.stream()
+                .map(User::getCollegeId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        Map<Long, String> collegeNames = collegeIds.isEmpty()
+                ? Collections.emptyMap()
+                : collegeService.listByIds(collegeIds).stream()
+                .collect(Collectors.toMap(College::getId, College::getCollegeName));
 
         // 遍历教师列表来创建返回的 Page 对象, 填充每位教师的选题情况
-        List<DeptTeacherVO> teacherVOList = new ArrayList<>();
+        List<TopicLeaderVO> teacherVOList = new ArrayList<>();
         for (User user : users) {
             // 获得教师的名字
             String userName = user.getUserName();
 
-            // 获得教师系部
-            String dept = user.getDept();
+            // 获得教师学院
+            Long teacherCollegeId = user.getCollegeId();
 
             // 获得教师的对应选题
             QueryWrapper<Topic> topicQueryWrapper = new QueryWrapper<>();
@@ -277,11 +300,12 @@ public class SelectionReportServiceImpl implements SelectionReportService {
                 surplusQuantity += topic.getSurplusQuantity();
             }
 
-            // 构建 DeptTeacherVO 对象
+            // 构建 TopicLeaderVO 对象
             if (count != 0) {
-                DeptTeacherVO teacherVO = new DeptTeacherVO();
+                TopicLeaderVO teacherVO = new TopicLeaderVO();
                 teacherVO.setTeacherName(userName);
-                teacherVO.setDeptName(dept);
+                teacherVO.setCollegeId(teacherCollegeId);
+                teacherVO.setCollegeName(collegeNames.get(teacherCollegeId));
                 teacherVO.setSurplusQuantity(surplusQuantity);
                 teacherVO.setSelectAmount(selectAmount);
                 teacherVO.setTopicAmount(count);
@@ -295,31 +319,34 @@ public class SelectionReportServiceImpl implements SelectionReportService {
         int toIndex = (int) Math.min(fromIndex + size, total);
 
         // 确保索引不越界
-        List<DeptTeacherVO> pagedTeacherVOList = new ArrayList<>();
+        List<TopicLeaderVO> pagedTeacherVOList = new ArrayList<>();
         if (fromIndex < total) {
             pagedTeacherVOList = teacherVOList.subList(fromIndex, toIndex);
         }
 
         // 构建分页对象
-        Page<DeptTeacherVO> teacherPage = new Page<>(current, size);
+        Page<TopicLeaderVO> teacherPage = new Page<>(current, size);
         teacherPage.setRecords(pagedTeacherVOList);
         teacherPage.setTotal((long) total);
         return teacherPage;
     }
 
     /**
-     * 校验当前系主任所属系部后查询同系部全体学生并过滤排除已处于生效选题记录中的学生账号
+     * 校验当前选题负责人所属选题组后查询本组专业学生并过滤已处于生效选题记录的学生
      *
-     * @return 同系部未选题学生列表
+     * @return 本组选题专业的未选题学生列表
      */
     @Override
     public List<User> getUnSelectTopicStudentList() {
         // 获取当前登陆用户
         User loginUser = userService.userGetCurrentLoginUser();
-        final String dept = requireDepartment(loginUser);
+        final Long topicGroupId = requireUserGroup(loginUser);
 
-        // 获取所有学生用户
-        final List<User> userList = userService.list(new QueryWrapper<User>().eq("userRole", UserRoleEnum.STUDENT.getCode()).eq(StringUtils.isNotBlank(dept), "dept", dept));
+        // 获取本组选题覆盖专业的学生用户
+        QueryWrapper<User> studentQuery = new QueryWrapper<User>()
+                .eq("userRole", UserRoleEnum.STUDENT.getCode());
+        applyTopicGroupStudentScope(studentQuery, topicGroupId);
+        final List<User> userList = userService.list(studentQuery);
 
         // 获取所有已经选题的学生
         final List<StudentTopicSelection> selectedList = studentTopicSelectionService.list(
@@ -406,13 +433,13 @@ public class SelectionReportServiceImpl implements SelectionReportService {
     }
 
     /**
-     * 校验当前系主任所属系部后查询本系部教师列表并汇总待审核状态题目的余量与已选数量进行内存分页
+     * 校验当前选题负责人所属选题组后查询本组教师并汇总待审核题目的余量与已选数量
      *
-     * @param request 系部教师查询请求
-     * @return 待审核题目的系部教师分页数据
+     * @param request 选题组教师查询请求
+     * @return 待审核题目的学院教师分页数据
      */
     @Override
-    public Page<DeptTeacherVO> getTeacherByAdmin(DeptTeacherQueryRequest request) {
+    public Page<TopicLeaderVO> getTeacherByAdmin(TopicLeaderQueryRequest request) {
         // 参数检查
         ThrowUtils.throwIf(request == null, CodeBindMessageEnums.PARAMS_ERROR, "请求体不能为空");
         assert request != null;
@@ -428,21 +455,28 @@ public class SelectionReportServiceImpl implements SelectionReportService {
 
         User loginUser = userService.userGetCurrentLoginUser();
 
-        String dept = requireDepartment(loginUser);
+        Long topicGroupId = requireUserGroup(loginUser);
+        List<String> teacherAccounts = teacherGroupService.teacherAccountsForGroup(topicGroupId);
+        if (teacherAccounts.isEmpty()) {
+            return new Page<>(current, size, 0);
+        }
 
         // 查询用户列表
         QueryWrapper<User> userQueryWrapper = new QueryWrapper<>();
-        userQueryWrapper.eq("dept", dept).eq("userRole", UserRoleEnum.TEACHER.getCode()).orderBy(SqlUtils.validSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC), sortField);
+        userQueryWrapper.eq("userRole", UserRoleEnum.TEACHER.getCode())
+                .in("userAccount", teacherAccounts)
+                .orderBy(SqlUtils.validSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC), sortField);
         List<User> users = this.userService.list(userQueryWrapper);
 
         // 创建返回的 Page 对象
-        List<DeptTeacherVO> teacherVOList = new ArrayList<>();
+        List<TopicLeaderVO> teacherVOList = new ArrayList<>();
         for (User user : users) {
             String userName = user.getUserName();
 
             // 查询该用户的课题列表
             QueryWrapper<Topic> topicQueryWrapper = new QueryWrapper<>();
             topicQueryWrapper.eq("teacherAccount", user.getUserAccount());
+            topicQueryWrapper.eq("topicGroupId", topicGroupId);
             topicQueryWrapper.eq("status", TopicStatusEnum.PENDING_REVIEW.getCode());
             int count = (int) topicService.count(topicQueryWrapper);
             List<Topic> topicList = topicService.list(topicQueryWrapper);
@@ -455,8 +489,8 @@ public class SelectionReportServiceImpl implements SelectionReportService {
                 selectAmount += topic.getSelectAmount();
             }
             if (count != 0) {
-                // 构建 DeptTeacherVO 对象
-                DeptTeacherVO teacherVO = new DeptTeacherVO();
+                // 构建 TopicLeaderVO 对象
+                TopicLeaderVO teacherVO = new TopicLeaderVO();
                 teacherVO.setTeacherName(userName);
                 teacherVO.setSurplusQuantity(surplusQuantity);
                 teacherVO.setSelectAmount(selectAmount);
@@ -471,13 +505,13 @@ public class SelectionReportServiceImpl implements SelectionReportService {
         int toIndex = (int) Math.min(fromIndex + size, total);
 
         // 确保索引不越界
-        List<DeptTeacherVO> pagedTeacherVOList = new ArrayList<>();
+        List<TopicLeaderVO> pagedTeacherVOList = new ArrayList<>();
         if (fromIndex < total) {
             pagedTeacherVOList = teacherVOList.subList(fromIndex, toIndex);
         }
 
         // 构建分页对象
-        Page<DeptTeacherVO> teacherPage = new Page<>(current, size);
+        Page<TopicLeaderVO> teacherPage = new Page<>(current, size);
         teacherPage.setRecords(pagedTeacherVOList);
         teacherPage.setTotal((long) total);
         return teacherPage;
@@ -486,28 +520,46 @@ public class SelectionReportServiceImpl implements SelectionReportService {
     /// 私有辅助方法 ///
 
     /**
-     * 校验并获取用户所属专业的选题组名称
+     * 将选题组覆盖专业转换为学生查询范围。
      *
-     * @param user 用户实体
-     * @return 专业所属选题组名称
+     * @param queryWrapper 学生查询条件
+     * @param topicGroupId 选题组 id
      */
-    private String requireUserGroup(User user) {
-        Project project = projectService.getOne(new QueryWrapper<Project>().eq("projectName", user.getProject()));
-        ThrowUtils.throwIf(project == null || StringUtils.isBlank(project.getGroupName()),
-                CodeBindMessageEnums.NO_AUTH_ERROR, "当前专业未配置选题组");
-        return project.getGroupName();
+    private void applyTopicGroupStudentScope(QueryWrapper<User> queryWrapper, Long topicGroupId) {
+        List<Long> majorIds = majorService.list(new QueryWrapper<Major>().eq("topicGroupId", topicGroupId))
+                .stream()
+                .map(Major::getId)
+                .collect(Collectors.toList());
+        if (majorIds.isEmpty()) {
+            queryWrapper.eq("id", -1L);
+            return;
+        }
+        queryWrapper.in("majorId", majorIds);
     }
 
     /**
-     * 校验并获取用户配置的所属系部名称
+     * 校验并获取选题负责人绑定的选题组 id
      *
      * @param user 用户实体
-     * @return 系部名称
+     * @return 选题组 id
      */
-    private static String requireDepartment(User user) {
-        String dept = user == null ? null : StringUtils.trim(user.getDept());
-        ThrowUtils.throwIf(StringUtils.isBlank(dept), CodeBindMessageEnums.NO_AUTH_ERROR, "当前账号未配置所属系部");
-        return dept;
+    private static Long requireUserGroup(User user) {
+        Long topicGroupId = user == null ? null : user.getTopicGroupId();
+        ThrowUtils.throwIf(topicGroupId == null,
+                CodeBindMessageEnums.NO_AUTH_ERROR, "当前账号未配置负责的选题组");
+        return topicGroupId;
+    }
+
+    /**
+     * 校验并获取用户配置的所属学院 id
+     *
+     * @param user 用户实体
+     * @return 学院 id
+     */
+    private static Long requireCollegeId(User user) {
+        Long collegeId = user == null ? null : user.getCollegeId();
+        ThrowUtils.throwIf(collegeId == null, CodeBindMessageEnums.NO_AUTH_ERROR, "当前账号未配置所属学院");
+        return collegeId;
     }
 
 }

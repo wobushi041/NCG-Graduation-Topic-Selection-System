@@ -33,10 +33,11 @@ public class TeacherGroupService {
      * @return 教师各选题组总额度与剩余额度列表
      */
     public List<Map<String, Object>> groups(String account) {
-        return jdbcTemplate.queryForList("SELECT q.groupName, q.maxTopics, "
+        return jdbcTemplate.queryForList("SELECT q.topicGroupId, g.groupName, q.maxTopics, "
                 + "q.maxTopics - (SELECT COUNT(*) FROM topic t WHERE t.teacherAccount=q.teacherAccount "
-                + "AND t.topicGroup=q.groupName AND t.isDelete=0) AS remaining "
-                + "FROM teacher_group_quota q WHERE q.teacherAccount=? ORDER BY q.groupName", account);
+                + "AND t.topicGroupId=q.topicGroupId AND t.isDelete=0) AS remaining "
+                + "FROM teacher_group_quota q JOIN topic_group g ON g.id=q.topicGroupId "
+                + "WHERE q.teacherAccount=? ORDER BY g.groupName", account);
     }
 
     /**
@@ -62,11 +63,13 @@ public class TeacherGroupService {
         }
         String placeholders = distinctAccounts.stream().map(item -> "?").collect(Collectors.joining(","));
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(
-                "SELECT q.teacherAccount AS teacherAccount, q.groupName AS groupName, q.maxTopics AS maxTopics, "
+                "SELECT q.teacherAccount AS teacherAccount, q.topicGroupId AS topicGroupId, "
+                        + "g.groupName AS groupName, q.maxTopics AS maxTopics, "
                         + "q.maxTopics - (SELECT COUNT(*) FROM topic t WHERE t.teacherAccount=q.teacherAccount "
-                        + "AND t.topicGroup=q.groupName AND t.isDelete=0) AS remaining "
-                        + "FROM teacher_group_quota q WHERE q.teacherAccount IN (" + placeholders + ") "
-                        + "ORDER BY q.teacherAccount, q.groupName",
+                        + "AND t.topicGroupId=q.topicGroupId AND t.isDelete=0) AS remaining "
+                        + "FROM teacher_group_quota q JOIN topic_group g ON g.id=q.topicGroupId "
+                        + "WHERE q.teacherAccount IN (" + placeholders + ") "
+                        + "ORDER BY q.teacherAccount, g.groupName",
                 distinctAccounts.toArray());
         for (Map<String, Object> row : rows) {
             Object accountValue = row.get("teacherAccount");
@@ -80,31 +83,67 @@ public class TeacherGroupService {
     }
 
     /**
-     * 基于 JdbcTemplate 通过 UNION 查询 project 与 teacher_group_quota 两表中已配置的非空选题组名称并集
+     * 基于 JdbcTemplate 查询选题组表中的有效选题组名称
      *
      * @return 排序后的全部选题组名称列表
      */
     public List<String> allGroups() {
         return jdbcTemplate.queryForList(
-                "SELECT groupName FROM ("
-                        + "SELECT DISTINCT groupName FROM project WHERE groupName IS NOT NULL AND groupName<>'' "
-                        + "UNION SELECT DISTINCT groupName FROM teacher_group_quota WHERE groupName IS NOT NULL AND groupName<>''"
-                        + ") g ORDER BY groupName", String.class);
+                "SELECT groupName FROM topic_group WHERE isDelete=0 ORDER BY groupName", String.class);
+    }
+
+    /**
+     * 查询指定选题组中已配置额度的教师账号
+     *
+     * @param topicGroupId 选题组 id
+     * @return 教师账号列表
+     */
+    public List<String> teacherAccountsForGroup(Long topicGroupId) {
+        return jdbcTemplate.queryForList(
+                "SELECT teacherAccount FROM teacher_group_quota WHERE topicGroupId=? ORDER BY teacherAccount",
+                String.class, topicGroupId);
+    }
+
+    /**
+     * 校验当前已出题目数量后更新教师在指定选题组中的最大出题数量
+     *
+     * @param account      教师账号
+     * @param topicGroupId 选题组 id
+     * @param maxTopics    最大出题数量
+     */
+    public void updateQuota(String account, Long topicGroupId, Integer maxTopics) {
+        List<Integer> limits = jdbcTemplate.queryForList(
+                "SELECT maxTopics FROM teacher_group_quota WHERE teacherAccount=? AND topicGroupId=?",
+                Integer.class, account, topicGroupId);
+        ThrowUtils.throwIf(limits.size() != 1, CodeBindMessageEnums.NOT_FOUND_ERROR,
+                "教师未配置该选题组额度");
+        Long used = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM topic WHERE teacherAccount=? AND topicGroupId=? AND isDelete=0",
+                Long.class, account, topicGroupId);
+        ThrowUtils.throwIf(used != null && maxTopics < used, CodeBindMessageEnums.PARAMS_ERROR,
+                "最大出题数量不能小于当前已出题目数量(" + used + ")");
+        int updatedRows = jdbcTemplate.update(
+                "UPDATE teacher_group_quota SET maxTopics=? WHERE teacherAccount=? AND topicGroupId=?",
+                maxTopics, account, topicGroupId);
+        ThrowUtils.throwIf(updatedRows != 1, CodeBindMessageEnums.OPERATION_ERROR,
+                "更新教师选题组额度失败");
     }
 
     /**
      * 在持有教师行锁的上下文中基于 JdbcTemplate 校验 teacher_group_quota 表额度配置与 topic 表已用题目数量
      *
      * @param account         教师账号
-     * @param group           选题组名称
+     * @param topicGroupId    选题组 id
      * @param excludedTopicId 更新题目时需排除统计的题目 ID
      */
-    public void validate(String account, String group, Long excludedTopicId) {
+    public void validate(String account, Long topicGroupId, Long excludedTopicId) {
         List<Integer> limits = jdbcTemplate.queryForList(
-                "SELECT maxTopics FROM teacher_group_quota WHERE teacherAccount=? AND groupName=?", Integer.class, account, group);
+                "SELECT maxTopics FROM teacher_group_quota WHERE teacherAccount=? AND topicGroupId=?",
+                Integer.class, account, topicGroupId);
         ThrowUtils.throwIf(limits.size() != 1, CodeBindMessageEnums.NO_AUTH_ERROR, "请选择当前教师所属的选题组");
-        Long used = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM topic WHERE teacherAccount=? AND topicGroup=? "
-                + "AND isDelete=0 AND (? IS NULL OR id<>?)", Long.class, account, group, excludedTopicId, excludedTopicId);
+        Long used = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM topic WHERE teacherAccount=? AND topicGroupId=? "
+                        + "AND isDelete=0 AND (? IS NULL OR id<>?)", Long.class, account, topicGroupId,
+                excludedTopicId, excludedTopicId);
         ThrowUtils.throwIf(used >= limits.get(0), CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR, "该组选题额度已用完");
     }
 

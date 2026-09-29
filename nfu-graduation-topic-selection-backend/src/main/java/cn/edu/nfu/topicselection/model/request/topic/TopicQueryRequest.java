@@ -32,9 +32,9 @@ public class TopicQueryRequest extends PageRequest implements Serializable {
     private String teacherName;
 
     /**
-     * 系部名
+     * 所属选题组 id
      */
-    private String deptName;
+    private Long topicGroupId;
 
     /**
      * 开启时间

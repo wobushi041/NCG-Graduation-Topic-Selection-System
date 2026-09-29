@@ -2,18 +2,19 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="cn.edu.nfu.topicselection.mapper.ProjectMapper">
+<mapper namespace="cn.edu.nfu.topicselection.mapper.MajorMapper">
 
-    <resultMap id="BaseResultMap" type="cn.edu.nfu.topicselection.model.entity.Project">
+    <resultMap id="BaseResultMap" type="cn.edu.nfu.topicselection.model.entity.Major">
             <id property="id" column="id" />
-            <result property="projectName" column="projectName" />
+            <result property="majorName" column="majorName" />
             <result property="createTime" column="createTime" />
             <result property="updateTime" column="updateTime" />
             <result property="isDelete" column="isDelete" />
-            <result property="deptName" column="deptName" />
+            <result property="collegeId" column="collegeId" />
+            <result property="topicGroupId" column="topicGroupId" />
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,projectName,createTime,updateTime,isDelete,deptName
+        id,majorName,collegeId,topicGroupId,createTime,updateTime,isDelete
     </sql>
 </mapper>

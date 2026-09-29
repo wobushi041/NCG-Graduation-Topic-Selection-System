@@ -7,9 +7,9 @@ import cn.edu.nfu.topicselection.manager.ai.AIResult;
 import cn.edu.nfu.topicselection.manager.redis.RedisManager;
 import cn.edu.nfu.topicselection.mapper.TopicMapper;
 import cn.edu.nfu.topicselection.mapper.UserMapper;
-import cn.edu.nfu.topicselection.model.entity.Project;
 import cn.edu.nfu.topicselection.model.entity.StudentTopicSelection;
 import cn.edu.nfu.topicselection.model.entity.Topic;
+import cn.edu.nfu.topicselection.model.entity.TopicGroup;
 import cn.edu.nfu.topicselection.model.entity.User;
 import cn.edu.nfu.topicselection.model.enums.StudentTopicSelectionStatusEnum;
 import cn.edu.nfu.topicselection.model.enums.TopicStatusEnum;
@@ -24,10 +24,10 @@ import cn.edu.nfu.topicselection.model.request.topic.SetTimeRequest;
 import cn.edu.nfu.topicselection.model.request.topic.UnSetTimeRequest;
 import cn.edu.nfu.topicselection.model.request.topic.UpdateTopicRequest;
 import cn.edu.nfu.topicselection.service.MailService;
-import cn.edu.nfu.topicselection.service.ProjectService;
 import cn.edu.nfu.topicselection.service.StudentTopicSelectionService;
 import cn.edu.nfu.topicselection.service.TeacherGroupService;
 import cn.edu.nfu.topicselection.service.TopicApplicationService;
+import cn.edu.nfu.topicselection.service.TopicGroupService;
 import cn.edu.nfu.topicselection.service.TopicService;
 import cn.edu.nfu.topicselection.service.UserService;
 import cn.edu.nfu.topicselection.utils.ThrowUtils;
@@ -91,9 +91,9 @@ public class TopicApplicationServiceImpl implements TopicApplicationService {
     private final TeacherGroupService teacherGroupService;
 
     /**
-     * 注入专业服务依赖
+     * 注入选题组服务依赖
      */
-    private final ProjectService projectService;
+    private final TopicGroupService topicGroupService;
 
     /**
      * 注入邮箱通知服务依赖
@@ -119,7 +119,7 @@ public class TopicApplicationServiceImpl implements TopicApplicationService {
      * @param topicService                 课题服务
      * @param studentTopicSelectionService 学生选题关联服务
      * @param teacherGroupService          教师选题组服务
-     * @param projectService               专业服务
+     * @param topicGroupService            选题组服务
      * @param mailService                  邮箱通知服务
      * @param redisManager                 Redis 缓存管理器
      * @param aiManager                    AI 查重管理器
@@ -128,7 +128,7 @@ public class TopicApplicationServiceImpl implements TopicApplicationService {
                                        UserService userService, TopicService topicService,
                                        StudentTopicSelectionService studentTopicSelectionService,
                                        TeacherGroupService teacherGroupService,
-                                       ProjectService projectService, MailService mailService,
+                                       TopicGroupService topicGroupService, MailService mailService,
                                        RedisManager redisManager, AIManager aiManager) {
         this.userMapper = userMapper;
         this.topicMapper = topicMapper;
@@ -136,7 +136,7 @@ public class TopicApplicationServiceImpl implements TopicApplicationService {
         this.topicService = topicService;
         this.studentTopicSelectionService = studentTopicSelectionService;
         this.teacherGroupService = teacherGroupService;
-        this.projectService = projectService;
+        this.topicGroupService = topicGroupService;
         this.mailService = mailService;
         this.redisManager = redisManager;
         this.aiManager = aiManager;
@@ -145,7 +145,7 @@ public class TopicApplicationServiceImpl implements TopicApplicationService {
     /// 课题维护与配额写读用例 ///
 
     /**
-     * 校验题目参数与唯一性并在事务中通过悲观锁锁定教师记录、保存新题目且扣减出题配额
+     * 校验题目参数与唯一性并在事务中通过悲观锁和组选题额度校验保存新题目
      *
      * @param request 添加题目请求
      * @return 新添加的选题 id
@@ -183,18 +183,10 @@ public class TopicApplicationServiceImpl implements TopicApplicationService {
         User user = userService.userGetCurrentLoginUser();
         User loginUser = userMapper.selectByIdForUpdate(user.getId());
         ThrowUtils.throwIf(loginUser == null || !userService.userIsTeacher(loginUser), CodeBindMessageEnums.NO_AUTH_ERROR, "当前教师账号不存在");
-        String teacherDept = loginUser.getDept();
-        ThrowUtils.throwIf(StringUtils.isBlank(teacherDept), CodeBindMessageEnums.PARAMS_ERROR, "当前教师账号未配置所属系部");
-        ThrowUtils.throwIf(
-                StringUtils.isNotBlank(request.getDeptName()) && !teacherDept.equals(request.getDeptName().trim()),
-                CodeBindMessageEnums.NO_AUTH_ERROR,
-                "不能为其他系部发布题目"
-        );
-
-        teacherGroupService.validate(loginUser.getUserAccount(), StringUtils.trimToNull(request.getTopicGroup()), null);
-
-        Integer topicAmount = loginUser.getTopicAmount();
-        ThrowUtils.throwIf(topicAmount == null || topicAmount <= 0, CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR, "剩余出题数量不足, 请不要继续添加题目");
+        Long teacherCollegeId = loginUser.getCollegeId();
+        ThrowUtils.throwIf(teacherCollegeId == null, CodeBindMessageEnums.PARAMS_ERROR, "当前教师账号未配置所属学院");
+        requireTeacherTopicGroup(request.getTopicGroupId(), teacherCollegeId);
+        teacherGroupService.validate(loginUser.getUserAccount(), request.getTopicGroupId(), null);
 
         Topic topic = new Topic();
         BeanUtils.copyProperties(request, topic);
@@ -204,21 +196,15 @@ public class TopicApplicationServiceImpl implements TopicApplicationService {
         topic.setRequirement(topicRequirement.trim());
         topic.setTeacherName(loginUser.getUserName());
         topic.setTeacherAccount(loginUser.getUserAccount());
-        topic.setDeptName(teacherDept);
-        topic.setDeptTeacher("");
-        topic.setTopicGroup(StringUtils.trimToNull(request.getTopicGroup()));
+        topic.setTopicGroupId(request.getTopicGroupId());
         topic.setSurplusQuantity(topicCapacity);
         boolean result = topicService.save(topic);
         ThrowUtils.throwIf(!result, CodeBindMessageEnums.OPERATION_ERROR, "无法添加新的选题");
-
-        loginUser.setTopicAmount(topicAmount - 1);
-        boolean teacherUpdated = userService.updateById(loginUser);
-        ThrowUtils.throwIf(!teacherUpdated, CodeBindMessageEnums.OPERATION_ERROR, "无法更新教师出题额度");
         return topic.getId();
     }
 
     /**
-     * 在事务中按教师到题目的固定顺序加悲观锁，删除题目、清理关联选题记录并回补教师出题额度
+     * 在事务中按教师到题目的固定顺序加悲观锁并删除题目及关联选题记录
      *
      * @param request 删除题目请求
      * @return 是否删除成功
@@ -246,10 +232,6 @@ public class TopicApplicationServiceImpl implements TopicApplicationService {
         boolean topicRemoveResult = topicService.removeById(id);
         ThrowUtils.throwIf(!topicRemoveResult, CodeBindMessageEnums.OPERATION_ERROR, "无法删除题目");
         studentTopicSelectionService.remove(new QueryWrapper<StudentTopicSelection>().eq("topicId", id));
-
-        lockedTeacher.setTopicAmount(lockedTeacher.getTopicAmount() + 1);
-        boolean teacherUpdated = userService.updateById(lockedTeacher);
-        ThrowUtils.throwIf(!teacherUpdated, CodeBindMessageEnums.OPERATION_ERROR, "无法恢复教师出题额度");
         return true;
     }
 
@@ -363,9 +345,6 @@ public class TopicApplicationServiceImpl implements TopicApplicationService {
                 "打回题目时必须填写理由"
         );
 
-        if (userService.userIsDept(loginUser)) {
-            topic.setDeptTeacher(loginUser.getUserName());
-        }
         topic.setStatus(statusEnum.getCode());
         topic.setReason(rejected ? reason : "");
         boolean result = topicService.updateById(topic);
@@ -518,11 +497,12 @@ public class TopicApplicationServiceImpl implements TopicApplicationService {
                 "已发布的题目不允许修改"
         );
 
-        teacherGroupService.validate(loginUser.getUserAccount(), StringUtils.trimToNull(request.getTopicGroup()), topic.getId());
+        requireTeacherTopicGroup(request.getTopicGroupId(), loginUser.getCollegeId());
+        teacherGroupService.validate(loginUser.getUserAccount(), request.getTopicGroupId(), topic.getId());
         topic.setType(type);
         topic.setDescription(description);
         topic.setRequirement(requirement);
-        topic.setTopicGroup(StringUtils.trimToNull(request.getTopicGroup()));
+        topic.setTopicGroupId(request.getTopicGroupId());
         topic.setStatus(TopicStatusEnum.PENDING_REVIEW.getCode());
         topic.setReason("");
         boolean result = topicService.updateById(topic);
@@ -584,11 +564,9 @@ public class TopicApplicationServiceImpl implements TopicApplicationService {
         if (actor == null || topic == null || targetStatus == null) {
             return false;
         }
-        if (Objects.equals(actor.getUserRole(), UserRoleEnum.DEPT.getCode())) {
-            return StringUtils.isNotBlank(actor.getDept())
-                    && StringUtils.isNotBlank(topic.getDeptName())
-                    && Objects.equals(actor.getDept(), topic.getDeptName())
-                    && Objects.equals(requireUserGroup(actor), topic.getTopicGroup())
+        if (Objects.equals(actor.getUserRole(), UserRoleEnum.TOPIC_LEADER.getCode())) {
+            return actor.getTopicGroupId() != null
+                    && Objects.equals(actor.getTopicGroupId(), topic.getTopicGroupId())
                     && Objects.equals(topic.getStatus(), TopicStatusEnum.PENDING_REVIEW.getCode())
                     && (targetStatus == TopicStatusEnum.NOT_PUBLISHED || targetStatus == TopicStatusEnum.REJECTED);
         }
@@ -613,16 +591,29 @@ public class TopicApplicationServiceImpl implements TopicApplicationService {
     }
 
     /**
-     * 校验并获取用户所属专业的选题组名称
+     * 校验并获取选题负责人直接绑定的选题组 id
      *
      * @param user 用户实体
-     * @return 专业所属选题组名称
+     * @return 负责人选题组 id
      */
-    String requireUserGroup(User user) {
-        Project project = projectService.getOne(new QueryWrapper<Project>().eq("projectName", user.getProject()));
-        ThrowUtils.throwIf(project == null || StringUtils.isBlank(project.getGroupName()),
-                CodeBindMessageEnums.NO_AUTH_ERROR, "当前专业未配置选题组");
-        return project.getGroupName();
+    Long requireUserGroup(User user) {
+        ThrowUtils.throwIf(user == null || user.getTopicGroupId() == null,
+                CodeBindMessageEnums.NO_AUTH_ERROR, "当前选题负责人未配置选题组");
+        return user.getTopicGroupId();
+    }
+
+    /**
+     * 校验选题组存在并属于教师所在学院
+     *
+     * @param topicGroupId 选题组 id
+     * @param collegeId    教师所属学院 id
+     */
+    private void requireTeacherTopicGroup(Long topicGroupId, Long collegeId) {
+        ThrowUtils.throwIf(topicGroupId == null, CodeBindMessageEnums.PARAMS_ERROR, "请选择选题组");
+        TopicGroup topicGroup = topicGroupService.getById(topicGroupId);
+        ThrowUtils.throwIf(topicGroup == null, CodeBindMessageEnums.NOT_FOUND_ERROR, "选题组不存在");
+        ThrowUtils.throwIf(collegeId == null || !collegeId.equals(topicGroup.getCollegeId()),
+                CodeBindMessageEnums.NO_AUTH_ERROR, "不能为其他学院的选题组发布题目");
     }
 
     /**

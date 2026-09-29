@@ -6,10 +6,10 @@ import cn.edu.nfu.topicselection.model.entity.Topic;
 import cn.edu.nfu.topicselection.model.entity.User;
 import cn.edu.nfu.topicselection.model.request.topic.TopicQueryByAdminRequest;
 import cn.edu.nfu.topicselection.model.request.topic.TopicQueryRequest;
-import cn.edu.nfu.topicselection.model.request.user.DeptTeacherQueryRequest;
+import cn.edu.nfu.topicselection.model.request.user.TopicLeaderQueryRequest;
 import cn.edu.nfu.topicselection.model.request.user.GetUserListRequest;
 import cn.edu.nfu.topicselection.model.request.user.UserQueryRequest;
-import cn.edu.nfu.topicselection.model.vo.DeptTeacherVO;
+import cn.edu.nfu.topicselection.model.vo.TopicLeaderVO;
 import cn.edu.nfu.topicselection.model.vo.SituationVO;
 import cn.edu.nfu.topicselection.model.vo.UserNameVO;
 import cn.edu.nfu.topicselection.model.vo.UserVO;
@@ -72,22 +72,22 @@ class TopicQueryControllerContractTest {
         Assertions.assertArrayEquals(new String[]{"/user"}, classMapping.value());
         Method getTopicListMethod = TopicQueryController.class.getMethod("getTopicList", TopicQueryRequest.class);
         Method getSituationMethod = TopicQueryController.class.getMethod("getSelectTopicSituation");
-        Method getTeacherMethod = TopicQueryController.class.getMethod("getTeacher", DeptTeacherQueryRequest.class);
+        Method getTeacherMethod = TopicQueryController.class.getMethod("getTeacher", TopicLeaderQueryRequest.class);
         Method getUnselectedMethod = TopicQueryController.class.getMethod("getUnSelectTopicStudentList");
         Method getTopicAdminMethod = TopicQueryController.class.getMethod("getTopicListByAdmin", TopicQueryByAdminRequest.class);
         Method listUserVOMethod = TopicQueryController.class.getMethod("listUserVOByPage", UserQueryRequest.class);
         Method getUserListMethod = TopicQueryController.class.getMethod("getUserList", GetUserListRequest.class);
-        Method getTeacherByAdminMethod = TopicQueryController.class.getMethod("getTeacherByAdmin", DeptTeacherQueryRequest.class);
+        Method getTeacherByAdminMethod = TopicQueryController.class.getMethod("getTeacherByAdmin", TopicLeaderQueryRequest.class);
 
         // 3. 断言 8 个接口的 HTTP 路径、Sentinel 资源名与 Sa-Token 角色鉴权完全符合契约
         assertPostEndpoint(getTopicListMethod, "/get/topic/page", "query.topic.page", null);
-        assertPostEndpoint(getSituationMethod, "/get/select/topic/situation", "query.selection.situation", new String[]{"admin", "dept"});
-        assertPostEndpoint(getTeacherMethod, "/get/dept/teacher", "query.dept.teacher", null);
-        assertPostEndpoint(getUnselectedMethod, "/get/unselect/topic/student/list", "query.selection.unselected-students", new String[]{"dept"});
+        assertPostEndpoint(getSituationMethod, "/get/select/topic/situation", "query.selection.situation", new String[]{"admin", "topic_leader"});
+        assertPostEndpoint(getTeacherMethod, "/get/college/teacher", "query.college.teacher", null);
+        assertPostEndpoint(getUnselectedMethod, "/get/unselect/topic/student/list", "query.selection.unselected-students", new String[]{"topic_leader"});
         assertPostEndpoint(getTopicAdminMethod, "/get/topic/list/by/admin", "query.topic.admin-page", new String[]{"admin"});
         assertPostEndpoint(listUserVOMethod, "/list/page/vo", "query.user.vo-page", new String[]{"admin"});
         assertPostEndpoint(getUserListMethod, "/get/user/list", "query.user.name-list", new String[]{"admin"});
-        assertPostEndpoint(getTeacherByAdminMethod, "/get/dept/teacher/by/admin", "query.dept.pending-teacher", new String[]{"dept"});
+        assertPostEndpoint(getTeacherByAdminMethod, "/get/college/teacher/by/admin", "query.college.pending-teacher", new String[]{"topic_leader"});
     }
 
     // 场景：测试 TopicQueryController 8 个方法委托调用 SelectionReportService 并封装统一响应
@@ -95,34 +95,34 @@ class TopicQueryControllerContractTest {
     void topicQueryController_shouldDelegateAllEightEndpointsToSelectionReportService() {
         // 1. 准备测试数据与模拟返回值
         TopicQueryRequest topicQueryRequest = new TopicQueryRequest();
-        DeptTeacherQueryRequest deptTeacherQueryRequest = new DeptTeacherQueryRequest();
+        TopicLeaderQueryRequest collegeTeacherQueryRequest = new TopicLeaderQueryRequest();
         TopicQueryByAdminRequest topicQueryByAdminRequest = new TopicQueryByAdminRequest();
         UserQueryRequest userQueryRequest = new UserQueryRequest();
         GetUserListRequest getUserListRequest = new GetUserListRequest();
         Page<Topic> topicPage = new Page<>(1, 10);
         SituationVO situationVO = new SituationVO();
-        Page<DeptTeacherVO> teacherPage = new Page<>(1, 10);
+        Page<TopicLeaderVO> teacherPage = new Page<>(1, 10);
         List<User> unselectedStudents = Collections.singletonList(new User());
         Page<UserVO> userVOPage = new Page<>(1, 10);
         List<UserNameVO> userNameVOList = Collections.singletonList(new UserNameVO());
         Mockito.when(selectionReportService.getTopicList(topicQueryRequest)).thenReturn(topicPage);
         Mockito.when(selectionReportService.getSelectTopicSituation()).thenReturn(situationVO);
-        Mockito.when(selectionReportService.getTeacher(deptTeacherQueryRequest)).thenReturn(teacherPage);
+        Mockito.when(selectionReportService.getTeacher(collegeTeacherQueryRequest)).thenReturn(teacherPage);
         Mockito.when(selectionReportService.getUnSelectTopicStudentList()).thenReturn(unselectedStudents);
         Mockito.when(selectionReportService.getTopicListByAdmin(topicQueryByAdminRequest)).thenReturn(topicPage);
         Mockito.when(selectionReportService.listUserVOByPage(userQueryRequest)).thenReturn(userVOPage);
         Mockito.when(selectionReportService.getUserList(getUserListRequest)).thenReturn(userNameVOList);
-        Mockito.when(selectionReportService.getTeacherByAdmin(deptTeacherQueryRequest)).thenReturn(teacherPage);
+        Mockito.when(selectionReportService.getTeacherByAdmin(collegeTeacherQueryRequest)).thenReturn(teacherPage);
 
         // 2. 依次调用 TopicQueryController 的 8 个接口方法
         BaseResponse<Page<Topic>> res1 = topicQueryController.getTopicList(topicQueryRequest);
         BaseResponse<SituationVO> res2 = topicQueryController.getSelectTopicSituation();
-        BaseResponse<Page<DeptTeacherVO>> res3 = topicQueryController.getTeacher(deptTeacherQueryRequest);
+        BaseResponse<Page<TopicLeaderVO>> res3 = topicQueryController.getTeacher(collegeTeacherQueryRequest);
         BaseResponse<List<User>> res4 = topicQueryController.getUnSelectTopicStudentList();
         BaseResponse<Page<Topic>> res5 = topicQueryController.getTopicListByAdmin(topicQueryByAdminRequest);
         BaseResponse<Page<UserVO>> res6 = topicQueryController.listUserVOByPage(userQueryRequest);
         BaseResponse<List<UserNameVO>> res7 = topicQueryController.getUserList(getUserListRequest);
-        BaseResponse<Page<DeptTeacherVO>> res8 = topicQueryController.getTeacherByAdmin(deptTeacherQueryRequest);
+        BaseResponse<Page<TopicLeaderVO>> res8 = topicQueryController.getTeacherByAdmin(collegeTeacherQueryRequest);
 
         // 3. 断言响应体状态码与返回数据正确
         Assertions.assertEquals(CodeBindMessageEnums.SUCCESS.getCode(), res1.getCode());

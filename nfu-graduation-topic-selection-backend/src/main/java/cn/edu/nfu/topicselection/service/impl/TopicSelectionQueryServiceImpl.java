@@ -3,6 +3,7 @@ package cn.edu.nfu.topicselection.service.impl;
 import cn.edu.nfu.topicselection.exception.CodeBindMessageEnums;
 import cn.edu.nfu.topicselection.model.entity.StudentTopicSelection;
 import cn.edu.nfu.topicselection.model.entity.Topic;
+import cn.edu.nfu.topicselection.model.entity.TopicGroup;
 import cn.edu.nfu.topicselection.model.entity.User;
 import cn.edu.nfu.topicselection.model.enums.StudentTopicSelectionStatusEnum;
 import cn.edu.nfu.topicselection.model.request.selection.GetSelectTopicByIdRequest;
@@ -10,6 +11,7 @@ import cn.edu.nfu.topicselection.model.request.selection.GetSelectTopicRequest;
 import cn.edu.nfu.topicselection.model.request.selection.GetStudentByTopicIdRequest;
 import cn.edu.nfu.topicselection.service.StudentTopicSelectionService;
 import cn.edu.nfu.topicselection.service.TopicSelectionQueryService;
+import cn.edu.nfu.topicselection.service.TopicGroupService;
 import cn.edu.nfu.topicselection.service.TopicService;
 import cn.edu.nfu.topicselection.service.UserService;
 import cn.edu.nfu.topicselection.utils.ThrowUtils;
@@ -43,6 +45,11 @@ public class TopicSelectionQueryServiceImpl implements TopicSelectionQueryServic
     private final TopicService topicService;
 
     /**
+     * 注入选题组服务依赖
+     */
+    private final TopicGroupService topicGroupService;
+
+    /**
      * 注入学生选题关联服务依赖
      */
     private final StudentTopicSelectionService studentTopicSelectionService;
@@ -52,12 +59,15 @@ public class TopicSelectionQueryServiceImpl implements TopicSelectionQueryServic
      *
      * @param userService                  用户服务
      * @param topicService                 课题服务
+     * @param topicGroupService            选题组服务
      * @param studentTopicSelectionService 学生选题关联服务
      */
     public TopicSelectionQueryServiceImpl(UserService userService, TopicService topicService,
+                                          TopicGroupService topicGroupService,
                                           StudentTopicSelectionService studentTopicSelectionService) {
         this.userService = userService;
         this.topicService = topicService;
+        this.topicGroupService = topicGroupService;
         this.studentTopicSelectionService = studentTopicSelectionService;
     }
 
@@ -162,6 +172,10 @@ public class TopicSelectionQueryServiceImpl implements TopicSelectionQueryServic
         Topic topic = topicService.getById(topicId);
         List<Topic> topicList = new ArrayList<>();
         ThrowUtils.throwIf(topic == null, CodeBindMessageEnums.OPERATION_ERROR, "不存在对应的题目，请联系系统管理员");
+        TopicGroup topicGroup = topic.getTopicGroupId() == null
+                ? null
+                : topicGroupService.getById(topic.getTopicGroupId());
+        topic.setTopicGroupName(topicGroup == null ? null : topicGroup.getGroupName());
         topicList.add(topic);
         return topicList;
     }
@@ -248,11 +262,8 @@ public class TopicSelectionQueryServiceImpl implements TopicSelectionQueryServic
         if (user == null || topic == null) {
             return false;
         }
-        if (StringUtils.isNotBlank(topic.getTeacherAccount())) {
-            return Objects.equals(user.getUserAccount(), topic.getTeacherAccount());
-        }
-        return Objects.equals(user.getUserName(), topic.getTeacherName())
-                && Objects.equals(StringUtils.trimToNull(user.getDept()), StringUtils.trimToNull(topic.getDeptName()));
+        return StringUtils.isNotBlank(topic.getTeacherAccount())
+                && Objects.equals(user.getUserAccount(), topic.getTeacherAccount());
     }
 
 }

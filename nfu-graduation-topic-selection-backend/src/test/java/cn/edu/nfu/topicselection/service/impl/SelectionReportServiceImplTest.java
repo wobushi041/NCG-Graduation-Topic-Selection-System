@@ -3,23 +3,26 @@ package cn.edu.nfu.topicselection.service.impl;
 import cn.edu.nfu.topicselection.constant.TopicConstant;
 import cn.edu.nfu.topicselection.exception.BusinessException;
 import cn.edu.nfu.topicselection.exception.CodeBindMessageEnums;
-import cn.edu.nfu.topicselection.model.entity.Project;
+import cn.edu.nfu.topicselection.model.entity.College;
 import cn.edu.nfu.topicselection.model.entity.StudentTopicSelection;
+import cn.edu.nfu.topicselection.model.entity.Major;
 import cn.edu.nfu.topicselection.model.entity.Topic;
 import cn.edu.nfu.topicselection.model.entity.User;
 import cn.edu.nfu.topicselection.model.enums.UserRoleEnum;
 import cn.edu.nfu.topicselection.model.request.topic.TopicQueryByAdminRequest;
 import cn.edu.nfu.topicselection.model.request.topic.TopicQueryRequest;
-import cn.edu.nfu.topicselection.model.request.user.DeptTeacherQueryRequest;
+import cn.edu.nfu.topicselection.model.request.user.TopicLeaderQueryRequest;
 import cn.edu.nfu.topicselection.model.request.user.GetUserListRequest;
 import cn.edu.nfu.topicselection.model.request.user.UserQueryRequest;
-import cn.edu.nfu.topicselection.model.vo.DeptTeacherVO;
+import cn.edu.nfu.topicselection.model.vo.TopicLeaderVO;
 import cn.edu.nfu.topicselection.model.vo.SituationVO;
 import cn.edu.nfu.topicselection.model.vo.UserNameVO;
 import cn.edu.nfu.topicselection.model.vo.UserVO;
-import cn.edu.nfu.topicselection.service.ProjectService;
 import cn.edu.nfu.topicselection.service.StudentTopicSelectionService;
+import cn.edu.nfu.topicselection.service.CollegeService;
+import cn.edu.nfu.topicselection.service.MajorService;
 import cn.edu.nfu.topicselection.service.SwitchService;
+import cn.edu.nfu.topicselection.service.TeacherGroupService;
 import cn.edu.nfu.topicselection.service.TopicService;
 import cn.edu.nfu.topicselection.service.UserService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -54,16 +57,28 @@ class SelectionReportServiceImplTest {
     private UserService userService;
 
     /**
-     * 模拟专业服务
-     */
-    @Mock
-    private ProjectService projectService;
-
-    /**
      * 模拟选题服务
      */
     @Mock
     private TopicService topicService;
+
+    /**
+     * 模拟专业服务
+     */
+    @Mock
+    private MajorService majorService;
+
+    /**
+     * 模拟学院服务
+     */
+    @Mock
+    private CollegeService collegeService;
+
+    /**
+     * 模拟教师选题组额度服务
+     */
+    @Mock
+    private TeacherGroupService teacherGroupService;
 
     /**
      * 模拟学生选题关联服务
@@ -89,8 +104,10 @@ class SelectionReportServiceImplTest {
     void setUp() {
         selectionReportService = new SelectionReportServiceImpl(
                 userService,
-                projectService,
                 topicService,
+                majorService,
+                collegeService,
+                teacherGroupService,
                 studentTopicSelectionService,
                 switchService
         );
@@ -116,22 +133,19 @@ class SelectionReportServiceImplTest {
     // 场景：测试 getTopicList 在系主任角色下按系部与专业选题组过滤分页查询
     @Test
     @SuppressWarnings("unchecked")
-    void getTopicList_deptRole_shouldFilterByDepartmentAndGroup() {
+    void getTopicList_collegeRole_shouldFilterByDepartmentAndGroup() {
         // 1. 准备测试数据
         TopicQueryRequest request = new TopicQueryRequest();
         request.setCurrent(1);
         request.setPageSize(10);
-        User deptUser = new User();
-        deptUser.setUserRole(UserRoleEnum.DEPT.getCode());
-        deptUser.setDept("计算机系");
-        deptUser.setProject("软件工程");
-        Project project = new Project();
-        project.setProjectName("软件工程");
-        project.setGroupName("软工组");
+        User collegeUser = new User();
+        collegeUser.setUserRole(UserRoleEnum.TOPIC_LEADER.getCode());
+        collegeUser.setCollegeId(1L);
+        collegeUser.setMajorId(1L);
+        collegeUser.setTopicGroupId(1L);
         Page<Topic> expectedPage = new Page<>(1, 10, 1);
-        Mockito.when(userService.userGetCurrentLoginUser()).thenReturn(deptUser);
+        Mockito.when(userService.userGetCurrentLoginUser()).thenReturn(collegeUser);
         Mockito.when(topicService.getQueryWrapper(request)).thenReturn(new QueryWrapper<>());
-        Mockito.when(projectService.getOne(ArgumentMatchers.any(QueryWrapper.class))).thenReturn(project);
         Mockito.when(topicService.page(ArgumentMatchers.any(Page.class), ArgumentMatchers.any(QueryWrapper.class))).thenReturn(expectedPage);
 
         // 2. 调用 getTopicList 方法
@@ -150,7 +164,7 @@ class SelectionReportServiceImplTest {
         request.setPageSize(10);
         User studentUser = new User();
         studentUser.setUserRole(UserRoleEnum.STUDENT.getCode());
-        studentUser.setDept("计算机系");
+        studentUser.setCollegeId(1L);
         Mockito.when(userService.userGetCurrentLoginUser()).thenReturn(studentUser);
         Mockito.when(topicService.getQueryWrapper(request)).thenReturn(new QueryWrapper<>());
         Mockito.when(switchService.isEnabled(TopicConstant.VIEW_TOPIC_SWITCH)).thenReturn(false);
@@ -178,7 +192,7 @@ class SelectionReportServiceImplTest {
         User student2 = new User();
         student2.setUserAccount("stu02");
         Mockito.when(userService.userGetCurrentLoginUser()).thenReturn(adminUser);
-        Mockito.when(userService.userIsDept(adminUser)).thenReturn(false);
+        Mockito.when(userService.userIsTopicLeader(adminUser)).thenReturn(false);
         Mockito.when(userService.userIsAdmin(adminUser)).thenReturn(true);
         Mockito.when(userService.count(ArgumentMatchers.any(QueryWrapper.class))).thenReturn(2L);
         Mockito.when(userService.list(ArgumentMatchers.any(QueryWrapper.class))).thenReturn(Arrays.asList(student1, student2));
@@ -200,31 +214,36 @@ class SelectionReportServiceImplTest {
     @SuppressWarnings("unchecked")
     void getTeacher_shouldAggregateTopicCountsAndPaginateInMemory() {
         // 1. 准备测试数据
-        DeptTeacherQueryRequest request = new DeptTeacherQueryRequest();
+        TopicLeaderQueryRequest request = new TopicLeaderQueryRequest();
         request.setCurrent(1);
         request.setPageSize(10);
         request.setTeacherName("张老师");
         User teacherUser = new User();
         teacherUser.setUserAccount("t001");
         teacherUser.setUserName("张老师");
-        teacherUser.setDept("计算机系");
+        teacherUser.setCollegeId(1L);
         Topic topic = new Topic();
         topic.setSelectAmount(2);
         topic.setSurplusQuantity(3);
+        College college = new College();
+        college.setId(1L);
+        college.setCollegeName("人工智能学院");
         Mockito.when(userService.userGetCurrentLoginUser()).thenReturn(teacherUser);
         Mockito.when(userService.userIsStudent(teacherUser)).thenReturn(false);
         Mockito.when(switchService.isEnabled(TopicConstant.CROSS_TOPIC_SWITCH)).thenReturn(true);
         Mockito.when(userService.list(ArgumentMatchers.any(QueryWrapper.class))).thenReturn(Collections.singletonList(teacherUser));
+        Mockito.when(collegeService.listByIds(ArgumentMatchers.anyCollection())).thenReturn(Collections.singletonList(college));
         Mockito.when(topicService.count(ArgumentMatchers.any(QueryWrapper.class))).thenReturn(1L);
         Mockito.when(topicService.list(ArgumentMatchers.any(QueryWrapper.class))).thenReturn(Collections.singletonList(topic));
 
         // 2. 调用 getTeacher 方法
-        Page<DeptTeacherVO> page = selectionReportService.getTeacher(request);
+        Page<TopicLeaderVO> page = selectionReportService.getTeacher(request);
 
         // 3. 断言统计字段与分页结果正确
         Assertions.assertEquals(1L, page.getTotal());
         Assertions.assertEquals(1, page.getRecords().size());
         Assertions.assertEquals("张老师", page.getRecords().get(0).getTeacherName());
+        Assertions.assertEquals("人工智能学院", page.getRecords().get(0).getCollegeName());
         Assertions.assertEquals(2, page.getRecords().get(0).getSelectAmount());
         Assertions.assertEquals(3, page.getRecords().get(0).getSurplusQuantity());
     }
@@ -234,15 +253,19 @@ class SelectionReportServiceImplTest {
     @SuppressWarnings("unchecked")
     void getUnSelectTopicStudentList_shouldFilterOutSelectedStudents() {
         // 1. 准备测试数据
-        User deptUser = new User();
-        deptUser.setDept("计算机系");
+        User collegeUser = new User();
+        collegeUser.setTopicGroupId(1L);
+        Major major = new Major();
+        major.setId(10L);
         User student1 = new User();
         student1.setUserAccount("stu01");
         User student2 = new User();
         student2.setUserAccount("stu02");
         StudentTopicSelection selected = new StudentTopicSelection();
         selected.setUserAccount("stu01");
-        Mockito.when(userService.userGetCurrentLoginUser()).thenReturn(deptUser);
+        Mockito.when(userService.userGetCurrentLoginUser()).thenReturn(collegeUser);
+        Mockito.when(majorService.list(ArgumentMatchers.any(QueryWrapper.class)))
+                .thenReturn(Collections.singletonList(major));
         Mockito.when(userService.list(ArgumentMatchers.any(QueryWrapper.class))).thenReturn(Arrays.asList(student1, student2));
         Mockito.when(studentTopicSelectionService.list(ArgumentMatchers.any(QueryWrapper.class))).thenReturn(Collections.singletonList(selected));
 
@@ -318,24 +341,26 @@ class SelectionReportServiceImplTest {
     @SuppressWarnings("unchecked")
     void getTeacherByAdmin_shouldReturnPendingReviewTeachersInDepartment() {
         // 1. 准备测试数据
-        DeptTeacherQueryRequest request = new DeptTeacherQueryRequest();
+        TopicLeaderQueryRequest request = new TopicLeaderQueryRequest();
         request.setCurrent(1);
         request.setPageSize(10);
-        User deptUser = new User();
-        deptUser.setDept("计算机系");
+        User collegeUser = new User();
+        collegeUser.setTopicGroupId(1L);
         User teacherUser = new User();
         teacherUser.setUserAccount("t001");
         teacherUser.setUserName("王老师");
         Topic pendingTopic = new Topic();
         pendingTopic.setSelectAmount(0);
         pendingTopic.setSurplusQuantity(5);
-        Mockito.when(userService.userGetCurrentLoginUser()).thenReturn(deptUser);
+        Mockito.when(userService.userGetCurrentLoginUser()).thenReturn(collegeUser);
+        Mockito.when(teacherGroupService.teacherAccountsForGroup(1L))
+                .thenReturn(Collections.singletonList("t001"));
         Mockito.when(userService.list(ArgumentMatchers.any(QueryWrapper.class))).thenReturn(Collections.singletonList(teacherUser));
         Mockito.when(topicService.count(ArgumentMatchers.any(QueryWrapper.class))).thenReturn(1L);
         Mockito.when(topicService.list(ArgumentMatchers.any(QueryWrapper.class))).thenReturn(Collections.singletonList(pendingTopic));
 
         // 2. 调用 getTeacherByAdmin 方法
-        Page<DeptTeacherVO> page = selectionReportService.getTeacherByAdmin(request);
+        Page<TopicLeaderVO> page = selectionReportService.getTeacherByAdmin(request);
 
         // 3. 断言返回待审核题目教师分页数据正确
         Assertions.assertEquals(1L, page.getTotal());

@@ -3,8 +3,8 @@ package cn.edu.nfu.topicselection.service.impl;
 import cn.edu.nfu.topicselection.constant.UserConstant;
 import cn.edu.nfu.topicselection.exception.BusinessException;
 import cn.edu.nfu.topicselection.exception.CodeBindMessageEnums;
-import cn.edu.nfu.topicselection.model.entity.Dept;
-import cn.edu.nfu.topicselection.model.entity.Project;
+import cn.edu.nfu.topicselection.model.entity.College;
+import cn.edu.nfu.topicselection.model.entity.Major;
 import cn.edu.nfu.topicselection.model.entity.StudentTopicSelection;
 import cn.edu.nfu.topicselection.model.entity.Topic;
 import cn.edu.nfu.topicselection.model.entity.User;
@@ -13,10 +13,10 @@ import cn.edu.nfu.topicselection.model.enums.UserRoleEnum;
 import cn.edu.nfu.topicselection.model.request.file.UploadFileRequest;
 import cn.edu.nfu.topicselection.response.BaseResponse;
 import cn.edu.nfu.topicselection.response.TheResult;
-import cn.edu.nfu.topicselection.service.DeptService;
+import cn.edu.nfu.topicselection.service.CollegeService;
 import cn.edu.nfu.topicselection.service.FileApplicationService;
 import cn.edu.nfu.topicselection.service.PasswordService;
-import cn.edu.nfu.topicselection.service.ProjectService;
+import cn.edu.nfu.topicselection.service.MajorService;
 import cn.edu.nfu.topicselection.service.SqlExportService;
 import cn.edu.nfu.topicselection.service.StudentTopicSelectionService;
 import cn.edu.nfu.topicselection.service.TopicService;
@@ -73,14 +73,14 @@ public class FileApplicationServiceImpl implements FileApplicationService {
     private final TopicService topicService;
 
     /**
-     * 注入系部服务依赖
+     * 注入学院服务依赖
      */
-    private final DeptService deptService;
+    private final CollegeService collegeService;
 
     /**
      * 注入专业服务依赖
      */
-    private final ProjectService projectService;
+    private final MajorService majorService;
 
     /**
      * 注入学生选题关联服务依赖
@@ -94,8 +94,8 @@ public class FileApplicationServiceImpl implements FileApplicationService {
      * @param userService                  用户服务
      * @param passwordService              密码服务
      * @param topicService                 选题服务
-     * @param deptService                  系部服务
-     * @param projectService               专业服务
+     * @param collegeService                  学院服务
+     * @param majorService               专业服务
      * @param studentTopicSelectionService 学生选题关联服务
      */
     public FileApplicationServiceImpl(
@@ -103,23 +103,23 @@ public class FileApplicationServiceImpl implements FileApplicationService {
             UserService userService,
             PasswordService passwordService,
             TopicService topicService,
-            DeptService deptService,
-            ProjectService projectService,
+            CollegeService collegeService,
+            MajorService majorService,
             StudentTopicSelectionService studentTopicSelectionService
     ) {
         this.sqlExportService = sqlExportService;
         this.userService = userService;
         this.passwordService = passwordService;
         this.topicService = topicService;
-        this.deptService = deptService;
-        this.projectService = projectService;
+        this.collegeService = collegeService;
+        this.majorService = majorService;
         this.studentTopicSelectionService = studentTopicSelectionService;
     }
 
     /// 文件批量导入服务实现 ///
 
     /**
-     * 校验上传 CSV 文件参数并在 Spring 声明式事务中逐行解析、校验系部专业存在性后批量落库用户账号
+     * 校验上传 CSV 文件参数并在 Spring 声明式事务中逐行解析、校验学院专业存在性后批量落库用户账号
      *
      * @param multipartFile 上传的 CSV 模板文件
      * @param request       文件上传请求参数
@@ -168,7 +168,7 @@ public class FileApplicationServiceImpl implements FileApplicationService {
                 String userAccount = record.get(0).trim();
                 String name = record.get(1).trim();
                 String department = record.get(2).trim();
-                String project = record.get(3).trim();
+                String major = record.get(3).trim();
                 String topicAmount = "";
                 if (teacherImport) {
                     topicAmount = record.get(4).trim();
@@ -195,16 +195,22 @@ public class FileApplicationServiceImpl implements FileApplicationService {
                 user.setUserPassword(passwordService.encodePassword(temporaryPassword));
                 user.setUserName(name);
                 user.setUserRole(request.getStatus());
-                user.setDept(department);
-                user.setProject(project);
                 user.setTopicAmount(StringUtils.isBlank(topicAmount) ? null : Integer.parseInt(topicAmount));
 
-                // 保存之前先检查用户填写的系部和专业是否存在, 不存在直接抛出异常回滚
-                if (StringUtils.isNotBlank(department)) {
-                    ThrowUtils.throwIf(deptService.getOne(new QueryWrapper<Dept>().eq("deptName", department)) == null, CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR, "表中第 " + i + "行, 导入用户 " + "[" + userAccount + ", " + name + "] " + "时, 系部 [" + department + "] 在系统中不存在, 请添加该系部或修改表格");
-                }
-                if (StringUtils.isNotBlank(project)) {
-                    ThrowUtils.throwIf(projectService.getOne(new QueryWrapper<Project>().eq("projectName", project)) == null, CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR, "表中第 " + i + "行, 导入用户 " + "[" + userAccount + ", " + name + "]" + "时, 专业 [" + project + "] 在系统中不存在, 请添加该专业或修改表格");
+                // 保存之前解析学院和专业名称并校验归属关系
+                College college = collegeService.getOne(new QueryWrapper<College>().eq("collegeName", department));
+                ThrowUtils.throwIf(college == null, CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR,
+                        "表中第 " + i + "行, 导入用户 [" + userAccount + ", " + name + "] 时, 学院 [" + department + "] 在系统中不存在");
+                assert college != null;
+                user.setCollegeId(college.getId());
+                if (StringUtils.isNotBlank(major)) {
+                    Major majorEntity = majorService.getOne(new QueryWrapper<Major>()
+                            .eq("majorName", major)
+                            .eq("collegeId", college.getId()));
+                    ThrowUtils.throwIf(majorEntity == null, CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR,
+                            "表中第 " + i + "行, 导入用户 [" + userAccount + ", " + name + "] 时, 专业 [" + major + "] 不属于所选学院");
+                    assert majorEntity != null;
+                    user.setMajorId(majorEntity.getId());
                 }
 
                 // 保存用户
@@ -233,14 +239,14 @@ public class FileApplicationServiceImpl implements FileApplicationService {
     /// 统计报表导出数据查询服务实现 ///
 
     /**
-     * 解析当前登录用户的系部权限范围并关联查询已选题学生的用户与题目信息组装 CSV 行列表
+     * 解析当前登录用户的学院权限范围并关联查询已选题学生的用户与题目信息组装 CSV 行列表
      *
      * @return 已选题学生 CSV 行数据列表
      */
     @Override
     public List<List<String>> listSelectedStudentTopicCsvRows() {
         User loginUser = userService.userGetCurrentLoginUser();
-        String dept = resolveDepartmentScope(loginUser);
+        Long collegeId = resolveCollegeScope(loginUser);
 
         List<StudentTopicSelection> selectedList = studentTopicSelectionService.list(
                 new QueryWrapper<StudentTopicSelection>()
@@ -253,11 +259,12 @@ public class FileApplicationServiceImpl implements FileApplicationService {
             String userAccount = studentTopicSelection.getUserAccount();
             User user = userService.getOne(new QueryWrapper<User>()
                     .eq("userAccount", userAccount)
-                    .eq(dept != null, "dept", dept));
+                    .eq(collegeId != null, "collegeId", collegeId));
             Topic topic = topicService.getById(studentTopicSelection.getTopicId());
             if (user != null && topic != null) {
                 rows.add(Arrays.asList(
-                        user.getUserAccount(), user.getUserName(), user.getProject(), user.getDept(),
+                        user.getUserAccount(), user.getUserName(), resolveMajorName(user.getMajorId()),
+                        resolveCollegeName(user.getCollegeId()),
                         topic.getTopic(), topic.getTeacherName()
                 ));
             }
@@ -266,19 +273,19 @@ public class FileApplicationServiceImpl implements FileApplicationService {
     }
 
     /**
-     * 解析当前登录用户的系部权限范围并筛选出尚未在生效选题记录中的学生实体列表
+     * 解析当前登录用户的学院权限范围并筛选出尚未在生效选题记录中的学生实体列表
      *
      * @return 未选题学生实体列表
      */
     @Override
     public List<User> listUnselectedStudentCsvUsers() {
         User loginUser = userService.userGetCurrentLoginUser();
-        String dept = resolveDepartmentScope(loginUser);
+        Long collegeId = resolveCollegeScope(loginUser);
 
         List<User> userList = userService.list(
                 new QueryWrapper<User>()
                         .eq("userRole", UserRoleEnum.STUDENT.getCode())
-                        .eq(dept != null, "dept", dept)
+                        .eq(collegeId != null, "collegeId", collegeId)
         );
         List<StudentTopicSelection> selectedList = studentTopicSelectionService.list(
                 new QueryWrapper<StudentTopicSelection>()
@@ -300,20 +307,25 @@ public class FileApplicationServiceImpl implements FileApplicationService {
     @Override
     public List<Map<String, Object>> exportUserListRows() {
         String sql = "SELECT\n" +
-                "    `userAccount` AS 帐号,\n" +
-                "    `userName` AS 姓名,\n" +
-                "    CASE `userRole`\n" +
+                "    u.`userAccount` AS 帐号,\n" +
+                "    u.`userName` AS 姓名,\n" +
+                "    CASE u.`userRole`\n" +
                 "        WHEN 3 THEN '管理员'\n" +
-                "        WHEN 2 THEN '专业负责人'\n" +
+                "        WHEN 2 THEN '选题负责人'\n" +
                 "        WHEN 1 THEN '教师'\n" +
                 "        WHEN 0 THEN '学生'\n" +
                 "        END AS 角色,\n" +
-                "    `dept` AS 系部,\n" +
-                "    `project` AS 专业,\n" +
-                "    `email` AS 邮箱,\n" +
-                "    `topicAmount` AS 出题数量或预选数量,\n" +
-                "    `status` AS 状态\n" +
-                "    FROM `user` WHERE `isDelete` = 0;";
+                "    c.`collegeName` AS 学院,\n" +
+                "    m.`majorName` AS 专业,\n" +
+                "    g.`groupName` AS 负责选题组,\n" +
+                "    u.`email` AS 邮箱,\n" +
+                "    u.`topicAmount` AS 出题数量或预选数量,\n" +
+                "    u.`status` AS 状态\n" +
+                "    FROM `user` u\n" +
+                "    LEFT JOIN `college` c ON u.`collegeId` = c.`id`\n" +
+                "    LEFT JOIN `major` m ON u.`majorId` = m.`id`\n" +
+                "    LEFT JOIN `topic_group` g ON u.`topicGroupId` = g.`id`\n" +
+                "    WHERE u.`isDelete` = 0;";
         return sqlExportService.executeQuery(sql);
     }
 
@@ -325,23 +337,26 @@ public class FileApplicationServiceImpl implements FileApplicationService {
     @Override
     public List<Map<String, Object>> exportTopicListRows() {
         String sql = "SELECT\n" +
-                "    `teacherName` AS 教师名称,\n" +
-                "    `topic` AS 题目,\n" +
-                "    `type` AS 题目类型,\n" +
-                "    `description` AS 描述,\n" +
-                "    `requirement` AS 要求,\n" +
-                "    `deptName` AS 系部,\n" +
-                "    `deptTeacher` AS 专业负责人,\n" +
-                "    `createTime` AS 创建时间,\n" +
-                "    `updateTime` AS 更新时间,\n" +
-                "    CASE `status`\n" +
+                "    t.`teacherName` AS 教师名称,\n" +
+                "    t.`topic` AS 题目,\n" +
+                "    t.`type` AS 题目类型,\n" +
+                "    t.`description` AS 描述,\n" +
+                "    t.`requirement` AS 要求,\n" +
+                "    g.`groupName` AS 选题组,\n" +
+                "    c.`collegeName` AS 学院,\n" +
+                "    t.`createTime` AS 创建时间,\n" +
+                "    t.`updateTime` AS 更新时间,\n" +
+                "    CASE t.`status`\n" +
                 "        WHEN -2 THEN '被打回'\n" +
                 "        WHEN -1 THEN '待审核'\n" +
                 "        WHEN 0 THEN '没发布'\n" +
                 "        WHEN 1 THEN '已发布'\n" +
                 "        END AS 状态,\n" +
-                "    `reason` AS 打回理由\n" +
-                "    FROM `topic` WHERE `isDelete` = 0;";
+                "    t.`reason` AS 打回理由\n" +
+                "    FROM `topic` t\n" +
+                "    JOIN `topic_group` g ON t.`topicGroupId` = g.`id`\n" +
+                "    JOIN `college` c ON g.`collegeId` = c.`id`\n" +
+                "    WHERE t.`isDelete` = 0;";
         return sqlExportService.executeQuery(sql);
     }
 
@@ -352,8 +367,10 @@ public class FileApplicationServiceImpl implements FileApplicationService {
      */
     @Override
     public List<Map<String, Object>> exportSurplusTopicListRows() {
-        String sql = "SELECT t.topic AS 题目名称, t.teacherName AS 指导老师, t.deptName AS 系部名称\n" +
+        String sql = "SELECT t.topic AS 题目名称, t.teacherName AS 指导老师, c.collegeName AS 学院, g.groupName AS 选题组\n" +
                 "FROM topic t\n" +
+                "JOIN topic_group g ON t.topicGroupId = g.id\n" +
+                "JOIN college c ON g.collegeId = c.id\n" +
                 "WHERE t.id NOT IN (\n" +
                 "    SELECT topicId\n" +
                 "    FROM student_topic_selection\n" +
@@ -375,8 +392,8 @@ public class FileApplicationServiceImpl implements FileApplicationService {
         String sql = "SELECT\n" +
                 "    u.`userAccount` AS `学号`,\n" +
                 "    u.`userName` AS `姓名`,\n" +
-                "    u.`dept` AS `系部`,\n" +
-                "    u.`project` AS `专业`,\n" +
+                "    c.`collegeName` AS `学院`,\n" +
+                "    m.`majorName` AS `专业`,\n" +
                 "    u.`email` AS `邮箱`,\n" +
                 "    s.`updateTime` AS `选择时间`,\n" +
                 "    t.`teacherName` AS `指导教师`,\n" +
@@ -386,6 +403,8 @@ public class FileApplicationServiceImpl implements FileApplicationService {
                 "FROM `student_topic_selection` s\n" +
                 "JOIN `user` u ON s.userAccount = u.userAccount\n" +
                 "JOIN `topic` t ON s.topicId = t.id\n" +
+                "LEFT JOIN `college` c ON u.collegeId = c.id\n" +
+                "LEFT JOIN `major` m ON u.majorId = m.id\n" +
                 "WHERE\n" +
                 "    s.status = 2 AND\n" +
                 "    u.userRole = 0 AND\n" +
@@ -405,10 +424,12 @@ public class FileApplicationServiceImpl implements FileApplicationService {
         String sql = "SELECT\n" +
                 "    u.`userAccount` AS `学号`,\n" +
                 "    u.`userName`    AS `姓名`,\n" +
-                "    u.`dept`        AS `系部`,\n" +
-                "    u.`project`     AS `专业`,\n" +
+                "    c.`collegeName` AS `学院`,\n" +
+                "    m.`majorName` AS `专业`,\n" +
                 "    u.`email`       AS `邮箱`\n" +
                 "FROM `user` u\n" +
+                "LEFT JOIN `college` c ON u.collegeId = c.id\n" +
+                "LEFT JOIN `major` m ON u.majorId = m.id\n" +
                 "WHERE\n" +
                 "    u.userRole = 0 AND\n" +
                 "    u.isDelete = 0 AND\n" +
@@ -426,19 +447,41 @@ public class FileApplicationServiceImpl implements FileApplicationService {
     /// 私有辅助方法 ///
 
     /**
-     * 解析当前登录用户允许导出的系部数据范围
+     * 解析当前登录用户允许导出的学院数据范围
      *
      * @param user 当前登录用户
-     * @return 系部名称（管理员返回 null 表示不限制系部范围）
+     * @return 学院 id（管理员返回 null 表示不限制学院范围）
      */
-    private String resolveDepartmentScope(User user) {
+    private Long resolveCollegeScope(User user) {
         if (userService.userIsAdmin(user)) {
             return null;
         }
-        ThrowUtils.throwIf(!userService.userIsDept(user), CodeBindMessageEnums.NO_AUTH_ERROR, "当前账号无权导出该数据");
-        String dept = user == null ? null : StringUtils.trim(user.getDept());
-        ThrowUtils.throwIf(StringUtils.isBlank(dept), CodeBindMessageEnums.NO_AUTH_ERROR, "当前专业负责人账号未配置所属系部");
-        return dept;
+        ThrowUtils.throwIf(!userService.userIsTopicLeader(user), CodeBindMessageEnums.NO_AUTH_ERROR, "当前账号无权导出该数据");
+        Long collegeId = user == null ? null : user.getCollegeId();
+        ThrowUtils.throwIf(collegeId == null, CodeBindMessageEnums.NO_AUTH_ERROR, "当前选题负责人账号未配置所属学院");
+        return collegeId;
+    }
+
+    /**
+     * 根据学院 id 获取用于导出的学院名称
+     *
+     * @param collegeId 学院 id
+     * @return 学院名称
+     */
+    private String resolveCollegeName(Long collegeId) {
+        College college = collegeId == null ? null : collegeService.getById(collegeId);
+        return college == null ? "" : college.getCollegeName();
+    }
+
+    /**
+     * 根据专业 id 获取用于导出的专业名称
+     *
+     * @param majorId 专业 id
+     * @return 专业名称
+     */
+    private String resolveMajorName(Long majorId) {
+        Major major = majorId == null ? null : majorService.getById(majorId);
+        return major == null ? "" : major.getMajorName();
     }
 
 }

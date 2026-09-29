@@ -6,10 +6,10 @@ import cn.edu.nfu.topicselection.model.entity.Topic;
 import cn.edu.nfu.topicselection.model.entity.User;
 import cn.edu.nfu.topicselection.model.request.topic.TopicQueryByAdminRequest;
 import cn.edu.nfu.topicselection.model.request.topic.TopicQueryRequest;
-import cn.edu.nfu.topicselection.model.request.user.DeptTeacherQueryRequest;
+import cn.edu.nfu.topicselection.model.request.user.TopicLeaderQueryRequest;
 import cn.edu.nfu.topicselection.model.request.user.GetUserListRequest;
 import cn.edu.nfu.topicselection.model.request.user.UserQueryRequest;
-import cn.edu.nfu.topicselection.model.vo.DeptTeacherVO;
+import cn.edu.nfu.topicselection.model.vo.TopicLeaderVO;
 import cn.edu.nfu.topicselection.model.vo.SituationVO;
 import cn.edu.nfu.topicselection.model.vo.UserNameVO;
 import cn.edu.nfu.topicselection.model.vo.UserVO;
@@ -67,40 +67,40 @@ public class TopicQueryController {
     }
 
     /**
-     * 获取当前的选题情况（只能获取和当前登陆用户系部相同的选题）
+     * 获取当前的选题情况（只能获取和当前登陆用户学院相同的选题）
      *
      * @return 选题统计情况视图对象
      */
     @SentinelRateLimit(resource = "query.selection.situation")
     @SaCheckLogin
-    @SaCheckRole(value = {"admin", "dept"}, mode = SaMode.OR)
+    @SaCheckRole(value = {"admin", "topic_leader"}, mode = SaMode.OR)
     @PostMapping("/get/select/topic/situation")
     public BaseResponse<SituationVO> getSelectTopicSituation() {
         return TheResult.success(CodeBindMessageEnums.SUCCESS, selectionReportService.getSelectTopicSituation());
     }
 
     /**
-     * 获取系部教师数据
+     * 获取学院教师数据
      *
-     * @param request 系部教师分页查询请求
-     * @return 系部教师统计分页数据
+     * @param request 学院教师分页查询请求
+     * @return 学院教师统计分页数据
      */
-    @SentinelRateLimit(resource = "query.dept.teacher")
+    @SentinelRateLimit(resource = "query.college.teacher")
     @SaCheckLogin
-    // @CacheSearchOptimization(ttl = 30, modelClass = DeptTeacherVO.class)
-    @PostMapping("/get/dept/teacher")
-    public BaseResponse<Page<DeptTeacherVO>> getTeacher(@RequestBody DeptTeacherQueryRequest request) {
+    // @CacheSearchOptimization(ttl = 30, modelClass = TopicLeaderVO.class)
+    @PostMapping("/get/college/teacher")
+    public BaseResponse<Page<TopicLeaderVO>> getTeacher(@RequestBody TopicLeaderQueryRequest request) {
         return TheResult.success(CodeBindMessageEnums.SUCCESS, selectionReportService.getTeacher(request));
     }
 
     /**
-     * 获取和当前登陆用户同系的没有选题的学生
+     * 获取当前选题负责人所属选题组覆盖专业中尚未选题的学生
      *
-     * @return 同系部未选题学生列表
+     * @return 同学院未选题学生列表
      */
     @SentinelRateLimit(resource = "query.selection.unselected-students")
     @SaCheckLogin
-    @SaCheckRole(value = {"dept"}, mode = SaMode.OR)
+    @SaCheckRole(value = {"topic_leader"}, mode = SaMode.OR)
     @PostMapping("/get/unselect/topic/student/list")
     public BaseResponse<List<User>> getUnSelectTopicStudentList() {
         return TheResult.success(CodeBindMessageEnums.SUCCESS, selectionReportService.getUnSelectTopicStudentList());
@@ -150,16 +150,16 @@ public class TopicQueryController {
     }
 
     /**
-     * 获取待审核题目的系部教师列表
+     * 获取待审核题目的学院教师列表
      *
-     * @param request 系部教师查询请求
-     * @return 待审核题目的系部教师分页数据
+     * @param request 学院教师查询请求
+     * @return 待审核题目的学院教师分页数据
      */
-    @SentinelRateLimit(resource = "query.dept.pending-teacher")
+    @SentinelRateLimit(resource = "query.college.pending-teacher")
     @SaCheckLogin
-    @SaCheckRole(value = {"dept"}, mode = SaMode.OR)
-    @PostMapping("/get/dept/teacher/by/admin")
-    public BaseResponse<Page<DeptTeacherVO>> getTeacherByAdmin(@RequestBody DeptTeacherQueryRequest request) {
+    @SaCheckRole(value = {"topic_leader"}, mode = SaMode.OR)
+    @PostMapping("/get/college/teacher/by/admin")
+    public BaseResponse<Page<TopicLeaderVO>> getTeacherByAdmin(@RequestBody TopicLeaderQueryRequest request) {
         return TheResult.success(CodeBindMessageEnums.SUCCESS, selectionReportService.getTeacherByAdmin(request));
     }
 
