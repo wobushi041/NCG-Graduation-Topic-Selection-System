@@ -1,15 +1,17 @@
 // @ts-ignore
-import { listUserByPageUsingPost, selectStudentUsingPost } from '@/services/topic-selection/userController';
+import {
+  listUserByPageUsingPost,
+  selectStudentUsingPost,
+} from '@/services/topic-selection/userController';
 import {
   getCollegeListUsingPost,
   getMajorListUsingPost,
 } from '@/services/topic-selection/organizationController';
-import { ActionType, ProColumns } from '@ant-design/pro-components';
-import { ProTable } from '@ant-design/pro-components';
+import { ActionType, PageContainer, ProColumns, ProTable } from '@ant-design/pro-components';
 import React, { useRef, useState } from 'react';
 import { message } from 'antd';
 // @ts-ignore
-import { useParams } from '@umijs/max';
+import { history, useParams } from '@umijs/max';
 
 type GithubIssueItem = {
   userAccount: string;
@@ -80,75 +82,77 @@ export default () => {
   ];
 
   return (
-    <ProTable<GithubIssueItem>
-      columns={columns}
-      actionRef={actionRef}
-      cardBordered
-      // @ts-ignore
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      request={async (params = {}, sort, filter) => {
-        try {
-          const current = params.current || 1;
-          const size = params.pageSize || 10;
-          setPageNum(current);
-          setPageSize(size);
-          const response = await listUserByPageUsingPost({
-            ...params,
-            userRole: 0,
-            // @ts-ignore
-            pageNumber: current,
-            pageSize: size,
-          });
-          const records = response?.data?.records || [];
-          const total = response?.data?.total || 0;
-          setTotal(total);
-          return {
-            data: records,
-            total: total,
-            success: true,
-          };
-        } catch (error) {
-          console.error('Error fetching data:', error);
-          return {
-            data: [],
-            total: 0,
-            success: false,
-          };
-        }
-      }}
-      editable={{
-        type: 'multiple',
-      }}
-      columnsState={{
-        persistenceKey: 'pro-table-user-demos',
-        persistenceType: 'localStorage',
-      }}
-      rowKey="userAccount"
-      search={{
-        labelWidth: 'auto',
-      }}
-      form={{
-        syncToUrl: (values, type) => {
-          if (type === 'get') {
-            return { ...values };
+    <PageContainer title="选择学生" onBack={() => history.push('/topic/teacher')}>
+      <ProTable<GithubIssueItem>
+        columns={columns}
+        actionRef={actionRef}
+        cardBordered
+        // @ts-ignore
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        request={async (params = {}, sort, filter) => {
+          try {
+            const current = params.current || 1;
+            const size = params.pageSize || 10;
+            setPageNum(current);
+            setPageSize(size);
+            const response = await listUserByPageUsingPost({
+              ...params,
+              userRole: 0,
+              // @ts-ignore
+              pageNumber: current,
+              pageSize: size,
+            });
+            const records = response?.data?.records || [];
+            const total = response?.data?.total || 0;
+            setTotal(total);
+            return {
+              data: records,
+              total: total,
+              success: true,
+            };
+          } catch (error) {
+            console.error('Error fetching data:', error);
+            return {
+              data: [],
+              total: 0,
+              success: false,
+            };
           }
-          return values;
-        },
-      }}
-      pagination={{
-        current: pageNum,
-        pageSize: pageSize,
-        total: total,
-        showSizeChanger: true,
-        pageSizeOptions: ['10', '20', '50', '100'],
-        onChange: (page, size) => {
-          setPageNum(page);
-          setPageSize(size);
-        },
-      }}
-      dateFormatter="string"
-      headerTitle="学生列表"
-      toolBarRender={() => []}
-    />
+        }}
+        editable={{
+          type: 'multiple',
+        }}
+        columnsState={{
+          persistenceKey: 'pro-table-user-demos',
+          persistenceType: 'localStorage',
+        }}
+        rowKey="userAccount"
+        search={{
+          labelWidth: 'auto',
+        }}
+        form={{
+          syncToUrl: (values, type) => {
+            if (type === 'get') {
+              return { ...values };
+            }
+            return values;
+          },
+        }}
+        pagination={{
+          current: pageNum,
+          pageSize: pageSize,
+          total: total,
+          showSizeChanger: true,
+          pageSizeOptions: ['10', '20', '50', '100'],
+          onChange: (page, size) => {
+            setPageNum(page);
+            setPageSize(size);
+          },
+        }}
+        dateFormatter="string"
+        headerTitle="学生列表"
+        toolBarRender={() => []}
+      />
+    </PageContainer>
   );
 };

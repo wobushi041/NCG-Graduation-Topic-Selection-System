@@ -2,15 +2,15 @@
  * 放弃使用这个页面以优化弹窗避免分页刷新问题...
  */
 
-import { ProColumns } from '@ant-design/pro-components';
-import { ProTable } from '@ant-design/pro-components';
+import { PageContainer, ProColumns, ProTable } from '@ant-design/pro-components';
 import { message } from 'antd';
-import React from "react";
+import React from 'react';
 import {
-  getTopicListUsingPost, preSelectTopicByIdUsingPost,
-} from "@/services/topic-selection/userController";
-import { useParams } from '@umijs/max';
-import useIsMobile, {useTableScroll} from '@/utils/useIsMobile';
+  getTopicListUsingPost,
+  preSelectTopicByIdUsingPost,
+} from '@/services/topic-selection/userController';
+import { history, useParams } from '@umijs/max';
+import useIsMobile, { useTableScroll } from '@/utils/useIsMobile';
 
 export type TableListItem = {
   id: number;
@@ -98,39 +98,41 @@ const TopicTable: React.FC = () => {
   const tableScroll = useTableScroll(1300);
 
   return (
-    <ProTable<TableListItem>
-      columns={buildColumns(isMobile)}
-      //@ts-ignore
-      request={async (params = {}, sort, filter) => {
-        console.log(sort, filter, params);
-        try {
-          const paramsWithFormName = { ...params, status: 1, teacherName: teacherName };
-          const response = await getTopicListUsingPost(paramsWithFormName);
-          return {
-            //@ts-ignore
-            data: response.data.records,
-            //@ts-ignore
-            total: response.data.total, // 确保包含 total 字段
-          };
-        } catch (error) {
-          console.error('Error fetching data:', error);
-          return {
-            data: [],
-            total: 0,
-          };
-        }
-      }}
-      scroll={tableScroll}
-      options={false}
-      search={{
-        labelWidth: 'auto',
-      }}
-      pagination={{
-        pageSize: 30,
-      }}
-      rowKey="id" // 确保使用唯一标识符
-      headerTitle="题目"
-    />
+    <PageContainer title="教师题目列表" onBack={() => history.push('/select/student/select')}>
+      <ProTable<TableListItem>
+        columns={buildColumns(isMobile)}
+        //@ts-ignore
+        request={async (params = {}, sort, filter) => {
+          console.log(sort, filter, params);
+          try {
+            const paramsWithFormName = { ...params, status: 1, teacherName: teacherName };
+            const response = await getTopicListUsingPost(paramsWithFormName);
+            return {
+              //@ts-ignore
+              data: response.data.records,
+              //@ts-ignore
+              total: response.data.total, // 确保包含 total 字段
+            };
+          } catch (error) {
+            console.error('Error fetching data:', error);
+            return {
+              data: [],
+              total: 0,
+            };
+          }
+        }}
+        scroll={tableScroll}
+        options={false}
+        search={{
+          labelWidth: 'auto',
+        }}
+        pagination={{
+          pageSize: 30,
+        }}
+        rowKey="id" // 确保使用唯一标识符
+        headerTitle="题目"
+      />
+    </PageContainer>
   );
 };
 

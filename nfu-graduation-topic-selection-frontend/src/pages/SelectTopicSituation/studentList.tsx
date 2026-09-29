@@ -1,9 +1,9 @@
 import { getUnSelectTopicStudentListUsingPost } from '@/services/topic-selection/userController';
-import { ActionType, ProColumns, ProTable } from '@ant-design/pro-components';
+import { ActionType, PageContainer, ProColumns, ProTable } from '@ant-design/pro-components';
 import React, { useRef } from 'react';
-import { useNavigate } from '@umijs/max';
-import { Button } from "antd";
-import { getUnSelectTopicStudentListCsvUsingPost } from "@/services/topic-selection/fileController";
+import { history, useModel, useNavigate } from '@umijs/max';
+import { Button } from 'antd';
+import { getUnSelectTopicStudentListCsvUsingPost } from '@/services/topic-selection/fileController';
 
 type GithubIssueItem = {
   userAccount: string;
@@ -14,7 +14,12 @@ type GithubIssueItem = {
 
 export default () => {
   const navigate = useNavigate();
+  const { initialState } = useModel('@@initialState');
   const actionRef = useRef<ActionType>();
+  const backPath =
+    initialState?.currentUser?.userRole === 2
+      ? '/topic/view/SelectTopicSituationToCollege'
+      : '/topic/view/SelectTopicSituation';
 
   const columns: ProColumns<GithubIssueItem>[] = [
     {
@@ -76,68 +81,70 @@ export default () => {
   };
 
   return (
-    <ProTable<GithubIssueItem>
-      columns={columns}
-      actionRef={actionRef}
-      cardBordered
-      // @ts-ignore
-      request={async (params = {}, sort, filter) => {
-        console.log(sort, filter, params);
-        try {
-          const { current, pageSize } = params;
-          const response = await getUnSelectTopicStudentListUsingPost({
-            pageNumber: current,
-            pageSize,
-          });
-          //@ts-ignore
-          const { data, total } = response;
-          return {
-            data: data,
-            total: total,
-            success: true,
-          };
-        } catch (error) {
-          console.error('Error fetching data:', error);
-          return {
-            data: [],
-            total: 0,
-            success: false,
-          };
-        }
-      }}
-      editable={{
-        type: 'multiple',
-      }}
-      columnsState={{
-        persistenceKey: 'pro-table-singe-demos',
-        persistenceType: 'localStorage',
-      }}
-      rowKey="id"
-      search={{
-        labelWidth: 'auto',
-      }}
-      form={{
-        syncToUrl: (values, type) => {
-          if (type === 'get') {
+    <PageContainer title="未选题学生列表" onBack={() => history.push(backPath)}>
+      <ProTable<GithubIssueItem>
+        columns={columns}
+        actionRef={actionRef}
+        cardBordered
+        // @ts-ignore
+        request={async (params = {}, sort, filter) => {
+          console.log(sort, filter, params);
+          try {
+            const { current, pageSize } = params;
+            const response = await getUnSelectTopicStudentListUsingPost({
+              pageNumber: current,
+              pageSize,
+            });
+            //@ts-ignore
+            const { data, total } = response;
             return {
-              ...values,
+              data: data,
+              total: total,
+              success: true,
+            };
+          } catch (error) {
+            console.error('Error fetching data:', error);
+            return {
+              data: [],
+              total: 0,
+              success: false,
             };
           }
-          return values;
-        },
-      }}
-      pagination={{
-        pageSize: 5,
-        total: 0, // 默认总数为 0
-      }}
-      dateFormatter="string"
-      headerTitle="学生"
-      toolBarRender={() => [
-        // eslint-disable-next-line react/jsx-key
-        <Button type="primary" size="large" onClick={exportUnselectedStudents}>
-          导出名单
-        </Button>,
-      ]}
-    />
+        }}
+        editable={{
+          type: 'multiple',
+        }}
+        columnsState={{
+          persistenceKey: 'pro-table-singe-demos',
+          persistenceType: 'localStorage',
+        }}
+        rowKey="id"
+        search={{
+          labelWidth: 'auto',
+        }}
+        form={{
+          syncToUrl: (values, type) => {
+            if (type === 'get') {
+              return {
+                ...values,
+              };
+            }
+            return values;
+          },
+        }}
+        pagination={{
+          pageSize: 5,
+          total: 0, // 默认总数为 0
+        }}
+        dateFormatter="string"
+        headerTitle="学生"
+        toolBarRender={() => [
+          // eslint-disable-next-line react/jsx-key
+          <Button type="primary" size="large" onClick={exportUnselectedStudents}>
+            导出名单
+          </Button>,
+        ]}
+      />
+    </PageContainer>
   );
 };

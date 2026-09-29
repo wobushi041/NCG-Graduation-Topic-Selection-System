@@ -1,12 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Card, Typography, Spin, Alert, Button } from 'antd';
+import { Alert, Card, Spin, Table } from 'antd';
 import type { TableColumnsType } from 'antd';
 import { history } from '@umijs/max';
 import { getTopicListUsingPost } from '@/services/topic-selection/userController';
-import { ArrowLeftOutlined } from '@ant-design/icons';
 import useIsMobile from '@/utils/useIsMobile';
+import { PageContainer } from '@ant-design/pro-components';
 
-const { Title } = Typography;
+const handleBack = () => {
+  if (window.opener && !window.opener.closed) {
+    window.close();
+    return;
+  }
+  history.push('/select/student/select');
+};
 
 // 格式化时间显示
 const formatDateTime = (dateString?: string) => {
@@ -18,7 +24,7 @@ const formatDateTime = (dateString?: string) => {
       month: '2-digit',
       day: '2-digit',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   } catch (e) {
     return '-';
@@ -32,13 +38,13 @@ const getRemainingHours = (endTime?: string) => {
     const end = new Date(endTime);
     const now = new Date();
     const diffTime = end.getTime() - now.getTime();
-    
+
     if (diffTime < 0) {
       return <span style={{ color: '#ff4d4f' }}>已结束</span>;
     }
-    
+
     const diffHours = Math.ceil(diffTime / (1000 * 60 * 60));
-    
+
     if (diffHours < 1) {
       return <span style={{ color: '#faad14' }}>即将截止</span>;
     } else {
@@ -54,7 +60,7 @@ const ViewTeacherTopics: React.FC = () => {
   const [topics, setTopics] = useState<API.Topic[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [teacherName, setTeacherName] = useState<string>('');
-  
+
   // 从本地存储获取教师姓名
   useEffect(() => {
     const storedTeacherName = localStorage.getItem('selectedTeacherForView');
@@ -69,7 +75,7 @@ const ViewTeacherTopics: React.FC = () => {
   // 获取题目数据
   const fetchTopics = async () => {
     if (!teacherName) return;
-    
+
     setLoading(true);
     setError(null);
     try {
@@ -77,12 +83,11 @@ const ViewTeacherTopics: React.FC = () => {
         status: 0,
         teacherName: teacherName,
       });
-      
+
       if (response.code === 0) {
         // 确保只显示当前教师的题目
-        const filteredTopics = response.data?.records?.filter(
-          item => item.teacherName === teacherName
-        ) || [];
+        const filteredTopics =
+          response.data?.records?.filter((item) => item.teacherName === teacherName) || [];
         setTopics(filteredTopics);
       } else {
         setError(response.message || '获取题目数据失败');
@@ -134,17 +139,23 @@ const ViewTeacherTopics: React.FC = () => {
       key: 'surplusQuantity',
       width: 100,
       sorter: (a, b) => {
-        if (typeof a.surplusQuantity !== 'number' || typeof b.surplusQuantity !== 'number') return 0;
+        if (typeof a.surplusQuantity !== 'number' || typeof b.surplusQuantity !== 'number')
+          return 0;
         return a.surplusQuantity - b.surplusQuantity;
       },
-      render: (text?: number) => typeof text !== 'number' ? '-' : (
-        <span style={{ 
-          color: text === 0 ? '#ff4d4f' : '#52c41a',
-          fontWeight: text === 0 ? 'bold' : 'normal'
-        }}>
-          {text}
-        </span>
-      )
+      render: (text?: number) =>
+        typeof text !== 'number' ? (
+          '-'
+        ) : (
+          <span
+            style={{
+              color: text === 0 ? '#ff4d4f' : '#52c41a',
+              fontWeight: text === 0 ? 'bold' : 'normal',
+            }}
+          >
+            {text}
+          </span>
+        ),
     },
     {
       title: '预选数量',
@@ -173,7 +184,7 @@ const ViewTeacherTopics: React.FC = () => {
       dataIndex: 'startTime',
       key: 'startTime',
       width: 160,
-      render: (text: string) => formatDateTime(text)
+      render: (text: string) => formatDateTime(text),
     },
     {
       title: '结束时间',
@@ -185,7 +196,7 @@ const ViewTeacherTopics: React.FC = () => {
           <div>{formatDateTime(text)}</div>
           <div>{getRemainingHours(text)}</div>
         </div>
-      )
+      ),
     },
   ];
   const columns: TableColumnsType<API.Topic> = baseColumns
@@ -193,47 +204,32 @@ const ViewTeacherTopics: React.FC = () => {
     .map((c) => (isMobile ? { ...c, fixed: undefined } : c));
 
   return (
-    <div style={{ 
-      padding: '16px', 
-      backgroundColor: '#f0f2f5', 
-      minHeight: '100vh'
-    }}>
-      <Card 
-        style={{ 
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          borderRadius: '4px',
-          border: '1px solid #e8e8e8'
+    <PageContainer title={'教师 ' + teacherName + ' 的题目列表'} onBack={handleBack}>
+      <div
+        style={{
+          padding: '16px',
+          backgroundColor: '#f0f2f5',
+          minHeight: '100vh',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
-          <Button 
-            type="primary" 
-            icon={<ArrowLeftOutlined />} 
-            onClick={() => window.close()}
-            style={{ marginRight: '16px' }}
-          >
-            返回
-          </Button>
-          <Title level={3} style={{ 
-            textAlign: 'center', 
-            marginBottom: 0, 
-            color: '#1890ff',
-            flex: 1
-          }}>
-            教师 {teacherName} 的题目列表
-          </Title>
-        </div>
-        
+        <Card
+          style={{
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            borderRadius: '4px',
+            border: '1px solid #e8e8e8',
+          }}
+        >
+
         {error && (
-          <Alert 
-            message="错误" 
-            description={error} 
-            type="error" 
-            showIcon 
+          <Alert
+            message="错误"
+            description={error}
+            type="error"
+            showIcon
             style={{ marginBottom: '16px' }}
           />
         )}
-        
+
         <Spin spinning={loading} size="large">
           <Table<API.Topic>
             dataSource={topics}
@@ -246,15 +242,16 @@ const ViewTeacherTopics: React.FC = () => {
               pageSizeOptions: ['10', '20', '30', '50'],
               showQuickJumper: true,
               showTotal: (total) => `共 ${total} 条记录`,
-              size: 'default'
+              size: 'default',
             }}
             sticky
             size="small"
             bordered
           />
         </Spin>
-      </Card>
-    </div>
+        </Card>
+      </div>
+    </PageContainer>
   );
 };
 

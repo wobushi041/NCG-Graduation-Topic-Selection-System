@@ -1,10 +1,12 @@
-import { ProColumns } from '@ant-design/pro-components';
-import { ProTable } from '@ant-design/pro-components';
-import React from "react";
-import { getTopicListByAdminUsingPost, selectStudentUsingPost } from "@/services/topic-selection/userController";
-import { message } from "antd";
-import { useParams } from '@umijs/max';
-import useIsMobile, {useTableScroll} from '@/utils/useIsMobile';
+import { PageContainer, ProColumns, ProTable } from '@ant-design/pro-components';
+import React from 'react';
+import {
+  getTopicListByAdminUsingPost,
+  selectStudentUsingPost,
+} from '@/services/topic-selection/userController';
+import { message } from 'antd';
+import { history, useParams } from '@umijs/max';
+import useIsMobile, { useTableScroll } from '@/utils/useIsMobile';
 
 export type TableListItem = {
   id: number;
@@ -107,21 +109,26 @@ const TopicSelectionTable: React.FC = () => {
   };
 
   return (
-    <ProTable<TableListItem>
-      columns={columns}
-      // @ts-ignore
-      request={fetchTopics}
-      scroll={tableScroll}
-      options={false}
-      search={{
-        labelWidth: 'auto',
-      }}
-      pagination={{
-        pageSize: 30,
-      }}
-      rowKey="id"
-      headerTitle="选择题目"
-    />
+    <PageContainer
+      title="为学生选择题目"
+      onBack={() => history.push('/topic/view/SelectTopicSituation/student')}
+    >
+      <ProTable<TableListItem>
+        columns={columns}
+        // @ts-ignore
+        request={fetchTopics}
+        scroll={tableScroll}
+        options={false}
+        search={{
+          labelWidth: 'auto',
+        }}
+        pagination={{
+          pageSize: 30,
+        }}
+        rowKey="id"
+        headerTitle="选择题目"
+      />
+    </PageContainer>
   );
 };
 

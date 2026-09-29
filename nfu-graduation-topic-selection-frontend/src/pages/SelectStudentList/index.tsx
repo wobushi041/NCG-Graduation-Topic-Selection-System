@@ -1,13 +1,13 @@
 import {
-  getSelectTopicByIdUsingPost, withdrawUsingPost,
+  getSelectTopicByIdUsingPost,
+  withdrawUsingPost,
 } from '@/services/topic-selection/userController';
-import {ActionType, ProColumns} from '@ant-design/pro-components';
-import { ProTable } from '@ant-design/pro-components';
+import { ActionType, PageContainer, ProColumns, ProTable } from '@ant-design/pro-components';
 import React, { useRef } from 'react';
-import {Button, Dropdown, message, Modal} from "antd";
-import {EllipsisOutlined} from "@ant-design/icons";
+import { Button, Dropdown, message, Modal } from 'antd';
+import { EllipsisOutlined } from '@ant-design/icons';
 // @ts-ignore
-import { useParams } from "@umijs/max"
+import { history, useParams } from '@umijs/max';
 
 type GithubIssueItem = {
   userAccount: string;
@@ -17,7 +17,7 @@ type GithubIssueItem = {
 
 export default () => {
   const actionRef = useRef<ActionType>();
-  const {id } = useParams();
+  const { id } = useParams();
 
   const columns: ProColumns<GithubIssueItem>[] = [
     {
@@ -33,12 +33,10 @@ export default () => {
     {
       title: '名字',
       dataIndex: 'userName',
-
     },
     {
       title: '学院',
       dataIndex: 'college',
-
     },
     {
       title: '专业',
@@ -48,7 +46,7 @@ export default () => {
       title: '操作',
       valueType: 'option',
       key: 'option',
-      render: (text, record, _,action) => [
+      render: (text, record, _, action) => [
         <a
           key="withdraw"
           onClick={() => {
@@ -63,11 +61,11 @@ export default () => {
                   const res = await withdrawUsingPost({
                     id: Number(id),
                     userAccount: record.userAccount,
-                  })
+                  });
                   if (res.code === 0) {
-                    message.success(res.message)
+                    message.success(res.message);
                   } else {
-                    message.error(res.message)
+                    message.error(res.message);
                   }
                   action?.reload();
                 } catch (error) {
@@ -83,80 +81,82 @@ export default () => {
     },
   ];
   return (
-    <ProTable<GithubIssueItem>
-      columns={columns}
-      actionRef={actionRef}
-      cardBordered
-      // @ts-ignore
-      request={async (params = {}, sort, filter) => {
-        console.log(sort, filter, params);
-        try {
-          const values={...params,id:id}
-          // @ts-ignore
-          const response = await getSelectTopicByIdUsingPost(values);
-          return {
+    <PageContainer title="查看已选学生" onBack={() => history.push('/topic/view/topic')}>
+      <ProTable<GithubIssueItem>
+        columns={columns}
+        actionRef={actionRef}
+        cardBordered
+        // @ts-ignore
+        request={async (params = {}, sort, filter) => {
+          console.log(sort, filter, params);
+          try {
+            const values = { ...params, id: id };
             // @ts-ignore
-            data: response.data
-          };
-        } catch (error) {
-          console.error('Error fetching data:', error);
-          return {
-            data: [],
-            total: 0,
-          };
-        }
-      }}
-      editable={{
-        type: 'multiple',
-      }}
-      columnsState={{
-        persistenceKey: 'pro-table-singe-demos',
-        persistenceType: 'localStorage',
-      }}
-      rowKey="id"
-      search={{
-        labelWidth: 'auto',
-      }}
-      form={{
-        syncToUrl: (values, type) => {
-          if (type === 'get') {
+            const response = await getSelectTopicByIdUsingPost(values);
             return {
-              ...values,
+              // @ts-ignore
+              data: response.data,
+            };
+          } catch (error) {
+            console.error('Error fetching data:', error);
+            return {
+              data: [],
+              total: 0,
             };
           }
-          return values;
-        },
-      }}
-      pagination={{
-        pageSize: 5,
-      }}
-      dateFormatter="string"
-      headerTitle="学生账号"
-      toolBarRender={() => [
-        <Dropdown
-          key="menu"
-          menu={{
-            items: [
-              {
-                label: '1st item',
-                key: '1',
-              },
-              {
-                label: '2nd item',
-                key: '1',
-              },
-              {
-                label: '3rd item',
-                key: '1',
-              },
-            ],
-          }}
-        >
-          <Button>
-            <EllipsisOutlined/>
-          </Button>
-        </Dropdown>,
-      ]}
-    />
+        }}
+        editable={{
+          type: 'multiple',
+        }}
+        columnsState={{
+          persistenceKey: 'pro-table-singe-demos',
+          persistenceType: 'localStorage',
+        }}
+        rowKey="id"
+        search={{
+          labelWidth: 'auto',
+        }}
+        form={{
+          syncToUrl: (values, type) => {
+            if (type === 'get') {
+              return {
+                ...values,
+              };
+            }
+            return values;
+          },
+        }}
+        pagination={{
+          pageSize: 5,
+        }}
+        dateFormatter="string"
+        headerTitle="学生账号"
+        toolBarRender={() => [
+          <Dropdown
+            key="menu"
+            menu={{
+              items: [
+                {
+                  label: '1st item',
+                  key: '1',
+                },
+                {
+                  label: '2nd item',
+                  key: '1',
+                },
+                {
+                  label: '3rd item',
+                  key: '1',
+                },
+              ],
+            }}
+          >
+            <Button>
+              <EllipsisOutlined />
+            </Button>
+          </Dropdown>,
+        ]}
+      />
+    </PageContainer>
   );
 };
