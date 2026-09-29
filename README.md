@@ -26,7 +26,7 @@
 
 ## 项目简介
 
-**广州南方学院毕设选题管理系统**（**NCG Graduation Topic Selection System**，简称 **NCG Topic Selection**）是一套面向高校院系场景的 Web 管理系统，采用前后端分离与 Maven 多模块架构，为学生、教师、专业负责人和系统管理员提供不同的业务工作台。
+**广州南方学院毕设选题管理系统**（**NCG Graduation Topic Selection System**，简称 **NCG Topic Selection**）是一套面向高校学院场景的 Web 管理系统，采用前后端分离与 Maven 多模块架构，为学生、教师、选题负责人和系统管理员提供不同的业务工作台。
 
 系统重点解决以下问题：
 
