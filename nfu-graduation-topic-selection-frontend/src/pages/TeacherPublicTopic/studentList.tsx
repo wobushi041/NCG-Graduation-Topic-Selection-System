@@ -1,5 +1,9 @@
 // @ts-ignore
 import { listUserByPageUsingPost, selectStudentUsingPost } from '@/services/topic-selection/userController';
+import {
+  getCollegeListUsingPost,
+  getMajorListUsingPost,
+} from '@/services/topic-selection/organizationController';
 import { ActionType, ProColumns } from '@ant-design/pro-components';
 import { ProTable } from '@ant-design/pro-components';
 import React, { useRef, useState } from 'react';
@@ -10,8 +14,8 @@ import { useParams } from '@umijs/max';
 type GithubIssueItem = {
   userAccount: string;
   userName: string;
-  college: string;
-  major: string;
+  collegeId: number;
+  majorId: number;
 };
 
 export default () => {
@@ -21,6 +25,9 @@ export default () => {
   const [pageNum, setPageNum] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
+  const loadColleges = async () => (await getCollegeListUsingPost({})).data || [];
+  const loadMajors = async () =>
+    (await getMajorListUsingPost({ current: 1, pageSize: 100 })).data || [];
 
   const columns: ProColumns<GithubIssueItem>[] = [
     {
@@ -39,11 +46,15 @@ export default () => {
     },
     {
       title: '学院',
-      dataIndex: 'college',
+      dataIndex: 'collegeId',
+      valueType: 'select',
+      request: loadColleges,
     },
     {
       title: '专业',
-      dataIndex: 'major',
+      dataIndex: 'majorId',
+      valueType: 'select',
+      request: loadMajors,
     },
     {
       title: '操作',
