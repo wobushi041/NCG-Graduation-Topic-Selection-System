@@ -1,8 +1,7 @@
 import {PageContainer} from '@ant-design/pro-components';
 import {useModel} from '@umijs/max';
-import {Card, Carousel, Collapse, Divider, Image, Tabs, theme, Typography} from 'antd';
+import {Card, Carousel, Collapse, Divider, Tabs, theme, Typography} from 'antd';
 import React from 'react';
-import WarningNotification from "@/components/WarningNotification";
 import {Toc} from "@/pages/Toc";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 
@@ -92,13 +91,8 @@ const Welcome: React.FC = () => {
   const {token} = theme.useToken();
   const {initialState} = useModel('@@initialState');
   return (
-    <PageContainer>
-      <WarningNotification/>
-      <div style={{
-        height: 'calc(100vh - 120px)',
-        overflowY: 'auto',
-        paddingRight: 12
-      }}>
+    <PageContainer title={false}>
+      <div>
         <Card
           style={{
             borderRadius: 8,
@@ -139,34 +133,29 @@ const Welcome: React.FC = () => {
               <InfoCard
                 index={1}
                 href="https://www.nfu.edu.cn/"
-                title="了解 广州南方学院学校"
-                desc="广州南方学院（原中山大学南方学院）是 2006 年经教育部批准设立的综合性应用型普通本科高等学校，一直致力于建设国内特色..."
+                title="了解广州南方学院"
+                desc="广州南方学院（原中山大学南方学院）是经教育部批准设立的综合性应用型普通本科高校，致力于培养具有创新精神和实践能力的高素质人才。"
               />
               <InfoCard
                 index={2}
-                title="了解 工学院"
+                title="了解工学院"
                 href="https://sece.nfu.edu.cn/"
-                desc="工学院，其前身为电子通信与软件工程系，始建于2006年，是广州南方学院（原中山大学南方学院）唯一的理工学院..."
+                desc="工学院前身为电子通信与软件工程系，始建于 2006 年，承担电子信息、计算机与软件工程等领域的人才培养工作。"
               />
               <InfoCard
                 index={3}
                 title="查看项目源码"
                 href="https://github.com/Lq0412/nfu-graduation-topic-selection"
-                desc="本仓库用于整理和继续维护广州南方学院毕设选题管理系统，包含本地运行说明、公开数据库结构与后续待办。"
+                desc="项目仓库包含系统源码、本地运行说明、数据库结构及维护记录，可用于了解系统实现与后续建设计划。"
               />
             </div>
           </div>
           <Divider/>
           <Typography>
-            <Title level={2}>1.使用环境?</Title>
-            <Paragraph>理论上本站在任意浏览器都可以正常运行，但是在一些老版本的浏览器中可能会有兼容性问题，界面会产生退化，请尽可能使用最新的 <Text
-              code>Chrome</Text> 或 <Text code>Edge</Text> 浏览器（避免使用 <Text
-              code>360</Text> 等浏览器），正常的主页图片如下，如果您访问的主页和图片不一致，请更换浏览器。</Paragraph>
-            <Image src="./home.png" style={{width: '100%', borderRadius: 8}}/>
-            <Title level={2}>2.如何使用?</Title>
+            <Title level={2}>使用指南</Title>
             <Tabs defaultActiveKey="1">
               <Tabs.TabPane tab="学生使用手册" key="1">
-                <Paragraph>学生的操作流程：</Paragraph>
+                <Paragraph>学生操作流程：</Paragraph>
                 <Paragraph>
                   <Text strong>
                     <ul>
@@ -183,17 +172,16 @@ const Welcome: React.FC = () => {
                   </Text>
                 </Paragraph>
                 <Paragraph>
-                  学生应当 <Text underline>在学生单选模式时</Text>，预选自己心仪的 <Text
-                  code>毕业设计题目（后续简称“题目”）</Text>。而 <Text
-                  underline>在题目开放后</Text> 可以预选题目（最多预选 10
-                  条）。当教师单选环节结束后，学生才能开始抢夺题目，每个学生只能选择一个题目，并且成功之后无法再次预选题目（除非取消已经提交的题目）。
+                  学生可先浏览教师发布的 <Text code>毕业设计题目（以下简称“题目”）</Text>，并根据个人意向进行预选。
+                  <Text underline>题目开放后</Text>，每名学生最多可预选 10 个题目；进入学生选题阶段后，需从可选题目中确认并提交一个最终题目。
+                  提交成功后如需变更，请先按系统规则取消已提交题目，或联系指导教师协助处理。
                 </Paragraph>
                 <Paragraph>
-                  本系统 <Text mark>提供退选题目的功能，但请慎重使用</Text>。若您发现无法取消当前已提交的题目，则需要联系题目所对应导师进行退选处理。
+                  本系统 <Text mark>支持在允许的阶段退选，请谨慎操作</Text>。若退选入口不可用或无法取消已提交题目，请联系对应指导教师处理。
                 </Paragraph>
                 <Paragraph>
-                  抢题过程中，请不要过分使用某些连点器工具来使用本系统，<Text
-                  style={{color: 'red'}}>一旦被系统检测到账号异常行为将会进行临时封号</Text>，严重将导致影响您的选题安排。
+                  选题过程中请勿使用连点器、自动刷新脚本等工具。<Text
+                  style={{color: 'red'}}>系统检测到异常请求后可能临时限制账号访问</Text>，并影响正常选题安排。
                 </Paragraph>
                 <Paragraph>
                   <Collapse
@@ -267,7 +255,7 @@ const Welcome: React.FC = () => {
                 </Paragraph>
               </Tabs.TabPane>
               <Tabs.TabPane tab="教师使用手册" key="2">
-                <Paragraph>教师的操作流程：</Paragraph>
+                <Paragraph>教师操作流程：</Paragraph>
                 <Paragraph>
                   <Text strong>
                     <ul>
@@ -284,16 +272,15 @@ const Welcome: React.FC = () => {
                   </Text>
                 </Paragraph>
                 <Paragraph>
-                  教师应当 <Text underline>在教师单选模式时</Text>，预先提交所出的 <Text
-                  code>毕业设计题目（后续简称“题目”）</Text>。不同教师的出题上限不同，而且 <Text
-                  underline>在题目开放后</Text> 可以提起选择题目所对应的学生。当教师单选模式环节结束后，学生才能开始抢夺题目。
+                  教师应在规定时间内提交 <Text code>毕业设计题目（以下简称“题目”）</Text>，并及时关注审核状态。
+                  不同教师的出题数量上限以系统配置为准；<Text underline>题目开放后</Text>，可根据选题规则查看并选择符合条件的学生。
                 </Paragraph>
                 <Paragraph>
-                  本系统 <Text mark>提供退选题目的功能，但请慎重使用</Text>。若您发现无法对某个学生进行退选，则需要联系管理员进行处理。
+                  本系统 <Text mark>支持在允许的阶段协助学生退选，请谨慎操作</Text>。若退选功能不可用，请联系选题负责人或系统管理员处理。
                 </Paragraph>
                 <Paragraph>
-                  出题过程中，可以考虑使用 <Text code>AI</Text> 检测工具来查验本题目是否和近三年的题目相同，<Text
-                  style={{color: 'red'}}>请谨慎使用，每位教师一天最多使用 30 次 AI 校验工具</Text>，请珍惜使用。
+                  发布题目前可使用 <Text code>AI</Text> 校验工具辅助检查题目与近三年题目的相似情况，结果仅供参考。<Text
+                  style={{color: 'red'}}>每位教师每日最多使用 30 次，请合理安排使用次数。</Text>
                 </Paragraph>
                 <Paragraph>
                   <Collapse
@@ -407,7 +394,7 @@ const Welcome: React.FC = () => {
                 </Paragraph>
               </Tabs.TabPane>
               <Tabs.TabPane tab="选题负责人使用手册" key="3">
-                <Paragraph>选题负责人的操作流程：</Paragraph>
+                <Paragraph>选题负责人操作流程：</Paragraph>
                 <Paragraph>
                   <Text strong>
                     <ul>
@@ -424,23 +411,23 @@ const Welcome: React.FC = () => {
                   </Text>
                 </Paragraph>
                 <Paragraph>
-                  选题负责人应当 <Text underline>在开启双选之前</Text>，审核本选题组提交的所有 <Text
-                  code>毕业设计题目（后续简称“题目”）</Text>。教师所出的题目如果被打回，后续再次修改后可以重新提交审核。
+                  选题负责人应在 <Text underline>双选开始前</Text> 完成本选题组所有 <Text
+                  code>毕业设计题目（以下简称“题目”）</Text> 的审核。被打回的题目可由教师根据意见修改后重新提交。
                 </Paragraph>
                 <Paragraph>
-                  本系统 <Text mark>提供选题负责人切换角色的特殊功能（满足选题负责人也可以出题的条件），但使用有一些条件</Text>。若右上角下拉菜单里<Text underline>看不到「切换身份」入口</Text>，说明两个账号尚未完成邮箱绑定与配对，需要联系管理员按下列步骤处理。
+                  本系统支持选题负责人在满足条件时切换为教师身份进行出题。若右上角菜单中<Text underline>未显示“切换身份”入口</Text>，说明选题负责人账号与教师账号尚未完成绑定，请联系管理员并按以下步骤检查。
                 </Paragraph>
                 <Paragraph>
                   <ol>
                     <li>
-                      使用选题负责人帐号登录系统，在初始化帐号的时候，修改密码、绑定邮箱
+                      使用选题负责人账号登录系统，完成初始密码修改并绑定邮箱。
                     </li>
                     <li>
-                      使用另外一个管理员提供的教师帐号登录系统，<Text
-                      style={{color: 'red'}}>确保与选题负责人帐号同名、同学院，并绑定相同邮箱；两个帐号无需使用相同密码</Text>，否则将无法切换角色
+                      使用管理员提供的教师账号登录系统，<Text
+                      style={{color: 'red'}}>确保两个账号姓名、学院一致，并绑定相同邮箱；密码无需保持一致。</Text>
                     </li>
                     <li>
-                      然后就可以在对应的选题负责人帐号或教师帐号中来回切换登陆（偶尔因为浏览器缓存的缘故需要刷新浏览器才生效，实在无法解决找管理员）
+                      绑定完成后，可通过右上角菜单切换身份；若入口暂未出现，请刷新页面，仍无法使用时联系管理员。
                     </li>
                   </ol>
                 </Paragraph>
@@ -507,7 +494,7 @@ const Welcome: React.FC = () => {
                               color: '#555',
                               fontSize: 14,
                             }}>
-                              4. 左下角（或右上角）可以选择退出登陆，也可以选择切换角色，方便选题负责人可以作为教师出题
+                              4. 可通过右上角账号菜单退出登录或切换身份，选题负责人切换为教师后即可进行出题
                             </div>
                           </div>
                         </Carousel>
@@ -517,23 +504,23 @@ const Welcome: React.FC = () => {
                 </Paragraph>
               </Tabs.TabPane>
             </Tabs>
-            <Title level={2}>3.遇到问题?</Title>
+            <Title level={2}>常见问题</Title>
             <Paragraph>
               <ul>
                 <li>
-                  无法访问？部分运营商可能在某些地区网络搭建有问题，导致无法访问本站，尝试切换不同运营商（比如移动、联通、电信等）进行访问。
+                  无法访问？部分地区的网络线路可能存在临时异常，可尝试刷新页面、切换网络或稍后重试。
                 </li>
                 <li>
-                  没有帐号？先联系老师询问情况，再由管理员创建帐号。
+                  没有账号？请先联系所在院系教师确认，再由系统管理员创建账号。
                 </li>
                 <li>
-                  被封号了？系统在检测到恶意流量时会对帐号进行封禁，一般在一定时间后会自动接触。
+                  账号受限？系统检测到异常请求时可能临时限制访问，请停止频繁操作并等待自动解除；长时间未恢复时请联系管理员。
                 </li>
                 <li>
-                  使用疑问？请先查看上述使用手册，以及学校的通知文件，或者联系管理员。
+                  操作不清楚？请先查看对应身份的使用手册和学校通知，仍有疑问时联系指导教师、选题负责人或管理员。
                 </li>
               </ul>
-              如果您在使用过程中遇到问题，请先查看使用手册；仍无法解决时，请联系当前系统管理员或所在院系负责老师。
+              如问题仍未解决，请记录出现问题的页面、操作步骤和提示信息，便于相关人员快速定位处理。
             </Paragraph>
           </Typography>
         </Card>

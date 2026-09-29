@@ -6,8 +6,7 @@
  * 布局组件
  */
 import Footer from './Footer';
-import { Question } from './RightContent';
 import { AvatarDropdown, AvatarName } from './RightContent/AvatarDropdown';
 import CollegeCrossTopicConfig from './CollegeCrossTopicConfig';
 
-export { AvatarDropdown, AvatarName, Footer, Question, CollegeCrossTopicConfig };
+export { AvatarDropdown, AvatarName, Footer, CollegeCrossTopicConfig };

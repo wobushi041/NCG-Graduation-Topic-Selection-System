@@ -1,4 +1,5 @@
 import {Footer} from '@/components';
+import showWarningNotification from '@/components/WarningNotification';
 import {getLoginUserUsingGet} from '@/services/topic-selection/userController';
 import {login, LoginRequest} from '@/services/topic-selection/authController';
 import {LockOutlined, UserOutlined} from '@ant-design/icons';
@@ -187,6 +188,7 @@ const Login: React.FC = () => {
         }
         const urlParams = new URL(window.location.href).searchParams;
         history.push(resolveSafeRedirect(urlParams.get('redirect'), loginUser.userRole));
+        showWarningNotification();
         return;
       }
     } catch (error) {

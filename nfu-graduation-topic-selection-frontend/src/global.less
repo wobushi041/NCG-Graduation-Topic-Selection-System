@@ -212,6 +212,25 @@ ol {
   margin-bottom: 16px;
 }
 
+/* 用户账户区域（证件图标 + 角色姓名）：鼠标移动/悬停与展开时的 UI 颜色轻提示 */
+.nfu-sider-avatar-wrapper {
+  color: rgba(0, 0, 0, 0.65);
+  cursor: pointer;
+  border-radius: 6px;
+  user-select: none;
+  transition: all 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
+
+  &:hover,
+  &.ant-dropdown-open {
+    color: #1890ff;
+    background-color: rgba(24, 144, 255, 0.08);
+
+    .nfu-sider-avatar-name {
+      color: #1890ff;
+    }
+  }
+}
+
 /* 桌面端侧边栏收缩状态下：隐藏顶部系统名称与底部用户姓名，将校徽与身份卡片图标严格水平居中对齐 */
 .ant-layout-sider-collapsed {
   .nfu-sider-avatar-name,

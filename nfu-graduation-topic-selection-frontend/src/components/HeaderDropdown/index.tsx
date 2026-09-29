@@ -42,11 +42,12 @@ export type HeaderDropdownProps = {
 
 /**
  * 顶部与侧边栏用户菜单通用下拉容器组件：
- * 默认同时支持 hover 与 click 触发，确保移动端点击可正常展开和收缩下拉名片
+ * 仅使用 click 触发，避免 hover 模式下鼠标在触发区域与下拉卡片之间移动时
+ * 因 mouseLeave 事件导致下拉卡片意外关闭，无法稳定点击退出登录等菜单项。
  */
 const HeaderDropdown: React.FC<HeaderDropdownProps> = ({
   overlayClassName: cls,
-  trigger = ['hover', 'click'],
+  trigger = ['click'],
   ...restProps
 }) => {
   const { styles } = useStyles();

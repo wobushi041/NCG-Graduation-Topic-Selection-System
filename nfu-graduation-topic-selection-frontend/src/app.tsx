@@ -1,10 +1,11 @@
-import { AvatarDropdown, AvatarName, Footer, Question } from '@/components';
+import { AvatarDropdown, AvatarName, Footer } from '@/components';
 import { getLoginUserUsingGet } from '@/services/topic-selection/userController';
 import { LinkOutlined } from '@ant-design/icons';
 import { SettingDrawer } from '@ant-design/pro-components';
 import type { Settings as LayoutSettings } from '@ant-design/pro-components';
 import type { RunTimeLayoutConfig } from '@umijs/max';
 import { history, Link } from '@umijs/max';
+import { Watermark } from 'antd';
 import defaultSettings from '../config/defaultSettings';
 import { errorConfig } from './requestErrorConfig';
 import { WebSocketNotification } from '@/components/WebSocket';
@@ -141,7 +142,6 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
         </div>
       );
     },
-    actionsRender: () => [<Question key="doc" />],
     avatarProps: {
       src: undefined,
       size: 'small',
@@ -180,9 +180,6 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
           </AvatarDropdown>
         );
       },
-    },
-    waterMarkProps: {
-      content: initialState?.currentUser?.userName,
     },
     style: {
       minHeight: '100vh',
@@ -237,6 +234,22 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
 
       return (
         <>
+          {initialState?.currentUser?.userName && (
+            <Watermark
+              content={initialState.currentUser.userName}
+              gap={[160, 160]}
+              font={{
+                color: 'rgba(0, 0, 0, 0.12)',
+                fontSize: 16,
+              }}
+              style={{
+                position: 'fixed',
+                inset: 0,
+                zIndex: 999,
+                pointerEvents: 'none',
+              }}
+            />
+          )}
           <WebSocketNotification />
           {children}
           {isDev && (
