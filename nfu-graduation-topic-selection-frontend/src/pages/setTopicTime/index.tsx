@@ -1,5 +1,5 @@
 import { PageContainer, ProColumns, ProTable } from '@ant-design/pro-components';
-import { Button, DatePicker, message, Space, Switch, Table, Tabs } from 'antd';
+import { Button, DatePicker, message, Modal, Space, Switch, Table, Tabs } from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
 import moment from 'moment';
 import {
@@ -141,6 +141,7 @@ export default () => {
   // 退选加锁时间状态
   const [withdrawLockTime, setWithdrawLockTime] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState<boolean>(true);
+  const [unpublishLoading, setUnpublishLoading] = useState<boolean>(false);
 
   // 获取开关状态
   useEffect(() => {
@@ -688,15 +689,52 @@ export default () => {
                   <Button
                     type="primary"
                     danger
+                    loading={unpublishLoading}
                     onClick={async () => {
-                      const res = await unsetTimeByIdUsingPost({
-                        topicIds: dataSource.selectedRows.map((topic) => topic.id),
-                      });
-                      if (res.code === 0) {
-                        message.success(res.message);
-                        window.location.reload();
-                      } else {
-                        message.error(res.message);
+                      setUnpublishLoading(true);
+                      try {
+                        const res = await unsetTimeByIdUsingPost({
+                          topicIds: dataSource.selectedRows.map((topic) => Number(topic.id)),
+                        });
+                        if (res.code !== 0) {
+                          message.error(res.message || '取消发布失败');
+                          return;
+                        }
+
+                        const cancelledTopicIds = res.data?.cancelledTopicIds || [];
+                        const skippedTopics = res.data?.skippedTopics || [];
+                        if (skippedTopics.length > 0) {
+                          Modal.warning({
+                            title:
+                              cancelledTopicIds.length > 0
+                                ? '部分题目已取消发布'
+                                : '未取消任何题目',
+                            content: (
+                              <div>
+                                {cancelledTopicIds.length > 0 && (
+                                  <p>已成功取消发布 {cancelledTopicIds.length} 个题目。</p>
+                                )}
+                                <p>以下 {skippedTopics.length} 个题目因已有学生选择而跳过：</p>
+                                {skippedTopics.map((topic) => (
+                                  <p key={topic.topicId}>
+                                    {topic.topicName || '题目 ' + topic.topicId}：{topic.reason}
+                                  </p>
+                                ))}
+                              </div>
+                            ),
+                          });
+                        } else if (cancelledTopicIds.length > 0) {
+                          message.success('已成功取消发布 ' + cancelledTopicIds.length + ' 个题目');
+                        } else {
+                          message.info('没有需要取消发布的题目');
+                        }
+
+                        if (cancelledTopicIds.length > 0) {
+                          await actionRef1.current?.reload();
+                        }
+                        dataSource.onCleanSelected?.();
+                      } finally {
+                        setUnpublishLoading(false);
                       }
                     }}
                   >

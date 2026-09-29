@@ -12,6 +12,7 @@ import cn.edu.nfu.topicselection.model.request.topic.SetTeacherTopicAmountReques
 import cn.edu.nfu.topicselection.model.request.topic.SetTimeRequest;
 import cn.edu.nfu.topicselection.model.request.topic.UnSetTimeRequest;
 import cn.edu.nfu.topicselection.model.request.topic.UpdateTopicRequest;
+import cn.edu.nfu.topicselection.model.vo.UnpublishTopicResultVO;
 import cn.edu.nfu.topicselection.response.BaseResponse;
 import cn.edu.nfu.topicselection.response.TheResult;
 import cn.edu.nfu.topicselection.service.TopicApplicationService;
@@ -124,7 +125,7 @@ public class TopicController {
      * 根据题目 id 列表添加开放的开始时间和结束时间来发布选题列表
      *
      * @param request 设置选题开放时间请求
-     * @return 操作结果提示信息
+     * @return 成功取消与因业务限制跳过的课题处理结果
      */
     @SentinelRateLimit(resource = "topic.publication.publish")
     @SaCheckLogin
@@ -144,7 +145,7 @@ public class TopicController {
     @SaCheckLogin
     @SaCheckRole(value = {"admin"}, mode = SaMode.OR)
     @PostMapping("/unset/time/by/id")
-    public BaseResponse<String> unsetTimeById(@RequestBody UnSetTimeRequest request) {
+    public BaseResponse<UnpublishTopicResultVO> unsetTimeById(@RequestBody UnSetTimeRequest request) {
         return TheResult.success(CodeBindMessageEnums.SUCCESS, topicApplicationService.unsetTimeById(request));
     }
 

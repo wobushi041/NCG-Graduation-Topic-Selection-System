@@ -23,6 +23,8 @@ import cn.edu.nfu.topicselection.model.request.topic.SetTeacherTopicAmountReques
 import cn.edu.nfu.topicselection.model.request.topic.SetTimeRequest;
 import cn.edu.nfu.topicselection.model.request.topic.UnSetTimeRequest;
 import cn.edu.nfu.topicselection.model.request.topic.UpdateTopicRequest;
+import cn.edu.nfu.topicselection.model.vo.UnpublishTopicResultVO;
+import cn.edu.nfu.topicselection.model.vo.UnpublishTopicSkippedVO;
 import cn.edu.nfu.topicselection.service.MailService;
 import cn.edu.nfu.topicselection.service.StudentTopicSelectionService;
 import cn.edu.nfu.topicselection.service.TeacherGroupService;
@@ -40,6 +42,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -418,19 +421,20 @@ public class TopicApplicationServiceImpl implements TopicApplicationService {
      * 在事务中逐条加悲观锁检查有效学生选题占用情况，对无占用的题目取消发布并清空时间窗口
      *
      * @param request 取消设置选题开放时间请求
-     * @return 操作结果提示信息
+     * @return 成功取消与因业务限制跳过的课题处理结果
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String unsetTimeById(UnSetTimeRequest request) {
+    public UnpublishTopicResultVO unsetTimeById(UnSetTimeRequest request) {
         // 参数检查
         ThrowUtils.throwIf(request == null, CodeBindMessageEnums.PARAMS_ERROR, "请求体不能为空");
         assert request != null;
 
         List<Long> topicIds = validateTopicIds(request.getTopicIds());
 
-        // 遍历选题列表开始取消开放
-        String message = "";
+        // 逐个锁定课题并记录批量处理结果
+        List<Long> cancelledTopicIds = new ArrayList<>();
+        List<UnpublishTopicSkippedVO> skippedTopics = new ArrayList<>();
         for (Long topicId : topicIds) {
             Topic topic = topicMapper.selectByIdForUpdate(topicId);
             ThrowUtils.throwIf(topic == null, CodeBindMessageEnums.NOT_FOUND_ERROR, "选中的题目不存在");
@@ -446,12 +450,23 @@ public class TopicApplicationServiceImpl implements TopicApplicationService {
                         .set("startTime", null)
                         .set("endTime", null));
                 ThrowUtils.throwIf(!result, CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR, "无法取消开放该选题，请联系系统管理员");
+                cancelledTopicIds.add(topicId);
             } else {
                 log.debug("教师 {} 出的题目 {} - {} 已经被学生选择, 不允许取消发布, 本次跳过取消发布", topic.getTeacherName(), topic.getId(), topic.getTopic());
-                message = " " + message + topic.getTeacherName() + topic.getId() + topic.getTopic();
+                UnpublishTopicSkippedVO skippedTopic = new UnpublishTopicSkippedVO();
+                skippedTopic.setTopicId(topic.getId());
+                skippedTopic.setTopicName(topic.getTopic());
+                skippedTopic.setTeacherName(topic.getTeacherName());
+                skippedTopic.setActiveSelectionCount(activeSelectionCount);
+                skippedTopic.setReason("题目已有 " + activeSelectionCount + " 名学生预选或确认选择，无法取消发布");
+                skippedTopics.add(skippedTopic);
             }
         }
-        return "成功取消发布!" + (StringUtils.isNotBlank(message) ? message : "");
+
+        UnpublishTopicResultVO result = new UnpublishTopicResultVO();
+        result.setCancelledTopicIds(cancelledTopicIds);
+        result.setSkippedTopics(skippedTopics);
+        return result;
     }
 
     /**

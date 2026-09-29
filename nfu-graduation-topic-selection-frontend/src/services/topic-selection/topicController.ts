@@ -52,7 +52,7 @@ export async function unsetTimeByIdUsingPost(
   body: API.UnSetTimeRequest,
   options?: { [key: string]: any },
 ) {
-  return request<API.BaseResponseString_>('/user/unset/time/by/id', {
+  return request<API.BaseResponseUnpublishTopicResultVO_>('/user/unset/time/by/id', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
