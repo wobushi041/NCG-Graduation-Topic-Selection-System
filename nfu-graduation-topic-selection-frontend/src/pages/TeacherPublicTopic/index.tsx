@@ -106,6 +106,7 @@ export default () => {
       dataIndex: 'capacity',
       valueType: 'digit',
       search: false,
+      render: (_, record) => record.capacity ?? record.surplusQuantity ?? 1,
       fieldProps: {
         min: 1,
         max: 100,
@@ -272,8 +273,13 @@ export default () => {
             pageSize: size,
           });
           setTotal(res.data?.total || 0);
+          const rawRecords = res.data?.records || [];
+          const records = rawRecords.map((item: any) => ({
+            ...item,
+            capacity: item.capacity ?? item.surplusQuantity ?? 1,
+          }));
           return {
-            data: res.data?.records || [],
+            data: records,
             total: res.data?.total || 0,
             success: true,
           };
