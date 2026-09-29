@@ -23,7 +23,7 @@ class AuthenticationFlowIT extends IntegrationTestBase {
     @Test
     void authenticationLifecycle_shouldIssueCookieAllowLoginAccessRevokeOnLogoutAndRejectUnauthorizedRole() {
         // 1. 准备测试学生账号并发起登录请求
-        testFixtureFactory.createDeptAndProject("计算机科学与工程系", "软件工程", "软件工程组");
+        testFixtureFactory.createCollegeAndMajor("计算机科学与工程系", "软件工程", "软件工程组");
         testFixtureFactory.createUser("20220001", "Pass@123456", "测试学生", 0, "计算机科学与工程系", "软件工程", 0);
 
         ResponseEntity<String> loginResp = testApiClient.loginRaw("20220001", "Pass@123456");
@@ -43,7 +43,7 @@ class AuthenticationFlowIT extends IntegrationTestBase {
         Assertions.assertEquals("20220001", currentJson.path("data").path("userAccount").asText());
 
         ResponseEntity<String> roleDeniedResp = testApiClient.postJson(
-                "/user/add/dept", Collections.singletonMap("deptName", "越权系部"), cookie
+                "/user/add/college", Collections.singletonMap("collegeName", "越权系部"), cookie
         );
         IntegrationAssertions.assertBusinessCode(
                 testApiClient, roleDeniedResp, CodeBindMessageEnums.NO_ROLE_ERROR.getCode()

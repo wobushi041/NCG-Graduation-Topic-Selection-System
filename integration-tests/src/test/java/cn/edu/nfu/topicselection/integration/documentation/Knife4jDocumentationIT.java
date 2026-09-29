@@ -52,14 +52,15 @@ class Knife4jDocumentationIT extends IntegrationTestBase {
         Assertions.assertEquals("2.0", root.path("swagger").asText());
         Assertions.assertEquals("接口文档", root.path("info").path("title").asText());
 
-        // 2. 提取 /v2/api-docs 中的业务操作集合并校验 79 个操作、关键重构路由及废弃路由不存在
+        // 2. 提取 /v2/api-docs 中的业务操作集合并校验 80 个操作、关键重构路由及废弃路由不存在
         Set<String> documentedOperations = extractDocumentedOperations(root.path("paths"));
-        Assertions.assertEquals(79, documentedOperations.size());
+        Assertions.assertEquals(80, documentedOperations.size());
 
         List<String> requiredOperations = Arrays.asList(
                 "POST /auth/login",
                 "POST /auth/logout",
                 "POST /user/add/topic",
+                "POST /user/teacher/group/quota",
                 "POST /user/preselect/topic/by/id",
                 "POST /user/select/topic/by/id",
                 "POST /user/withdraw",
@@ -83,7 +84,7 @@ class Knife4jDocumentationIT extends IntegrationTestBase {
         }
 
         // 3. 收集运行时 Controller 的方法与路径映射并与文档集合比对，同时校验 release Profile 关闭文档
-        Set<String> runtimeOperations = collectProjectControllerOperations();
+        Set<String> runtimeOperations = collectMajorControllerOperations();
         Assertions.assertEquals(runtimeOperations, documentedOperations);
 
         YamlPropertiesFactoryBean yamlFactory = new YamlPropertiesFactoryBean();
@@ -119,7 +120,7 @@ class Knife4jDocumentationIT extends IntegrationTestBase {
      *
      * @return 形如 METHOD /path 的运行时操作集合
      */
-    private Set<String> collectProjectControllerOperations() {
+    private Set<String> collectMajorControllerOperations() {
         Set<String> operations = new HashSet<>();
         Map<RequestMappingInfo, HandlerMethod> handlerMethods = requestMappingHandlerMapping.getHandlerMethods();
         for (Map.Entry<RequestMappingInfo, HandlerMethod> entry : handlerMethods.entrySet()) {

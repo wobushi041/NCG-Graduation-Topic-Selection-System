@@ -31,11 +31,13 @@ public class DatabaseCleaner {
      * 清空业务表数据与 Redis 键，恢复默认系统开关状态
      */
     public void cleanAll() {
+        jdbcTemplate.execute("DELETE FROM `teacher_group_quota`");
         jdbcTemplate.execute("DELETE FROM `student_topic_selection`");
         jdbcTemplate.execute("DELETE FROM `topic`");
-        jdbcTemplate.execute("DELETE FROM `project`");
-        jdbcTemplate.execute("DELETE FROM `dept`");
         jdbcTemplate.execute("DELETE FROM `user`");
+        jdbcTemplate.execute("DELETE FROM `major`");
+        jdbcTemplate.execute("DELETE FROM `topic_group`");
+        jdbcTemplate.execute("DELETE FROM `college`");
         jdbcTemplate.execute("DELETE FROM `switch`");
 
         // 初始化基础系统开关默认值

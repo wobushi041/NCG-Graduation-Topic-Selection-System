@@ -32,7 +32,7 @@ class TopicSelectionFlowIT extends IntegrationTestBase {
     @Test
     void topicSelectionFlow_shouldCompletePreselectConfirmQueryAndWithdraw() {
         // 1. 准备系部、专业、指导教师、学生及已发布课题
-        testFixtureFactory.createDeptAndProject("计算机系", "计算机科学与技术", "计科组");
+        testFixtureFactory.createCollegeAndMajor("计算机系", "计算机科学与技术", "计科组");
         testFixtureFactory.createUser("T2001", "Pass@123456", "陈老师", 1, "计算机系", "计算机科学与技术", 5);
         testFixtureFactory.createUser("S2001", "Pass@123456", "赵同学", 0, "计算机系", "计算机科学与技术", 0);
         Topic topic = testFixtureFactory.createPublishedTopic(

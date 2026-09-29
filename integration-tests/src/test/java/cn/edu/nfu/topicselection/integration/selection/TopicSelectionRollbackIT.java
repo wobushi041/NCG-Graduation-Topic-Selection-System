@@ -49,7 +49,7 @@ class TopicSelectionRollbackIT extends IntegrationTestBase {
     @Test
     void selectTopicById_whenSelectionInsertFails_shouldRollbackTopicSurplusAndStudentState() {
         // 1. 准备教师、学生及剩余容量为 1 的已发布课题
-        testFixtureFactory.createDeptAndProject("网络工程系", "网络工程", "网工组");
+        testFixtureFactory.createCollegeAndMajor("网络工程系", "网络工程", "网工组");
         testFixtureFactory.createUser("T4001", "Pass@123456", "吴老师", 1, "网络工程系", "网络工程", 5);
         User student = testFixtureFactory.createUser("S4001", "Pass@123456", "孙同学", 0, "网络工程系", "网络工程", 0);
         Topic topic = testFixtureFactory.createPublishedTopic(

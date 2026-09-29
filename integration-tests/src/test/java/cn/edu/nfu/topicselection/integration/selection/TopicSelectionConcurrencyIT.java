@@ -44,7 +44,7 @@ class TopicSelectionConcurrencyIT extends IntegrationTestBase {
     @Test
     void concurrentConfirmSelection_givenSingleRemainingQuota_allowsExactlyOneStudent() throws Exception {
         // 1. 准备一名教师、两名学生及仅剩 1 个名额的已发布课题
-        testFixtureFactory.createDeptAndProject("人工智能系", "智能科学与技术", "智能组");
+        testFixtureFactory.createCollegeAndMajor("人工智能系", "智能科学与技术", "智能组");
         testFixtureFactory.createUser("T3001", "Pass@123456", "周老师", 1, "人工智能系", "智能科学与技术", 5);
         testFixtureFactory.createUser("S3001", "Pass@123456", "学生甲", 0, "人工智能系", "智能科学与技术", 0);
         testFixtureFactory.createUser("S3002", "Pass@123456", "学生乙", 0, "人工智能系", "智能科学与技术", 0);
