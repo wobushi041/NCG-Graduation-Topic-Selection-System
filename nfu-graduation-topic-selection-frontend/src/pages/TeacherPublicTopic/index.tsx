@@ -167,8 +167,17 @@ export default () => {
           <a
             key="selectStudent"
             onClick={() => {
+              if (!isPublished) {
+                message.warning('只有已发布的题目才能选择学生');
+                return;
+              }
               const encodedTopic = encodeURIComponent(record.topic || '');
               navigate(`/topic/teacher/selectStudent/${encodedTopic}`);
+            }}
+            style={{
+              color: !isPublished ? 'gray' : undefined,
+              textDecoration: !isPublished ? 'line-through' : undefined,
+              cursor: !isPublished ? 'not-allowed' : 'pointer',
             }}
           >
             选择学生
