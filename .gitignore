@@ -188,3 +188,6 @@ fabric.properties
 
 # WorkBuddy local working directory (contains deployment helper scripts with credentials)
 /.workbuddy/
+
+# Local README snapshot retained before documentation rewrites
+/README.backup.md
