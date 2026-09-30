@@ -2,7 +2,7 @@
 
 ## 1. 重构背景与目标
 
-本次重构对应《HTTP 接口与 AOP 重构台账》（`docs/HTTP_API_REFACTOR_STATUS.md`）中的 **Wave 3（阶段 3.3：系统开关配置 `CFG-001` ～ `CFG-012` + 用户管理 `USR-001` ～ `USR-008` + 测试诊断 `TST-001`，共 21 个接口）**。
+本次重构对应《HTTP 接口与 AOP 重构台账》（`docs/phase-00-planning/HTTP_API_REFACTOR_STATUS.md`）中的 **Wave 3（阶段 3.3：系统开关配置 `CFG-001` ～ `CFG-012` + 用户管理 `USR-001` ～ `USR-008` + 测试诊断 `TST-001`，共 21 个接口）**。
 
 遵循“仅做上层逻辑架构迁移、100% 保持底层业务实现与对外协议不变”的原则，完成以下目标：
 

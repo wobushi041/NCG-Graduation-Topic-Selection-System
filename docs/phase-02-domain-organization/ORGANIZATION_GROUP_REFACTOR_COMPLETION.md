@@ -2,7 +2,7 @@
 
 ## 1. 重构背景与目标
 
-本次重构对应《HTTP 接口与 AOP 重构台账》（`docs/HTTP_API_REFACTOR_STATUS.md`）中的 **Wave 2（阶段 3.2：系部、专业与教师选题组域，`ORG-001` ～ `ORG-009` + `GRP-001` ～ `GRP-003`，共 12 个接口）**。
+本次重构对应《HTTP 接口与 AOP 重构台账》（`docs/phase-00-planning/HTTP_API_REFACTOR_STATUS.md`）中的 **Wave 2（阶段 3.2：系部、专业与教师选题组域，`ORG-001` ～ `ORG-009` + `GRP-001` ～ `GRP-003`，共 12 个接口）**。
 
 遵循“仅做上层逻辑架构迁移、100% 保持底层业务实现与对外协议不变”的原则，完成以下目标：
 

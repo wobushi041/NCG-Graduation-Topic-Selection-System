@@ -9,7 +9,7 @@
 
 ## 0. 给执行 Agent 的交接入口
 
-本文件可交给能访问本仓库的编码 Agent 执行，包括 Antigravity。执行者先从仓库根目录阅读 `AGENTS.md`、本计划及 `docs/HTTP_API_REFACTOR_STATUS.md`，再核对当前文件与计划中的基线是否一致。本计划中的相对路径均以仓库根目录为基准；不要把示例中的原机器盘符当作项目路径。每个阶段执行完成后记录改动文件、验证命令和结果，再进入下一阶段；命令返回非零退出码时先排查，不跳过失败继续迁移。
+本文件可交给能访问本仓库的编码 Agent 执行，包括 Antigravity。执行者先从仓库根目录阅读 `AGENTS.md`、本计划及 `docs/phase-00-planning/HTTP_API_REFACTOR_STATUS.md`，再核对当前文件与计划中的基线是否一致。本计划中的相对路径均以仓库根目录为基准；不要把示例中的原机器盘符当作项目路径。每个阶段执行完成后记录改动文件、验证命令和结果，再进入下一阶段；命令返回非零退出码时先排查，不跳过失败继续迁移。
 
 运行环境需有 JDK 8、Node.js 24、pnpm 11.19.0、Docker Desktop/Compose v2（集成测试阶段）、PowerShell 和可用的 Maven Wrapper。前端依赖若缺失，按锁文件执行 `pnpm --dir web install --frozen-lockfile`（目录迁移前将 `web` 替换为旧前端目录）；后端依赖由 Maven Wrapper 解析。涉及 Java 文件时，先遵守仓库 `AGENTS.md` 指向的 Java 编码规范。该规范目前位于本机 `C:/Users/abc/.codex/skills/java-coding-conventions/SKILL.md`；若执行环境无法访问它，需先解决规范可访问性，不能假定 Antigravity 自带同名技能。
 
@@ -17,7 +17,7 @@
 
 可直接交给 Antigravity 的任务指令：
 
-> 请阅读仓库根目录 `AGENTS.md`、`docs/MAVEN_PROJECT_NAMING_REFACTOR_PLAN.md` 和 `docs/HTTP_API_REFACTOR_STATUS.md`，从阶段 0 起按顺序实施到阶段 9。每阶段先核对当前文件和未提交修改，再实施、运行该阶段验收命令并记录结果；通过后继续下一阶段。保留现有用户修改，不用跳过测试、删除有效测试或改用本机数据库绕过集成测试。若 Java 规范文件、Docker、必要凭据或其他前置条件缺失，完成不依赖该条件的工作后，报告准确阻塞点、已完成阶段和可复现命令。最终给出改动摘要、测试结果、剩余风险和 `git status --short`。不要创建或更名远端 Git 仓库。
+> 请阅读仓库根目录 `AGENTS.md`、`docs/phase-00-planning/MAVEN_PROJECT_NAMING_REFACTOR_PLAN.md` 和 `docs/phase-00-planning/HTTP_API_REFACTOR_STATUS.md`，从阶段 0 起按顺序实施到阶段 9。每阶段先核对当前文件和未提交修改，再实施、运行该阶段验收命令并记录结果；通过后继续下一阶段。保留现有用户修改，不用跳过测试、删除有效测试或改用本机数据库绕过集成测试。若 Java 规范文件、Docker、必要凭据或其他前置条件缺失，完成不依赖该条件的工作后，报告准确阻塞点、已完成阶段和可复现命令。最终给出改动摘要、测试结果、剩余风险和 `git status --short`。不要创建或更名远端 Git 仓库。
 
 ## 1. 目标与原则
 
@@ -85,7 +85,7 @@ work-topic-selection-backend/src/main/java/cn/com/edtechhub/worktopicselection/a
 ```
 
 这些文件随目录和包一起迁移，但不得回滚其内容。
-本计划文件 `docs/MAVEN_PROJECT_NAMING_REFACTOR_PLAN.md` 也是当前新建、尚未跟踪的文件；执行者应将它纳入计划文档提交，不把它当作可清理的临时文件。以执行当天的 `git status --short` 为准，保留之后新增的其他用户修改。
+本计划文件 `docs/phase-00-planning/MAVEN_PROJECT_NAMING_REFACTOR_PLAN.md` 也是当前新建、尚未跟踪的文件；执行者应将它纳入计划文档提交，不把它当作可清理的临时文件。以执行当天的 `git status --short` 为准，保留之后新增的其他用户修改。
 
 ### 2.3 重建边界
 
