@@ -2,9 +2,18 @@
 
 <div align="center">
   <strong>按客户端角色开放毕业设计选题、审核、确认与管理能力。</strong>
-  <br />
-  React 18 · Umi Max · Spring Boot · MyBatis-Plus · Sa-Token
 </div>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Java-8-ED8B00?logo=openjdk&logoColor=white" alt="Java 8" />
+  <img src="https://img.shields.io/badge/Spring%20Boot-2.5.6-6DB33F?logo=springboot&logoColor=white" alt="Spring Boot 2.5.6" />
+  <img src="https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=111827" alt="React 18" />
+  <img src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white" alt="TypeScript 5" />
+  <img src="https://img.shields.io/badge/Umi%20Max-4-1677FF" alt="Umi Max 4" />
+  <img src="https://img.shields.io/badge/MyBatis--Plus-3.5.2-DC382D" alt="MyBatis-Plus 3.5.2" />
+  <img src="https://img.shields.io/badge/Sa--Token-1.42.0-4C8BF5" alt="Sa-Token 1.42.0" />
+  <img src="https://img.shields.io/badge/License-MIT-F5C518" alt="MIT License" />
+</p>
 
 <p align="center">
   <a href="#产品能力">产品能力</a>
