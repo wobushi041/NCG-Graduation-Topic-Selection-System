@@ -21,20 +21,18 @@
   <img src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="MIT License" />
 </p>
-
-> 将“组织配置 → 题目发布 → 系部审核 → 学生预选 → 开放确认 → 结果统计”串成一个可追踪、可管理的选题闭环。
-
 ## 项目简介
 
-**广州南方学院毕设选题管理系统**（**NCG Graduation Topic Selection System**，简称 **NCG Topic Selection**）是一套面向高校学院场景的 Web 管理系统，采用前后端分离与 Maven 多模块架构，为学生、教师、选题负责人和系统管理员提供不同的业务工作台。
+**广州南方学院毕设选题管理系统**（**NCG Graduation Topic Selection System**，简称 **NCG Topic Selection**）是一套面向高校院系毕业设计选题场景的 Web 管理系统。项目采用前后端分离的单体仓库结构：前端通过 Umi Max 路由与权限模型向不同客户端角色开放对应工作台，后端通过 Spring MVC Controller、应用服务、MyBatis-Plus Mapper 与基础设施管理器承载认证、组织、课题、选题和系统配置能力。
 
 系统重点解决以下问题：
 
-- 统一维护院系、专业、选题组和用户账号等基础数据；
-- 将题目发布、审核、开放时间和学生选题过程集中管理；
-- 支持“预选 → 正式确认”的分阶段选题流程，并处理并发选题；
-- 通过统计面板、CSV 导入/导出和实时通知减少人工沟通成本；
-- 在公开代码仓库中隔离真实名单、账号和服务凭据，便于学习、演示和二次开发。
+- 使用统一的组织与账号模型维护学院、专业、选题组及四类客户端角色；
+- 将课题维护、审核、开放时间、预选、正式确认和结果查询拆分为独立接口与前端页面；
+- 通过角色路由、接口鉴权和对象级业务校验控制不同客户端能够访问的数据与操作；
+- 使用事务、悲观锁、唯一约束和缓存策略保护选题名额与状态一致性；
+- 提供数据导入导出、实时通知、运行状态展示以及可选的邮件和 AI 扩展能力；
+- 在公开仓库中隔离真实名单、账号和服务凭据，便于教学演示、功能验证与二次开发。
 
 > **项目定位**：本项目适合高校院系教学演示、毕业设计流程管理与功能二次开发。仓库不提供可直接登录的公开账号，公网生产环境部署请配合 [deploy/README.md](./deploy/README.md) 完成安全配置与加固。
 
@@ -66,71 +64,71 @@
 
 ![系统首页预览](./nfu-graduation-topic-selection-frontend/public/home.png)
 
-> 截图来自仓库内置前端页面，仅用于展示系统布局和交互风格。
 
 ## 核心功能
 
-### 按角色划分
+### 按客户端角色开放对应的功能
 
-| 角色 | 主要能力 |
+| 客户端角色 | 开放页面与功能 |
 | --- | --- |
-| **学生** | 浏览符合本人院系/专业/选题组规则的题目；预选多个题目；在开放时间内确认一个题目；查看当前结果并按规则退选。 |
-| **教师** | 发布、编辑和删除题目；提交系部审核；配置题目适用选题组；使用可选的 AI 辅助检查；查看已选学生并按权限处理退选。 |
-| **专业负责人** | 审核本专业题目、填写打回理由；查看本系选题情况；导出统计结果；在满足条件时切换教师角色参与出题。 |
-| **系统管理员** | 管理院系、专业、专业选题组和四类账号；调整教师出题/学生预选额度；配置选题时间窗、跨系规则和系统开关；查看全局统计并批量导入数据。 |
+| **学生端（student）** | 浏览符合本人学院、专业和选题组范围的教师与课题；预选或取消预选；在开放阶段提交最终课题；查看当前选题状态，并在系统规则允许时申请退选。 |
+| **教师端（teacher）** | 新增、编辑、删除和提交课题；配置课题所属选题组与可接收人数；使用可选的 AI 辅助检查；查看选择本人课题的学生，并进入指定学生等二级操作页面。 |
+| **选题负责人端（topic_leader）** | 审核所属范围内的课题并填写通过或退回意见；查看院系选题统计、学生与课题明细；导出结果；满足资格时可切换至教师角色参与出题。 |
+| **系统管理端（admin）** | 管理学院、专业、选题组和四类账号；设置教师出题额度与学生预选策略；控制课题开放和取消发布；配置跨学院选题、查看权限、单选模式及系统锁；查看全局统计并执行批量导入导出。 |
 
-### 业务流程
+### 架构能力
 
-```mermaid
-flowchart LR
-    A[管理员配置院系、专业与账号] --> B[教师发布题目]
-    B --> C[专业负责人审核]
-    C -->|通过| D[进入选题池]
-    C -->|打回| B
-    D --> E[学生预选]
-    E --> F[开放正式确认]
-    F --> G[学生确认一个题目]
-    G --> H[教师/专业负责人/管理员查看与导出结果]
-```
-
-### 特色能力
-
-- **专业选题组**：每个专业可以配置一个选题组，教师可以为题目指定适用组；未设置组名的历史题目仍可兼容使用。
-- **分阶段选题**：支持预选、正式确认、取消预选和退选等状态流转，避免将所有操作集中在单一时间点。
-- **时间窗与系统开关**：管理员可以分别控制题目开放时间、跨系选题、查看题目和单选模式等规则。
-- **跨系选题规则**：在开启跨系选题后，可按院系配置允许选择的范围。
-- **批量数据处理**：提供学生、教师和题目导入模板，并支持选题情况 CSV 导出。
-- **实时通知**：使用 WebSocket 推送系统消息、选题阶段变化和管理员通知。
-- **可选外部服务**：可接入 SMTP 邮件服务和腾讯云智能体 API；未配置时不影响核心选题流程。
-- **安全与一致性**：使用 BCrypt 保存密码，结合角色/对象级权限校验、Sentinel 限流、一次性验证码、事务、悲观行锁和数据库唯一约束保护关键操作。
+- **角色化客户端入口**：Umi Max 的 routes.ts 与 access.ts 根据 student、teacher、topic_leader、admin 四类角色过滤菜单、页面和二级路由；后端继续使用 Sa-Token 注解执行接口级鉴权。
+- **领域接口拆分**：前后端按认证、组织结构、教师选题组、课题维护、课题查询、学生选题、选题策略和系统管理拆分 Controller 与 Service，避免继续把全部用户领域能力集中在单一模块。
+- **结构化操作反馈**：批量发布、取消发布等操作返回可识别的结果数据，前端根据成功、部分跳过和全部跳过状态展示具体原因，并通过局部刷新保持页面状态。
+- **选题一致性保护**：正式选题、教师指定学生和退选等关键操作结合 Spring 事务、数据库锁、唯一约束与状态校验，降低重复选择、名额超卖和并发覆盖风险。
+- **组织与选题组约束**：学院、专业、选题组和教师配额共同限定课题适用范围；跨学院选择由系统策略和允许范围配置共同控制。
+- **批量处理与统计**：提供学生、教师和课题数据模板、CSV 导入导出、角色范围内的选题统计与明细查询。
+- **实时与可选扩展**：WebSocket 用于系统消息和状态通知；SMTP 邮件与腾讯云智能体 API 为可选能力，未配置时不阻塞核心功能。
+- **安全与运行保护**：使用 BCrypt、Sa-Token、Sentinel、验证码与一次性凭证、Redis 会话、Caffeine 查询缓存和统一异常响应保护系统访问与运行稳定性。
 
 ## 系统架构
 
 ```mermaid
 flowchart TB
-    U[浏览器]
-    F[React 18 + Umi Max + Ant Design<br/>graduation-topic-selection-web]
-    B[Spring Boot REST API + WebSocket<br/>graduation-topic-selection-server]
-    M[(MySQL 8<br/>nfu_topic_selection)]
-    R[(Redis 7<br/>nfu:topic-selection:*)]
-    S[SMTP 邮件服务]
+    U[浏览器客户端]
+
+    subgraph WEB[graduation-topic-selection-web]
+        ACCESS[Umi 路由与角色权限]
+        PAGES[角色工作台与业务页面]
+        CLIENT[领域 Service 请求模块]
+        ACCESS --> PAGES --> CLIENT
+    end
+
+    subgraph SERVER[graduation-topic-selection-server]
+        SECURITY[Servlet / Sa-Token / Sentinel / DTO 校验]
+        API[认证、组织、课题、选题、策略、系统等 Controller]
+        SERVICE[应用 Service 与事务边界]
+        DATA[MyBatis-Plus Mapper 与基础设施 Manager]
+        SECURITY --> API --> SERVICE --> DATA
+    end
+
+    MYSQL[(MySQL 8<br/>nfu_topic_selection)]
+    REDIS[(Redis 7<br/>nfu:topic-selection:*)]
+    WS[WebSocket]
+    MAIL[SMTP 邮件服务]
     AI[腾讯云智能体 API]
 
-    U --> F
-    F -->|HTTP / REST| B
-    F <-->|WebSocket| B
-    B --> M
-    B --> R
-    B -. 可选 .-> S
-    B -. 可选 .-> AI
+    U --> ACCESS
+    CLIENT -->|HTTP / REST| SECURITY
+    U <-->|实时消息| WS
+    WS --> SERVICE
+    DATA --> MYSQL
+    DATA --> REDIS
+    SERVICE -. 可选 .-> MAIL
+    SERVICE -. 可选 .-> AI
 ```
 
-- **前端（`graduation-topic-selection-web`）**：负责页面渲染、角色菜单、权限路由和交互体验；本地开发直连 `http://127.0.0.1:8000`，生产环境通过 `/api` 与 `/api/global/message` 访问后端与 WebSocket；
-- **后端（`graduation-topic-selection-server`）**：负责认证授权（Sa-Token）、限流防护（Sentinel）、业务规则编排、并发控制、文件处理和实时通知，提供 79 个兼容 HTTP 接口（`/auth/**`、`/user/**`、`/file/**`、`/ai/**`）；
-- **集成测试（`graduation-topic-selection-integration-tests`）**：独立 Maven 子模块，基于 Testcontainers（MySQL 8 + Redis 7）运行端到端业务流、并发争抢、事务回滚及 Knife4j 运行时文档契约测试；
-- **MySQL（`nfu_topic_selection`）**：保存组织架构、账号、题目、选题关联及教师选题组配额数据；
-- **Redis & Caffeine（`nfu:topic-selection:`）**：用于 Sa-Token 会话存储、验证码与一次性凭证、查询缓存及系统开关配置；
-- **生产容器编排**：使用 Caddy 2 提供 HTTPS 与静态文件服务，并将 `/api/*` 反向代理到后端容器 `topic-selection-server:8000`。
+- **前端（`graduation-topic-selection-web`）**：使用 React、TypeScript、Umi Max 与 Ant Design Pro Components 构建客户端；路由权限负责页面可见性，`src/services/topic-selection/` 按后端领域接口组织请求。本地开发访问 `http://127.0.0.1:8000`，生产环境统一通过 `/api` 反向代理。
+- **后端（`graduation-topic-selection-server`）**：Spring MVC 接收请求，Sa-Token、Sentinel 与请求 DTO 校验切面处理认证、授权、限流和基础参数约束；Controller 调用应用 Service，事务与业务规则在服务层执行，Mapper 和 Manager 负责数据库、缓存、WebSocket 与外部服务访问。
+- **数据层**：MySQL 保存组织、账号、课题、选题关系及组选题额度；Redis 保存 Sa-Token 会话、验证码、一次性凭证和系统开关；Caffeine 为高频查询提供进程内缓存。
+- **测试模块（`graduation-topic-selection-integration-tests`）**：作为独立 Maven 子模块，使用 Testcontainers 启动 MySQL 8 和 Redis 7，覆盖应用启动、认证、课题生命周期、选题并发、事务回滚与 Knife4j 文档契约。
+- **部署层**：后端构建可执行 Jar 与服务镜像，前端构建静态资源与 Caddy 镜像；`deploy/` 使用 Docker Compose 组织前端、后端、MySQL、Redis 和生产反向代理。
 
 ## 技术栈
 
@@ -487,8 +485,8 @@ Spring Boot 启动时会通过 `spring.config.import` 自动读取当前目录�
 
 - [AGENTS.md](./AGENTS.md)：项目级上下文、前后端架构事实与协作边界说明；
 - [deploy/README.md](./deploy/README.md)：Docker Compose 公网生产部署、数据库备份与恢复说明；
-- [docs/MAVEN_PROJECT_NAMING_REFACTOR_PLAN.md](./docs/MAVEN_PROJECT_NAMING_REFACTOR_PLAN.md)：Maven 工程命名与模块化重构实施计划；
-- [docs/HTTP_API_REFACTOR_STATUS.md](./docs/HTTP_API_REFACTOR_STATUS.md)：79 个 HTTP 接口重构与契约台账；
+- [docs/phase-00-planning/MAVEN_PROJECT_NAMING_REFACTOR_PLAN.md](./docs/phase-00-planning/MAVEN_PROJECT_NAMING_REFACTOR_PLAN.md)：Maven 工程命名与模块化重构实施计划；
+- [docs/phase-00-planning/HTTP_API_REFACTOR_STATUS.md](./docs/phase-00-planning/HTTP_API_REFACTOR_STATUS.md)：79 个 HTTP 接口重构与契约台账；
 - [TODO.md](./TODO.md)：安全整改、测试验证与后续开发计划。
 
 ## 来源与许可证
