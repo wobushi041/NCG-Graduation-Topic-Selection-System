@@ -7,9 +7,9 @@
 </div>
 
 <p align="center">
-  <a href="https://github.com/Lq0412/nfu-graduation-topic-selection">项目主页</a>
+  <a href="https://github.com/wobushi041/NCG-Graduation-Topic-Selection-System">项目主页</a>
   ·
-  <a href="https://github.com/Lq0412/nfu-graduation-topic-selection/issues">问题反馈</a>
+  <a href="https://github.com/wobushi041/NCG-Graduation-Topic-Selection-System/issues">问题反馈</a>
   ·
   <a href="./TODO.md">开发计划</a>
 </p>
@@ -204,7 +204,7 @@ nfu-graduation-topic-selection/
 ### 2. 获取代码
 
 ```bash
-git clone https://github.com/Lq0412/nfu-graduation-topic-selection.git
+git clone https://github.com/wobushi041/NCG-Graduation-Topic-Selection-System.git
 cd nfu-graduation-topic-selection
 ```
 
@@ -491,6 +491,6 @@ Spring Boot 启动时会通过 `spring.config.import` 自动读取当前目录�
 
 ## 来源与许可证
 
-本项目基于 [limou3434/work-topic-selection](https://github.com/limou3434/work-topic-selection) 整理并继续开发，源码中的原作者标注予以保留。
+本项目基于 [https://github.com/wobushi041/NCG-Graduation-Topic-Selection-System](https://github.com/wobushi041/NCG-Graduation-Topic-Selection-System) 对其架构优化并继续开发完善，源码中的原作者标注予以保留。
 
 原项目声明 MIT License，本仓库据此保留 [LICENSE](./LICENSE)。本项目仅供学习、研究和二次开发使用；在实际院系或学校环境部署前，请根据组织的数据安全、账号管理和运维规范进行评估与加固。

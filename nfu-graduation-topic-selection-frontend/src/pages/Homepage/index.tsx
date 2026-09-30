@@ -238,7 +238,7 @@ const Welcome: React.FC = () => {
               <InfoCard
                 index={3}
                 title="查看项目源码"
-                href="https://github.com/Lq0412/nfu-graduation-topic-selection"
+                href="https://github.com/wobushi041/NCG-Graduation-Topic-Selection-System"
                 desc="项目仓库包含系统源码、本地运行说明、数据库结构及维护记录，可用于了解系统实现与后续建设计划。"
               />
             </div>
