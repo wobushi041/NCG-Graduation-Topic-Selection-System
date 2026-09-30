@@ -83,7 +83,7 @@ export async function getInitialState(): Promise<{
 /**
  * 全局 ProLayout 运行时布局配置：
  * - 顶栏/侧栏左上角强制渲染广州南方学院校徽 (/nfu-logo-512.png)，展开时显示单行系统名称，收缩时仅居中展示校徽；
- * - 扩宽左侧侧边栏宽度 (siderWidth: 280) 容纳完整系统名称；
+ * - 设置紧凑的左侧侧边栏宽度 (siderWidth: 248)，并保持菜单标题单行显示；
  * - 左下角在展开时展示像素级对齐的 AddressCardOutlineIcon + 角色姓名，在收缩时仅居中展示 AddressCardOutlineIcon 图标。
  * @see https://procomponents.ant.design/components/layout
  */
@@ -93,7 +93,7 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
   return {
     logo: '/nfu-logo-512.png',
     title: '广州南方学院毕设选题管理系统',
-    siderWidth: 280,
+    siderWidth: 248,
     collapsed: isCollapsed,
     onCollapse: (collapsed: boolean) => {
       setInitialState((preInitialState) => ({

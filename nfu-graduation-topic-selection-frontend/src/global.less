@@ -53,6 +53,13 @@ body,
   left: unset;
 }
 
+/* 侧栏菜单标题保持单行，避免层级缩进后被挤压成两行 */
+.ant-pro-sider .ant-menu-item,
+.ant-pro-sider .ant-menu-submenu-title,
+.ant-pro-sider .ant-menu-title-content {
+  white-space: nowrap;
+}
+
 canvas {
   display: block;
 }
