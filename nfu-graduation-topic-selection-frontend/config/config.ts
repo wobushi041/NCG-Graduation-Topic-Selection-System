@@ -66,6 +66,11 @@ export default defineConfig({
    */
   initialState: {},
   /**
+   * @name 浏览器标签页图标
+   * @description 使用广州南方学院校徽作为 favicon
+   */
+  favicons: ['/nfu-logo-512.png'],
+  /**
    * @name layout 插件
    * @doc https://umijs.org/docs/max/layout-menu
    */
