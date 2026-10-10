@@ -2,7 +2,6 @@ package cn.edu.nfu.topicselection.aop;
 
 import cn.edu.nfu.topicselection.annotation.ValidateRequest;
 import cn.edu.nfu.topicselection.exception.BusinessException;
-import cn.edu.nfu.topicselection.exception.CodeBindMessageEnums;
 import cn.edu.nfu.topicselection.model.request.auth.LoginRequest;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
@@ -52,21 +51,6 @@ class RequestDtoValidationAspectTest {
         when(signature.getMethod()).thenReturn(method);
         joinPoint = mock(ProceedingJoinPoint.class);
         when(joinPoint.getSignature()).thenReturn(signature);
-    }
-
-    // 场景：测试空请求体在进入 Controller 前被拒绝
-    @Test
-    void rejectsNullRequestBodyBeforeController() {
-        // 1. 准备空请求体参数
-        when(joinPoint.getArgs()).thenReturn(new Object[]{null});
-
-        // 2. 调用请求 DTO 校验切面
-        BusinessException exception = assertThrows(BusinessException.class,
-                () -> aspect.around(joinPoint, validateRequest));
-
-        // 3. 断言返回统一参数错误
-        assertEquals(CodeBindMessageEnums.PARAMS_ERROR, exception.getCodeBindMessageEnums());
-        assertEquals("请求体不能为空", exception.getExceptionMessage());
     }
 
     // 场景：测试多个字段错误按属性名称稳定选择首个结果

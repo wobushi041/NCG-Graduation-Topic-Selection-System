@@ -13,6 +13,7 @@
 | 阶段 04 | [`phase-04-user-policy`](./phase-04-user-policy/) | 用户管理与系统策略 |
 | 阶段 05 | [`phase-05-file-ai`](./phase-05-file-ai/) | 文件与 AI 能力 |
 | 阶段 06 | [`phase-06-withdrawal`](./phase-06-withdrawal/) | 退选异步通知与批量退选计划 |
+| 阶段 07 | [`phase-07-api-safe-link`](./phase-07-api-safe-link/) | ApiSafeLink 接口安全责任链管道重构计划与设计 |
 
 ## 维护规则
 

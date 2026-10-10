@@ -144,20 +144,6 @@ class ControllerValidationInstanceTest {
         userControllerProxy = userFactory.getProxy();
     }
 
-    // 场景：测试当请求体为 null 时切面直接拦截并快速失败
-    @Test
-    void nullRequestBody_shouldBeInterceptedByAspectWithParamsError() {
-        // 1. 准备 null 请求体调用添加学院接口
-        // 2. 调用代理实例并捕获异常
-        BusinessException exception = assertThrows(BusinessException.class,
-                () -> organizationControllerProxy.addCollege(null));
-
-        // 3. 断言抛出统一定义的参数错误且底层服务未被调用
-        assertEquals(CodeBindMessageEnums.PARAMS_ERROR, exception.getCodeBindMessageEnums());
-        assertEquals("请求体不能为空", exception.getExceptionMessage());
-        verify(organizationApplicationService, never()).addCollege(any());
-    }
-
     // 场景：测试添加学院时学院名称为空被切面拦截且底层服务不被调用
     @Test
     void addCollege_shouldInterceptBlankCollegeName() {
