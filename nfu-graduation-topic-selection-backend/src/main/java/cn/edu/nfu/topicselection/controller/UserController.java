@@ -1,6 +1,7 @@
 package cn.edu.nfu.topicselection.controller;
 
 import cn.edu.nfu.topicselection.annotation.SentinelRateLimit;
+import cn.edu.nfu.topicselection.annotation.ValidateRequest;
 import cn.edu.nfu.topicselection.exception.CodeBindMessageEnums;
 import cn.edu.nfu.topicselection.model.entity.User;
 import cn.edu.nfu.topicselection.model.request.user.DeleteRequest;
@@ -60,6 +61,7 @@ public class UserController {
     @SentinelRateLimit(resource = "user.manage.add")
     @SaCheckLogin
     @SaCheckRole(value = {"admin"}, mode = SaMode.OR)
+    @ValidateRequest
     @PostMapping("/add")
     public BaseResponse<Long> addUser(@RequestBody UserAddRequest request) {
         return userApplicationService.addUser(request);
@@ -74,6 +76,7 @@ public class UserController {
     @SentinelRateLimit(resource = "user.manage.delete")
     @SaCheckLogin
     @SaCheckRole(value = {"admin"}, mode = SaMode.OR)
+    @ValidateRequest
     @PostMapping("/delete")
     public BaseResponse<Boolean> deleteUser(@RequestBody DeleteRequest request) {
         return TheResult.success(CodeBindMessageEnums.SUCCESS, userApplicationService.deleteUser(request));
@@ -88,6 +91,7 @@ public class UserController {
     @SentinelRateLimit(resource = "user.manage.update")
     @SaCheckLogin
     @SaCheckRole(value = {"admin"}, mode = SaMode.OR)
+    @ValidateRequest
     @PostMapping("/update")
     public BaseResponse<Boolean> updateUser(@RequestBody UserUpdateRequest request) {
         return TheResult.success(CodeBindMessageEnums.SUCCESS, userApplicationService.updateUser(request));
@@ -114,6 +118,7 @@ public class UserController {
     @SentinelRateLimit(resource = "user.query.page")
     @SaCheckLogin
     @SaCheckRole(value = {"admin", "teacher"}, mode = SaMode.OR)
+    @ValidateRequest
     @PostMapping("/get/user/page")
     public BaseResponse<Page<User>> listUserByPage(@RequestBody UserQueryRequest request) {
         return TheResult.success(CodeBindMessageEnums.SUCCESS, userApplicationService.listUserByPage(request));
@@ -128,6 +133,7 @@ public class UserController {
     @SentinelRateLimit(resource = "user.query.teacher-list")
     @SaCheckLogin
     @SaCheckRole(value = {"teacher"}, mode = SaMode.OR)
+    @ValidateRequest
     @PostMapping("/get/teacher")
     public BaseResponse<List<TeacherVO>> getTeacher(@RequestBody TeacherQueryRequest request) {
         return TheResult.success(CodeBindMessageEnums.SUCCESS, userApplicationService.getTeacher(request));

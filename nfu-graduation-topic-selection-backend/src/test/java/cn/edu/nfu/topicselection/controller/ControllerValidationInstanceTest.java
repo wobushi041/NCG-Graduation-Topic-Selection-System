@@ -8,11 +8,14 @@ import cn.edu.nfu.topicselection.model.request.organization.CollegeAddRequest;
 import cn.edu.nfu.topicselection.model.request.organization.TeacherGroupQuotaUpdateRequest;
 import cn.edu.nfu.topicselection.model.request.policy.SetCollegeConfigRequest;
 import cn.edu.nfu.topicselection.model.request.topic.AddTopicRequest;
+import cn.edu.nfu.topicselection.model.request.user.DeleteRequest;
+import cn.edu.nfu.topicselection.model.request.user.UserUpdateRequest;
 import cn.edu.nfu.topicselection.response.BaseResponse;
 import cn.edu.nfu.topicselection.service.AIApplicationService;
 import cn.edu.nfu.topicselection.service.OrganizationApplicationService;
 import cn.edu.nfu.topicselection.service.SelectionPolicyService;
 import cn.edu.nfu.topicselection.service.TopicApplicationService;
+import cn.edu.nfu.topicselection.service.UserApplicationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -70,6 +73,12 @@ class ControllerValidationInstanceTest {
     private AIApplicationService aiApplicationService;
 
     /**
+     * 模拟用户应用服务
+     */
+    @Mock
+    private UserApplicationService userApplicationService;
+
+    /**
      * 组织架构控制器代理实例
      */
     private OrganizationController organizationControllerProxy;
@@ -93,6 +102,11 @@ class ControllerValidationInstanceTest {
      * AI 控制器代理实例
      */
     private AIController aiControllerProxy;
+
+    /**
+     * 用户管理控制器代理实例
+     */
+    private UserController userControllerProxy;
 
     @BeforeEach
     void setUp() {
@@ -123,6 +137,11 @@ class ControllerValidationInstanceTest {
         AspectJProxyFactory aiFactory = new AspectJProxyFactory(new AIController(aiApplicationService));
         aiFactory.addAspect(aspect);
         aiControllerProxy = aiFactory.getProxy();
+
+        // 为 UserController 创建织入切面的代理实例
+        AspectJProxyFactory userFactory = new AspectJProxyFactory(new UserController(userApplicationService));
+        userFactory.addAspect(aspect);
+        userControllerProxy = userFactory.getProxy();
     }
 
     // 场景：测试当请求体为 null 时切面直接拦截并快速失败
@@ -246,6 +265,40 @@ class ControllerValidationInstanceTest {
         assertEquals(0, response.getCode());
         assertEquals(100L, response.getData());
         verify(organizationApplicationService).addCollege(request);
+    }
+
+    // 场景：测试删除用户时用户账号为空被切面拦截且底层服务不被调用
+    @Test
+    void deleteUser_shouldInterceptBlankUserAccount() {
+        // 1. 准备用户账号为空白的删除请求体
+        DeleteRequest request = new DeleteRequest();
+        request.setUserAccount("   ");
+
+        // 2. 调用代理实例并捕获异常
+        BusinessException exception = assertThrows(BusinessException.class,
+                () -> userControllerProxy.deleteUser(request));
+
+        // 3. 断言错误文案精确匹配且底层服务未被执行
+        assertEquals(CodeBindMessageEnums.PARAMS_ERROR, exception.getCodeBindMessageEnums());
+        assertEquals("指定删除的用户账号不能为空", exception.getExceptionMessage());
+        verify(userApplicationService, never()).deleteUser(any());
+    }
+
+    // 场景：测试更新用户时用户标识小于 1 被切面拦截且底层服务不被调用
+    @Test
+    void updateUser_shouldInterceptInvalidId() {
+        // 1. 准备用户标识不合法的更新请求体
+        UserUpdateRequest request = new UserUpdateRequest();
+        request.setId(0L);
+
+        // 2. 调用代理实例并捕获异常
+        BusinessException exception = assertThrows(BusinessException.class,
+                () -> userControllerProxy.updateUser(request));
+
+        // 3. 断言错误文案精确匹配且底层服务未被执行
+        assertEquals(CodeBindMessageEnums.PARAMS_ERROR, exception.getCodeBindMessageEnums());
+        assertEquals("用户标识不合法, 必须为正整数", exception.getExceptionMessage());
+        verify(userApplicationService, never()).updateUser(any());
     }
 
 }
