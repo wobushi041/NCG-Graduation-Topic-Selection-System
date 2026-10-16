@@ -15,6 +15,10 @@
 | 阶段 06 | [`phase-06-withdrawal`](./phase-06-withdrawal/) | 退选异步通知与批量退选计划 |
 | 阶段 07 | [`phase-07-api-safe-link`](./phase-07-api-safe-link/) | ApiSafeLink 接口安全责任链管道重构计划与设计 |
 
+## DDD 重构规划
+
+- [三个限界上下文重构计划](./phase-00-planning/DDD_BOUNDED_CONTEXT_REFACTOR_PLAN.md)：记录身份与账号、教学组织、毕业选题的目标边界、选题组归属、跨上下文协作和渐进重构步骤；当前为待实施计划。
+
 ## 维护规则
 
 - 新增阶段性计划或完成报告时，放入对应 `phase-XX-*` 目录。
