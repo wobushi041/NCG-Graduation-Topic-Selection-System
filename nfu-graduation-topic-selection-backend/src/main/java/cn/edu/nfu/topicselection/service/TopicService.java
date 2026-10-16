@@ -23,7 +23,7 @@ public interface TopicService extends IService<Topic> {
 
     /**
      * 根据管理员或选题负责人题目查询请求构建带学院与余量过滤的查询条件封装
-     * TODO: 廖写的查询条件都有问题...就不应该这么传递参数的, 头疼真的, 我也不敢删除
+     * TODO: 查询条件都有问题
      *
      * @param topicQueryByAdminRequest 管理员或选题负责人题目查询请求参数
      * @return 题目查询条件包装器
