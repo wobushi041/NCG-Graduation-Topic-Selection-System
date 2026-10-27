@@ -1,4 +1,4 @@
-FROM openjdk:8-jdk-slim
+FROM public.ecr.aws/amazoncorretto/amazoncorretto:8-jre
 WORKDIR /app
 ARG JAR_FILE=target/*-exec.jar
 COPY ${JAR_FILE} app.jar

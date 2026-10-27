@@ -1,0 +1,50 @@
+# 通用参考模板：由 OpenResty 的 http {} 包含；不是完整的 nginx.conf。
+# 将所有 example.com 替换为主域名，将证书路径改为 OpenResty 容器内的实际路径。
+# 如通过 1Panel 管理网站，请按 README-openresty.md 配置，勿重复粘贴整份 server 块。
+# 默认使用共享 Docker 网络；宿主机/host 模式请将代理目标改为 http://127.0.0.1:18080，删除 resolver 行。
+map $http_upgrade $topic_selection_connection_upgrade {
+    default upgrade;
+    '' close;
+}
+
+server {
+    listen 80;
+    server_name example.com www.example.com;
+    return 301 https://example.com$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name www.example.com;
+    ssl_certificate /etc/nginx/certs/example.com/fullchain.pem;
+    ssl_certificate_key /etc/nginx/certs/example.com/privkey.pem;
+    return 301 https://example.com$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name example.com;
+    ssl_certificate /etc/nginx/certs/example.com/fullchain.pem;
+    ssl_certificate_key /etc/nginx/certs/example.com/privkey.pem;
+
+    # 允许后端最大 10 MB 文件上传所需的 multipart 请求额外开销。
+    client_max_body_size 12m;
+
+    location / {
+        # Docker 内置 DNS：前端容器重建、IP 变化后无需手动修改代理地址。
+        resolver 127.0.0.11 valid=30s ipv6=off;
+        set $topic_selection_upstream http://topic-selection-web:3000;
+        proxy_pass $topic_selection_upstream;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        # OpenResty 是公网第一层网关，在此用实际连接地址覆盖客户端传入的转发头。
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $topic_selection_connection_upgrade;
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+    }
+}

@@ -1,0 +1,9 @@
+# 适用于宿主机安装或采用 host 网络的 OpenResty；要求 Docker Compose v2.24.4+。
+# docker compose -f docker-compose.yml -f docker-compose.openresty-host.yml up -d
+services:
+  topic-selection-web:
+    # 完整替换基础模板的 80/443，仅在宿主机回环地址提供 HTTP。
+    ports: !override
+      - "127.0.0.1:${OPENRESTY_HTTP_PORT:-18080}:3000"
+    volumes:
+      - ./Caddyfile.openresty:/etc/caddy/Caddyfile:ro
