@@ -1,6 +1,7 @@
 package cn.edu.nfu.topicselection.service.impl;
 
 import cn.edu.nfu.topicselection.exception.CodeBindMessageEnums;
+import cn.edu.nfu.topicselection.mapper.CollegeMapper;
 import cn.edu.nfu.topicselection.model.entity.College;
 import cn.edu.nfu.topicselection.model.entity.Major;
 import cn.edu.nfu.topicselection.model.entity.Topic;
@@ -82,6 +83,11 @@ public class OrganizationApplicationServiceImpl implements OrganizationApplicati
     private final TeacherGroupService teacherGroupService;
 
     /**
+     * 注入学院数据访问层依赖
+     */
+    private final CollegeMapper collegeMapper;
+
+    /**
      * 初始化组织应用服务
      *
      * @param collegeService      学院服务
@@ -90,35 +96,50 @@ public class OrganizationApplicationServiceImpl implements OrganizationApplicati
      * @param userService         用户服务
      * @param topicService        题目服务
      * @param teacherGroupService 教师选题组额度服务
+     * @param collegeMapper       学院数据访问层
      */
     public OrganizationApplicationServiceImpl(CollegeService collegeService, MajorService majorService,
                                               TopicGroupService topicGroupService, UserService userService,
-                                              TopicService topicService, TeacherGroupService teacherGroupService) {
+                                              TopicService topicService, TeacherGroupService teacherGroupService,
+                                              CollegeMapper collegeMapper) {
         this.collegeService = collegeService;
         this.majorService = majorService;
         this.topicGroupService = topicGroupService;
         this.userService = userService;
         this.topicService = topicService;
         this.teacherGroupService = teacherGroupService;
+        this.collegeMapper = collegeMapper;
     }
 
     /// 组织写用例 ///
 
     /**
-     * 校验学院名称唯一性后保存学院记录
+     * 校验学院名称唯一性后保存学院记录（若存在已逻辑删除记录则执行恢复）
      *
      * @param request 学院创建请求
-     * @return 新增学院 id
+     * @return 新增或恢复的学院 id
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long addCollege(CollegeAddRequest request) {
+        // 参数检查
         ThrowUtils.throwIf(request == null, CodeBindMessageEnums.PARAMS_ERROR, "请求体不能为空");
         assert request != null;
         String collegeName = StringUtils.trimToNull(request.getCollegeName());
         ThrowUtils.throwIf(collegeName == null, CodeBindMessageEnums.PARAMS_ERROR, "学院名称不能为空");
-        ThrowUtils.throwIf(collegeService.count(new QueryWrapper<College>().eq("collegeName", collegeName)) > 0,
-                CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR, "该学院已存在, 请不要重复添加");
+
+        // 校验同名学院记录（包含已逻辑删除记录）
+        College existingCollege = collegeMapper.selectByCollegeName(collegeName);
+        if (existingCollege != null) {
+            ThrowUtils.throwIf(Integer.valueOf(0).equals(existingCollege.getIsDelete()),
+                    CodeBindMessageEnums.ILLEGAL_OPERATION_ERROR, "该学院已存在, 请不要重复添加");
+            // 若曾被逻辑删除（isDelete = 1），则直接恢复该记录
+            ThrowUtils.throwIf(collegeMapper.restoreById(existingCollege.getId()) <= 0,
+                    CodeBindMessageEnums.OPERATION_ERROR, "无法添加新的学院");
+            return existingCollege.getId();
+        }
+
+        // 核心业务处理：数据库无同名记录时新增学院
         College college = new College();
         college.setCollegeName(collegeName);
         ThrowUtils.throwIf(!collegeService.save(college), CodeBindMessageEnums.OPERATION_ERROR, "无法添加新的学院");

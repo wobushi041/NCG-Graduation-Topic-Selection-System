@@ -1,11 +1,13 @@
 package cn.edu.nfu.topicselection.service.impl;
 
 import cn.edu.nfu.topicselection.exception.BusinessException;
+import cn.edu.nfu.topicselection.mapper.CollegeMapper;
 import cn.edu.nfu.topicselection.model.entity.Major;
 import cn.edu.nfu.topicselection.model.entity.College;
 import cn.edu.nfu.topicselection.model.entity.TopicGroup;
 import cn.edu.nfu.topicselection.model.entity.User;
 import cn.edu.nfu.topicselection.model.enums.UserRoleEnum;
+import cn.edu.nfu.topicselection.model.request.organization.CollegeAddRequest;
 import cn.edu.nfu.topicselection.model.request.organization.DeleteCollegeRequest;
 import cn.edu.nfu.topicselection.model.request.organization.DeleteMajorRequest;
 import cn.edu.nfu.topicselection.model.request.organization.CollegeQueryRequest;
@@ -84,6 +86,12 @@ class OrganizationApplicationServiceImplTest {
      */
     @Mock
     private TeacherGroupService teacherGroupService;
+
+    /**
+     * 模拟学院数据访问层依赖
+     */
+    @Mock
+    private CollegeMapper collegeMapper;
 
     /**
      * 待测组织与选题组应用服务实现实例
@@ -235,6 +243,64 @@ class OrganizationApplicationServiceImplTest {
         // 3. 断言更新成功并向额度服务传递准确的教师、选题组和上限
         assertTrue(result);
         verify(teacherGroupService).updateQuota("T001", 8L, 10);
+    }
+
+    // 场景：测试新增学院时如果数据库无记录则直接新增成功
+    @Test
+    void addCollege_whenNotExists_shouldSaveAndReturnId() {
+        // 1. 准备新增学院请求与模拟入库对象
+        CollegeAddRequest request = new CollegeAddRequest();
+        request.setCollegeName("计算机学院");
+        when(collegeMapper.selectByCollegeName("计算机学院")).thenReturn(null);
+        when(collegeService.save(any(College.class))).thenAnswer(invocation -> {
+            College saved = invocation.getArgument(0);
+            saved.setId(100L);
+            return true;
+        });
+
+        // 2. 调用 addCollege 方法
+        Long collegeId = organizationApplicationService.addCollege(request);
+
+        // 3. 断言新增学院成功并返回新 id
+        assertEquals(100L, collegeId);
+        verify(collegeService).save(any(College.class));
+    }
+
+    // 场景：测试新增学院时如果已存在正常未删除学院则抛出异常
+    @Test
+    void addCollege_whenExistsAndNotDeleted_shouldThrowException() {
+        // 1. 准备已存在的正常学院实体与请求
+        CollegeAddRequest request = new CollegeAddRequest();
+        request.setCollegeName("计算机学院");
+        College existingCollege = new College();
+        existingCollege.setId(100L);
+        existingCollege.setCollegeName("计算机学院");
+        existingCollege.setIsDelete(0);
+        when(collegeMapper.selectByCollegeName("计算机学院")).thenReturn(existingCollege);
+
+        // 2. 调用 addCollege 方法并断言抛出业务异常
+        assertThrows(BusinessException.class, () -> organizationApplicationService.addCollege(request));
+    }
+
+    // 场景：测试新增学院时如果已存在软删除记录则执行恢复逻辑
+    @Test
+    void addCollege_whenExistsAndDeleted_shouldRestoreAndReturnId() {
+        // 1. 准备已软删除的学院实体与请求
+        CollegeAddRequest request = new CollegeAddRequest();
+        request.setCollegeName("计算机学院");
+        College deletedCollege = new College();
+        deletedCollege.setId(100L);
+        deletedCollege.setCollegeName("计算机学院");
+        deletedCollege.setIsDelete(1);
+        when(collegeMapper.selectByCollegeName("计算机学院")).thenReturn(deletedCollege);
+        when(collegeMapper.restoreById(100L)).thenReturn(1);
+
+        // 2. 调用 addCollege 方法
+        Long collegeId = organizationApplicationService.addCollege(request);
+
+        // 3. 断言恢复学院成功并返回已有 id
+        assertEquals(100L, collegeId);
+        verify(collegeMapper).restoreById(100L);
     }
 
 }
