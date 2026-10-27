@@ -31,6 +31,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import javax.validation.Valid;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -164,6 +165,27 @@ class SelectionPolicyAndSystemControllerContractTest {
         assertEquals("user.query.teacher-list", getTeacherMethod.getAnnotation(SentinelRateLimit.class).resource());
         assertEquals("user.query.by-id", getUserByIdMethod.getAnnotation(SentinelRateLimit.class).resource());
         assertEquals("user.query.vo-by-id", getUserVOByIdMethod.getAnnotation(SentinelRateLimit.class).resource());
+    }
+
+    // 场景：测试 UserController 中 5 个请求体接口均声明 @ValidateRequest 切面且禁止使用 Spring 原生 @Valid
+    @Test
+    void userControllerRequestBodyEndpoints_shouldDeclareValidateRequestAndNoSpringValidAnnotations() throws Exception {
+        // 1. 准备测试数据并获取 UserController 5 个请求体接口反射对象
+        Method addUserMethod = UserController.class.getMethod("addUser", UserAddRequest.class);
+        Method deleteUserMethod = UserController.class.getMethod("deleteUser", DeleteRequest.class);
+        Method updateUserMethod = UserController.class.getMethod("updateUser", UserUpdateRequest.class);
+        Method listUserByPageMethod = UserController.class.getMethod("listUserByPage", UserQueryRequest.class);
+        Method getTeacherMethod = UserController.class.getMethod("getTeacher", TeacherQueryRequest.class);
+        List<Method> methods = Arrays.asList(addUserMethod, deleteUserMethod, updateUserMethod, listUserByPageMethod, getTeacherMethod);
+
+        // 2. 依次校验每个方法的切面注解与入参注解
+        for (Method method : methods) {
+            assertNotNull(method.getAnnotation(ValidateRequest.class));
+            assertFalse(method.getParameters()[0].isAnnotationPresent(Valid.class));
+        }
+
+        // 3. 断言 5 个接口全部符合参数校验契约
+        assertEquals(5, methods.size());
     }
 
     // 场景：测试 SelectionPolicyController、SystemController 与 UserController 各端点正确委托服务层

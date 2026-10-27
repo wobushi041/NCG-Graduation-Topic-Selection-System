@@ -2,6 +2,9 @@ package cn.edu.nfu.topicselection.model.request.user;
 
 import lombok.Data;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 
 /**
@@ -15,11 +18,14 @@ public class UserAddRequest implements Serializable {
     /**
      * 姓名
      */
+    @NotBlank(message = "缺少用户名字")
     private String userName;
 
     /**
      * 账号
      */
+    @NotBlank(message = "缺少用户的学号/工号")
+    @Size(max = 128, message = "用户账号不能超过 128 个字符")
     private String userAccount;
 
     /**
@@ -40,6 +46,7 @@ public class UserAddRequest implements Serializable {
     /**
      * 角色
      */
+    @NotNull(message = "缺少用户角色")
     private Integer userRole;
 
     /// 序列化字段 ///

@@ -1,6 +1,7 @@
 package cn.edu.nfu.topicselection.controller;
 
 import cn.edu.nfu.topicselection.annotation.SentinelRateLimit;
+import cn.edu.nfu.topicselection.annotation.ValidateRequest;
 import cn.edu.nfu.topicselection.exception.CodeBindMessageEnums;
 import cn.edu.nfu.topicselection.model.entity.Topic;
 import cn.edu.nfu.topicselection.model.entity.User;
@@ -60,6 +61,7 @@ public class TopicQueryController {
      */
     @SentinelRateLimit(resource = "query.topic.page")
     @SaCheckLogin
+    @ValidateRequest
     // @CacheSearchOptimization(ttl = 15, modelClass = Topic.class)
     @PostMapping("/get/topic/page")
     public BaseResponse<Page<Topic>> getTopicList(@RequestBody TopicQueryRequest request) {
@@ -87,6 +89,7 @@ public class TopicQueryController {
      */
     @SentinelRateLimit(resource = "query.college.teacher")
     @SaCheckLogin
+    @ValidateRequest
     // @CacheSearchOptimization(ttl = 30, modelClass = TopicLeaderVO.class)
     @PostMapping("/get/college/teacher")
     public BaseResponse<Page<TopicLeaderVO>> getTeacher(@RequestBody TopicLeaderQueryRequest request) {
@@ -115,6 +118,7 @@ public class TopicQueryController {
     @SentinelRateLimit(resource = "query.topic.admin-page")
     @SaCheckLogin
     @SaCheckRole(value = {"admin"}, mode = SaMode.OR)
+    @ValidateRequest
     @PostMapping("/get/topic/list/by/admin")
     public BaseResponse<Page<Topic>> getTopicListByAdmin(@RequestBody TopicQueryByAdminRequest request) {
         return TheResult.success(CodeBindMessageEnums.SUCCESS, selectionReportService.getTopicListByAdmin(request));
@@ -130,6 +134,7 @@ public class TopicQueryController {
     @SentinelRateLimit(resource = "query.user.vo-page")
     @SaCheckLogin
     @SaCheckRole(value = {"admin"}, mode = SaMode.OR)
+    @ValidateRequest
     @PostMapping("/list/page/vo")
     public BaseResponse<Page<UserVO>> listUserVOByPage(@RequestBody UserQueryRequest request) {
         return TheResult.success(CodeBindMessageEnums.SUCCESS, selectionReportService.listUserVOByPage(request));
@@ -144,6 +149,7 @@ public class TopicQueryController {
     @SentinelRateLimit(resource = "query.user.name-list")
     @SaCheckLogin
     @SaCheckRole(value = {"admin"}, mode = SaMode.OR)
+    @ValidateRequest
     @PostMapping("/get/user/list")
     public BaseResponse<List<UserNameVO>> getUserList(@RequestBody GetUserListRequest request) {
         return TheResult.success(CodeBindMessageEnums.SUCCESS, selectionReportService.getUserList(request));
@@ -158,6 +164,7 @@ public class TopicQueryController {
     @SentinelRateLimit(resource = "query.college.pending-teacher")
     @SaCheckLogin
     @SaCheckRole(value = {"topic_leader"}, mode = SaMode.OR)
+    @ValidateRequest
     @PostMapping("/get/college/teacher/by/admin")
     public BaseResponse<Page<TopicLeaderVO>> getTeacherByAdmin(@RequestBody TopicLeaderQueryRequest request) {
         return TheResult.success(CodeBindMessageEnums.SUCCESS, selectionReportService.getTeacherByAdmin(request));

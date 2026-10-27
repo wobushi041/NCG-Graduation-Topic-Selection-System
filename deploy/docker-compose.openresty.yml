@@ -1,0 +1,18 @@
+# 在 deploy/ 中与基础模板叠加使用；要求支持 !reset 的 Docker Compose（建议 v2.24.4+）。
+# docker compose -f docker-compose.yml -f docker-compose.openresty.yml up -d
+services:
+  topic-selection-web:
+    # 公网 80/443 由现有 OpenResty 使用；前端仅通过 Docker 网络提供 HTTP。
+    ports: !reset []
+    expose:
+      - "3000"
+    volumes:
+      - ./Caddyfile.openresty:/etc/caddy/Caddyfile:ro
+    networks:
+      - topic-selection-net
+      - topic-selection-gateway
+
+networks:
+  topic-selection-gateway:
+    external: true
+    name: ${OPENRESTY_NETWORK:-topic-selection-gateway}

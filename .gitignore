@@ -40,7 +40,9 @@
 # Production deployment secrets and local backup artifacts
 /deploy/.env
 /deploy/backups/
-/deploy/*.tar.gz
+/deploy/*.tar
+/deploy/*.tar
+*.tar.gz
 
 # Real student/teacher/director lists and historical topic data
 # 2023 级真实名单与导入产物：教师出题额度一览含 178 位真实教师姓名/工号，
@@ -94,6 +96,7 @@ build/
 *.nar
 *.ear
 *.zip
+*.tar
 *.tar.gz
 *.rar
 

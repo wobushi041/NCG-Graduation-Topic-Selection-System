@@ -2,6 +2,11 @@
 
 本目录用于把「广州南方学院毕设选题管理系统」以 Docker Compose 方式部署到一台公网服务器。
 
+提供两种可复用的部署方式，域名和密码均通过 `.env` 配置：
+
+- **独立部署**：使用本页步骤，Caddy 直接使用服务器的 80/443 端口，负责证书和 HTTPS。
+- **已有 OpenResty 统一网关**：使用 [OpenResty 网关部署说明](README-openresty.md)，叠加额外 Compose 文件，保留完整应用服务，由 OpenResty 负责公网入口和证书。
+
 ## 架构
 
 | 服务 | 镜像 / 容器 | 说明 |
@@ -18,7 +23,9 @@
 ### 1. 准备域名和服务器
 
 - 域名解析（A 记录）指向服务器公网 IP；
+- 独立部署模板将 `www.<SITE_DOMAIN>` 301 跳转到主域名，该域名也需要正确解析；
 - 服务器安全组/防火墙放行 80 和 443；
+- 确认没有其他服务占用同一个 IP 的 80/443；已有 OpenResty 时按网关模式部署；
 - 安装 Docker 和 Docker Compose v2。
 
 ### 2. 准备环境变量
@@ -36,11 +43,19 @@ openssl rand -base64 24
 
 ### 3. 构建并上传应用镜像
 
-构建脚本需要 JDK 8、Node 24 与 pnpm 11（Windows 请在 Git Bash/WSL 中执行）：
+构建脚本需要 JDK 8、Node 24、pnpm 11.19.0 和可用的 Docker。以下命令均在仓库根目录执行。
+
+Windows PowerShell：
+
+```powershell
+.\deploy\build.ps1
+```
+
+Linux / Git Bash / WSL：
 
 ```bash
 cd 仓库根目录
-./build.sh
+bash ./deploy/build.sh
 ```
 
 如果镜像在开发机生成、部署在服务器，可以打包传输：
@@ -51,14 +66,16 @@ docker save nfu-topic-selection-server:local nfu-topic-selection-web:local \
 scp deploy/nfu-topic-selection-images.tar.gz 用户名@服务器IP:/tmp/
 ```
 
-服务器上先加载镜像，再上传本 `deploy/` 目录（含 `.env`、`Caddyfile`、`docker-compose.yml`）：
+服务器上先加载镜像，再上传本 `deploy/` 目录（含 `.env`、`Caddyfile`、`docker-compose.yml`）。
+还需要按相同的相对目录上传 `nfu-graduation-topic-selection-backend/src/main/resources/sql/schema.sql`，
+下一步导入表结构时会引用它；或上传完整仓库，并单独放置 `.env`。
 
 ```bash
 docker load -i /tmp/nfu-topic-selection-images.tar.gz
 cd /path/to/deploy
 ```
 
-也可以在服务器上直接克隆仓库并运行 `./build.sh`，前提是服务器具备 JDK 8、Node 24、pnpm 11。
+也可以在服务器上直接克隆仓库并在仓库根目录运行 `bash ./deploy/build.sh`，前提是服务器具备所需工具和足够的构建资源。
 
 ### 4. 首次初始化数据库
 
@@ -120,7 +137,7 @@ gzip -dc backups/nfu_topic_selection-备份时间戳.sql.gz \
 
 1. 先备份数据库；
 2. 拉取新代码，确认是否有需要先执行的数据库迁移；
-3. 重新执行 `./build.sh`；
+3. 在仓库根目录重新执行 `bash ./deploy/build.sh`（Windows 使用 `.\deploy\build.ps1`）；
 4. `docker compose up -d`（镜像标签相同时需先 `docker compose up -d --force-recreate` 重建容器）。
 
 ## 上线前仍需人工确认

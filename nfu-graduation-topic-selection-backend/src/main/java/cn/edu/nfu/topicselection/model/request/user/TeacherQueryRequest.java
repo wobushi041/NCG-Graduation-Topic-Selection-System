@@ -2,6 +2,7 @@ package cn.edu.nfu.topicselection.model.request.user;
 
 import lombok.Data;
 
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 /**
@@ -15,7 +16,8 @@ public class TeacherQueryRequest implements Serializable {
     /**
      * 用户角色
      */
-    private int userRole;
+    @NotNull(message = "用户角色不能为空")
+    private Integer userRole;
 
     /// 序列化字段 ///
 

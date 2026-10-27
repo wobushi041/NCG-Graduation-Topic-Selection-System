@@ -60,11 +60,7 @@ public class RequestDtoValidationAspect {
             if (!hasRequestBody(parameterAnnotations[index])) {
                 continue;
             }
-            Object argument = arguments[index];
-            if (argument == null) {
-                throw new BusinessException(CodeBindMessageEnums.PARAMS_ERROR, "请求体不能为空");
-            }
-            validate(argument);
+            validate(arguments[index]);
         }
         return joinPoint.proceed();
     }

@@ -1,6 +1,7 @@
 package cn.edu.nfu.topicselection.controller;
 
 import cn.edu.nfu.topicselection.annotation.SentinelRateLimit;
+import cn.edu.nfu.topicselection.annotation.ValidateRequest;
 import cn.edu.nfu.topicselection.exception.CodeBindMessageEnums;
 import cn.edu.nfu.topicselection.model.entity.Topic;
 import cn.edu.nfu.topicselection.model.entity.User;
@@ -27,6 +28,8 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+
+import javax.validation.Valid;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -155,6 +158,31 @@ class TopicQueryControllerContractTest {
         // 3. 断言 UserController 仅包含 userApplicationService 单一依赖
         Assertions.assertEquals(1, instanceFields.size());
         Assertions.assertEquals("userApplicationService", instanceFields.get(0).getName());
+    }
+
+    // 场景：测试 TopicQueryController 中 6 个请求体接口均声明 @ValidateRequest 切面且禁止使用 Spring 原生 @Valid
+    @Test
+    void topicQueryControllerRequestBodyEndpoints_shouldDeclareValidateRequestAndNoSpringValidAnnotations() throws Exception {
+        // 1. 准备测试数据并获取 TopicQueryController 6 个请求体接口反射对象
+        Method getTopicListMethod = TopicQueryController.class.getMethod("getTopicList", TopicQueryRequest.class);
+        Method getTeacherMethod = TopicQueryController.class.getMethod("getTeacher", TopicLeaderQueryRequest.class);
+        Method getTopicAdminMethod = TopicQueryController.class.getMethod("getTopicListByAdmin", TopicQueryByAdminRequest.class);
+        Method listUserVOMethod = TopicQueryController.class.getMethod("listUserVOByPage", UserQueryRequest.class);
+        Method getUserListMethod = TopicQueryController.class.getMethod("getUserList", GetUserListRequest.class);
+        Method getTeacherByAdminMethod = TopicQueryController.class.getMethod("getTeacherByAdmin", TopicLeaderQueryRequest.class);
+        List<Method> methods = Arrays.asList(
+                getTopicListMethod, getTeacherMethod, getTopicAdminMethod,
+                listUserVOMethod, getUserListMethod, getTeacherByAdminMethod
+        );
+
+        // 2. 依次校验每个方法的切面注解与入参注解
+        for (Method method : methods) {
+            Assertions.assertNotNull(method.getAnnotation(ValidateRequest.class));
+            Assertions.assertFalse(method.getParameters()[0].isAnnotationPresent(Valid.class));
+        }
+
+        // 3. 断言 6 个接口全部符合参数校验契约
+        Assertions.assertEquals(6, methods.size());
     }
 
     /**
